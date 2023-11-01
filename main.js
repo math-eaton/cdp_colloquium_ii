@@ -43,6 +43,47 @@ function animate() {
 initThreeJS();
 animate();
 
+// Define pan speed
+const panSpeed = .05;
+
+// Function to handle keyboard events for panning
+function onDocumentKeyDown(event) {
+    event.preventDefault();
+
+    let needsUpdate = false;
+
+    switch (event.key) {
+        case 'ArrowUp':
+            camera.position.y += panSpeed;
+            controls.target.y += panSpeed;
+            needsUpdate = true;
+            break;
+        case 'ArrowDown':
+            camera.position.y -= panSpeed;
+            controls.target.y -= panSpeed;
+            needsUpdate = true;
+            break;
+        case 'ArrowLeft':
+            camera.position.x -= panSpeed;
+            controls.target.x -= panSpeed;
+            needsUpdate = true;
+            break;
+        case 'ArrowRight':
+            camera.position.x += panSpeed;
+            controls.target.x += panSpeed;
+            needsUpdate = true;
+            break;
+    }
+
+    if (needsUpdate) {
+        controls.update();
+    }
+}
+
+// Add event listener for the document
+document.addEventListener('keydown', onDocumentKeyDown, false);
+
+
 // Define a scaling factor for the Z values (elevation)
 const zScale = 0.0005; // Change this value to scale the elevation up or down
 
@@ -299,21 +340,5 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
   });
 
 
-// Uncomment these lines to add helpers to the scene
-// const axesHelper = new THREE.AxesHelper(5);
-// scene.add(axesHelper);
-
-// Call this after you have created the bounding box
-// const boxHelper = new THREE.BoxHelper(new THREE.Line(geometry, material));
-// scene.add(boxHelper);
-
 // Set the background color after initializing the renderer
 renderer.setClearColor(0x000000); // A neutral gray background
-
-
-
-// const axesHelper = new THREE.AxesHelper(5);
-// scene.add(axesHelper);
-
-// const boxHelper = new THREE.BoxHelper(new THREE.Mesh(geometry));
-// scene.add(boxHelper);
