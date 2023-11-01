@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import proj4 from 'proj4';
 import '/style.css'; 
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 
 // Define the custom projection with its PROJ string
@@ -77,9 +79,9 @@ function onDocumentKeyDown(event) {
           camera.position.x += panSpeed;
           controls.target.x += panSpeed;
           break;
-        case 'q': // Rotate counter-clockwise
-        case 'e': // Rotate clockwise
-            const angle = (event.key === 'q' ? 1 : -1) * rotationSpeed;
+        case 'f': // Rotate counter-clockwise
+        case 'r': // Rotate clockwise
+            const angle = (event.key === 'f' ? 1 : -1) * rotationSpeed;
             const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
 
             vector.copy(camera.position).sub(controls.target);
@@ -95,18 +97,19 @@ function onDocumentKeyDown(event) {
   document.addEventListener('keydown', onDocumentKeyDown, false);
   
 
-function rotateAroundWorldAxis(point, axis, angle) {
-  const vector = camera.position.clone().sub(point);
-  const quaternion = new THREE.Quaternion();
+// function rotateAroundWorldAxis(point, axis, angle) {
+//   const vector = camera.position.clone().sub(point);
+//   const quaternion = new THREE.Quaternion();
   
-  // Rotate the vector around the specified axis by the angle and then reposition the camera
-  quaternion.setFromAxisAngle(axis, angle);
-  vector.applyQuaternion(quaternion);
-  camera.position.copy(vector.add(point));
+//   // Rotate the vector around the specified axis by the angle and then reposition the camera
+//   quaternion.setFromAxisAngle(axis, angle);
+//   vector.applyQuaternion(quaternion);
+//   camera.position.copy(vector.add(point));
 
-  // After repositioning the camera, we need to ensure it's looking back at the target
-  camera.lookAt(controls.target);
-}
+//   // After repositioning the camera, we need to ensure it's looking back at the target
+//   camera.lookAt(controls.target);
+// }
+
 
 
 // Function to handle panning
@@ -152,11 +155,16 @@ function getColorForElevation(elevation, minElevation, maxElevation) {
   return color;
 }
 
-// Updated function to add contour lines with gradient colors
+// Define a variable to store the minimum elevation
+// This should be determined from the addContourLines function
+let globalMinElevation = Infinity;
+
+// Updated addContourLines function to update globalMinElevation
 function addContourLines(geojson) {
   // Determine min and max elevation from the geojson
   const elevations = geojson.features.map(f => f.properties.Contour);
   const minElevation = Math.min(...elevations);
+  globalMinElevation = Math.min(globalMinElevation, minElevation); // Update the global minimum elevation
   const maxElevation = Math.max(...elevations);
 
   geojson.features.forEach((feature, index) => {
@@ -201,6 +209,82 @@ function addContourLines(geojson) {
       });
     } else {
       console.error(`Unsupported geometry type: ${feature.geometry.type}`);
+    }
+  });
+}
+
+function addPolygons(geojson, stride = 20) {
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xFF1493, // Pink color
+    transparent: true,
+    wireframe: true, // Set wireframe to true for mesh look
+    opacity: 0.5, // Increase opacity for visibility
+    side: THREE.DoubleSide // Render both sides of the polygon
+  });
+
+  for (let i = 0; i < geojson.features.length; i += stride) {
+    const feature = geojson.features[i];
+    try {
+      const shapeCoords = feature.geometry.coordinates[0]; // Assuming no holes in the polygon for simplicity
+      const vertices = [];
+      let centroid = new THREE.Vector3(0, 0, 0);
+
+      // Convert coordinates to vertices and calculate centroid
+      shapeCoords.forEach(coord => {
+        const [x, y] = toStatePlane(coord[0], coord[1]);
+        const z = globalMinElevation * zScale; // Set Z to the lowest contour elevation
+        vertices.push(new THREE.Vector3(x, y, z));
+        centroid.add(new THREE.Vector3(x, y, z));
+      });
+
+      centroid.divideScalar(shapeCoords.length); // Average to find centroid
+      vertices.unshift(centroid); // Add centroid as the first vertex
+
+      const shapeGeometry = new THREE.BufferGeometry();
+      const positions = [];
+
+      // The centroid is the first vertex, and it's connected to every other vertex
+      for (let j = 1; j <= shapeCoords.length; j++) {
+        // Add centroid
+        positions.push(centroid.x, centroid.y, centroid.z);
+
+        // Add current vertex
+        positions.push(vertices[j % shapeCoords.length].x, vertices[j % shapeCoords.length].y, vertices[j % shapeCoords.length].z);
+
+        // Add next vertex
+        positions.push(vertices[(j + 1) % shapeCoords.length].x, vertices[(j + 1) % shapeCoords.length].y, vertices[(j + 1) % shapeCoords.length].z);
+      }
+
+      shapeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      shapeGeometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(shapeGeometry, material);
+      scene.add(mesh);
+    } catch (error) {
+      console.error(`Error processing feature at index ${i}:`, error);
+    }
+  }
+}
+
+
+// Function to add points as hollow yellow spheres with reduced resolution
+function addYellowPoints(geojson) {
+  const sphereMaterial = new THREE.MeshBasicMaterial({
+    color: 0xFFFF00, // Yellow color
+    wireframe: true
+  });
+
+  geojson.features.forEach(feature => {
+    if (feature.geometry.type === 'Point') {
+      const [lon, lat] = feature.geometry.coordinates;
+      const [x, y] = toStatePlane(lon, lat);
+      const z = feature.properties.Elevation * zScale; // Apply scaling factor to elevation
+
+      // Reduced resolution for a more 'mesh' look
+      const sphereGeometry = new THREE.SphereGeometry(0.005, 8, 8); // Reduce widthSegments and heightSegments
+      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+      sphere.position.set(x, y, z);
+      scene.add(sphere);
     }
   });
 }
@@ -289,7 +373,7 @@ function constrainCamera(controls, boundingBox) {
   controls.addEventListener('change', () => {
     // Clamp the camera position within the bounding box
     camera.position.x = Math.max(boundingBox.min.x, Math.min(boundingBox.max.x, camera.position.x));
-    camera.position.y = Math.max(boundingBox.min.y, Math.min(boundingBox.max.y, camera.position.y));
+    camera.position.y = Math.max(boundingBox.min.y + 0.25, Math.min(boundingBox.max.y, camera.position.y));
     camera.position.z = Math.max(boundingBox.min.z, Math.min(boundingBox.max.z, camera.position.z));
     
     // Clamp the controls target within the bounding box
@@ -297,7 +381,6 @@ function constrainCamera(controls, boundingBox) {
     controls.target.y = Math.max(boundingBox.min.y, Math.min(boundingBox.max.y, controls.target.y));
     controls.target.z = Math.max(boundingBox.min.z, Math.min(boundingBox.max.z, controls.target.z));
 
-    // Do NOT call controls.update() here, as it would trigger the 'change' event again
   });
 }
 
@@ -359,6 +442,29 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
         console.error('Error loading points GeoJSON:', error);
       });
 
+    // Fetch and add the polygon data
+    fetch('data/FM_contours_NYS_clip_20231101.geojson')
+    .then(response => response.json())
+    .then(polygonGeojson => {
+      addPolygons(polygonGeojson);
+      console.log("Polygons added");
+    })
+    .catch(error => {
+      console.error('Error loading polygon GeoJSON:', error);
+    });
+
+    // Fetch and add the points data
+    fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101.geojson')
+    .then(response => response.json())
+    .then(pointGeojson => {
+      addYellowPoints(pointGeojson);
+      console.log("Yellow points added");
+    })
+    .catch(error => {
+      console.error('Error loading points GeoJSON:', error);
+    });
+
+
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
     
     // Move the camera and set controls target
@@ -367,12 +473,12 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
     const maxDim = Math.max(size.x, size.y);
     const fov = camera.fov * (Math.PI / 180);
     let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-    cameraZ *= 0.7; // Slight adjustment
+    cameraZ *= 0.7; // adjust Z magic number
     camera.position.set(center.x, center.y, cameraZ);
     controls.target.set(center.x, center.y, 0);
 
     // Now, add the constraints to the camera and controls
-    // constrainCamera(controls, boundingBox);
+    constrainCamera(controls, boundingBox);
 
     // Call this after setting the position and target
     controls.update();
