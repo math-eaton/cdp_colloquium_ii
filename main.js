@@ -50,37 +50,64 @@ const panSpeed = .05;
 
 // Function to handle keyboard events for panning
 function onDocumentKeyDown(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    let needsUpdate = false;
+  const rotationSpeed = 0.025; // Speed of rotation
+  const vector = new THREE.Vector3(); // Create once and reuse it to avoid garbage collection
+  const axis = new THREE.Vector3(1, 0, 0); // X axis for world space rotation
 
-    switch (event.key) {
-        case 'ArrowUp':
-            camera.position.y += panSpeed;
-            controls.target.y += panSpeed;
-            needsUpdate = true;
-            break;
-        case 'ArrowDown':
-            camera.position.y -= panSpeed;
-            controls.target.y -= panSpeed;
-            needsUpdate = true;
-            break;
-        case 'ArrowLeft':
-            camera.position.x -= panSpeed;
-            controls.target.x -= panSpeed;
-            needsUpdate = true;
-            break;
-        case 'ArrowRight':
-            camera.position.x += panSpeed;
-            controls.target.x += panSpeed;
-            needsUpdate = true;
-            break;
-    }
+  console.log(`Key pressed: ${event.key}`); // Log which key was pressed
 
-    if (needsUpdate) {
-        controls.update();
-    }
+
+  switch (event.key) {
+      // WASD keys for panning
+      case 'w':
+          camera.position.y += panSpeed;
+          controls.target.y += panSpeed;
+          break;
+      case 's':
+          camera.position.y -= panSpeed;
+          controls.target.y -= panSpeed;
+          break;
+      case 'a':
+          camera.position.x -= panSpeed;
+          controls.target.x -= panSpeed;
+          break;
+      case 'd':
+          camera.position.x += panSpeed;
+          controls.target.x += panSpeed;
+          break;
+        case 'q': // Rotate counter-clockwise
+        case 'e': // Rotate clockwise
+            const angle = (event.key === 'q' ? 1 : -1) * rotationSpeed;
+            const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+
+            vector.copy(camera.position).sub(controls.target);
+            vector.applyQuaternion(quaternion);
+            camera.position.copy(controls.target).add(vector);
+            camera.lookAt(controls.target); // Keep the camera looking at the target
+            break;
+      }
+  
+      controls.update();
+  }
+  
+  document.addEventListener('keydown', onDocumentKeyDown, false);
+  
+
+function rotateAroundWorldAxis(point, axis, angle) {
+  const vector = camera.position.clone().sub(point);
+  const quaternion = new THREE.Quaternion();
+  
+  // Rotate the vector around the specified axis by the angle and then reposition the camera
+  quaternion.setFromAxisAngle(axis, angle);
+  vector.applyQuaternion(quaternion);
+  camera.position.copy(vector.add(point));
+
+  // After repositioning the camera, we need to ensure it's looking back at the target
+  camera.lookAt(controls.target);
 }
+
 
 // Function to handle panning
 function panCamera(dx, dy) {
@@ -90,10 +117,6 @@ function panCamera(dx, dy) {
   controls.target.y += dy * panSpeed;
   controls.update();
 }
-
-
-// Add event listener for the document
-document.addEventListener('keydown', onDocumentKeyDown, false);
 
 
 // Attach click event listeners to the pan buttons
@@ -299,18 +322,18 @@ function getSizeOfBoundingBox(boundingBox) {
 }
 
 // Adjust the camera to view the entire extent of the GeoJSON features
-function adjustCameraToBoundingBox(camera, controls, boundingBox) {
-  const center = getCenterOfBoundingBox(boundingBox);
-  const size = getSizeOfBoundingBox(boundingBox);
-  const maxDim = Math.max(size.x, size.y);
-  const fov = camera.fov * (Math.PI / 180);
-  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)); // Adjust the 2 to frame the scene
+// function adjustCameraToBoundingBox(camera, controls, boundingBox) {
+//   const center = getCenterOfBoundingBox(boundingBox);
+//   const size = getSizeOfBoundingBox(boundingBox);
+//   const maxDim = Math.max(size.x, size.y);
+//   const fov = camera.fov * (Math.PI / 180);
+//   let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)); // Adjust the 2 to frame the scene
 
-  cameraZ *= 1.1; // Slight adjustment to ensure the features are fully visible
-  camera.position.set(center.x, center.y, cameraZ);
-  controls.target.set(center.x, center.y, 0);
-  controls.update();
-}
+//   cameraZ *= 1.1; // Slight adjustment to ensure the features are fully visible
+//   camera.position.set(center.x, center.y, cameraZ);
+//   controls.target.set(center.x, center.y, 0);
+//   controls.update();
+// }
 
 
 // Set material for the contour lines
@@ -344,12 +367,12 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
     const maxDim = Math.max(size.x, size.y);
     const fov = camera.fov * (Math.PI / 180);
     let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-    cameraZ *= 1.1; // Slight adjustment
+    cameraZ *= 0.7; // Slight adjustment
     camera.position.set(center.x, center.y, cameraZ);
     controls.target.set(center.x, center.y, 0);
 
     // Now, add the constraints to the camera and controls
-    constrainCamera(controls, boundingBox);
+    // constrainCamera(controls, boundingBox);
 
     // Call this after setting the position and target
     controls.update();
