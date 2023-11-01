@@ -7,6 +7,8 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 
+
+
 // Define the custom projection with its PROJ string
 const statePlaneProjString = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 proj4.defs("EPSG:32118", statePlaneProjString);
@@ -19,8 +21,44 @@ function toStatePlane(lon, lat) {
   return proj4("EPSG:32118").forward([lon, lat]);
 }
 
+let itemsToLoad = 4; // Update this with the number of assets you are loading
+let itemsLoaded = 0;
+const spinnerCharacters = ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'];
+let currentSpinnerIndex = 0;
+
+// Call this function to update the spinner
+function updateSpinner() {
+  const progressBar = document.getElementById('progress-bar');
+  progressBar.textContent = spinnerCharacters[currentSpinnerIndex];
+  currentSpinnerIndex = (currentSpinnerIndex + 1) % spinnerCharacters.length;
+}
+
+// Start spinner animation
+const spinnerInterval = setInterval(updateSpinner, 100); // Update spinner every 100ms
+
+function updateProgressBar() {
+  itemsLoaded++;
+  const progress = (itemsLoaded / itemsToLoad) * 100;
+  const progressBar = document.getElementById('progress-bar');
+  progressBar.style.width = `${(progress / itemsToLoad) * 33}%`; // Set width to a third of total progress
+
+  if (itemsLoaded === itemsToLoad) {
+    clearInterval(spinnerInterval); // Stop the spinner animation
+    progressBar.textContent = "Loading complete!"; // Change the text content
+    // All items are loaded, hide the progress bar and show the visualization
+    const visualizationContainer = document.getElementById('three-container');
+    progressBar.style.display = 'none';
+    visualizationContainer.style.visibility = 'visible'; // Reveal the visualization
+  }
+}
+
+
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
+
+// Add event listener for DOMContentLoaded
+document.addEventListener('DOMContentLoaded', (event) => {
+
 
 function initThreeJS() {
     scene = new THREE.Scene();
@@ -128,6 +166,7 @@ document.getElementById('pan-down').addEventListener('click', () => panCamera(0,
 document.getElementById('pan-left').addEventListener('click', () => panCamera(-1, 0));
 document.getElementById('pan-right').addEventListener('click', () => panCamera(1, 0));
 
+})
 
 // Define a scaling factor for the Z values (elevation)
 const zScale = 0.0005; // Change this value to scale the elevation up or down
@@ -281,7 +320,7 @@ function addYellowPoints(geojson) {
       const z = feature.properties.Elevation * zScale; // Apply scaling factor to elevation
 
       // Reduced resolution for a more 'mesh' look
-      const sphereGeometry = new THREE.SphereGeometry(0.005, 8, 8); // Reduce widthSegments and heightSegments
+      const sphereGeometry = new THREE.SphereGeometry(0.005, 3, 3); // Reduce widthSegments and heightSegments
       const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
       sphere.position.set(x, y, z);
       scene.add(sphere);
@@ -425,11 +464,14 @@ const lineMaterial = new THREE.LineBasicMaterial({
   linewidth: 4 // Make sure the lines are thick enough to be visible
 });
 
+
 // Fetching the contour lines GeoJSON and adding to the scene
 fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
   .then(response => response.json())
   .then(geojson => {
     addContourLines(geojson); // Existing call to add contour lines
+    updateProgressBar();
+
 
     // Fetch and add POINT data here after adding contour lines
     fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101.geojson')
@@ -437,6 +479,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
       .then(pointGeojson => {
         addGeoJSONPoints(pointGeojson); // Call the new function to add points
         console.log("adding points")
+        updateProgressBar();
       })
       .catch(error => {
         console.error('Error loading points GeoJSON:', error);
@@ -448,6 +491,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
     .then(polygonGeojson => {
       addPolygons(polygonGeojson);
       console.log("Polygons added");
+      updateProgressBar();
     })
     .catch(error => {
       console.error('Error loading polygon GeoJSON:', error);
@@ -459,6 +503,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
     .then(pointGeojson => {
       addYellowPoints(pointGeojson);
       console.log("Yellow points added");
+      updateProgressBar();
     })
     .catch(error => {
       console.error('Error loading points GeoJSON:', error);

@@ -64,6 +64,28 @@ h1 {
   color: #888;
 }
 
+#progress-container {
+  width: 33%;
+  margin: 0 auto; /* Center the progress bar */
+  background-color: #eee;
+  position: relative;
+  overflow: hidden;
+}
+
+#progress-bar {
+  display: block;
+  height: 20px;
+  width: 0;
+  background-color: #33cc33; /* Corrected color */
+  line-height: 20px;
+  text-align: center;
+  color: white; /* If you want the text color to be white */
+}
+
+#three-container {
+  visibility: hidden;
+}
+
 #pan-controls {
   position: absolute;
   bottom: 2%;
