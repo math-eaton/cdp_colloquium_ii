@@ -122,6 +122,38 @@ function addContourLines(geojson) {
   });
 }
 
+// Function to add spheres for POINT data from GeoJSON
+function addGeoJSONPoints(geojson) {
+  // Material for the spheres
+  const sphereMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0xff0000, // red color
+    transparent: true,
+    opacity: 0.5
+  });
+
+  // Parse the POINT data from the GeoJSON
+  geojson.features.forEach(feature => {
+    if (feature.geometry.type === 'Point') {
+      const [lon, lat] = feature.geometry.coordinates;
+      const elevation = feature.properties.Elevation;
+      try {
+        // Convert the lon/lat to State Plane coordinates
+        const [x, y] = toStatePlane(lon, lat);
+        const z = elevation * zScale; // Apply the scaling factor to the elevation
+
+        // Create a sphere geometry for the point
+        const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32); // Adjust the size as necessary
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(x, y, z);
+        scene.add(sphere);
+      } catch (error) {
+        console.error(`Error projecting point:`, error.message);
+      }
+    } else {
+      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
+    }
+  });
+}
 
 
 
@@ -223,11 +255,23 @@ const lineMaterial = new THREE.LineBasicMaterial({
   linewidth: 4 // Make sure the lines are thick enough to be visible
 });
 
-// After loading the GeoJSON and creating the bounding box
+// Fetching the contour lines GeoJSON and adding to the scene
 fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
   .then(response => response.json())
   .then(geojson => {
-    addContourLines(geojson);
+    addContourLines(geojson); // Existing call to add contour lines
+
+    // Fetch and add POINT data here after adding contour lines
+    fetch('data/Cellular_Tower_HIFLD_20231101.geojson')
+      .then(response => response.json())
+      .then(pointGeojson => {
+        addGeoJSONPoints(pointGeojson); // Call the new function to add points
+        console.log("adding points")
+      })
+      .catch(error => {
+        console.error('Error loading points GeoJSON:', error);
+      });
+
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
     
     // Move the camera and set controls target
