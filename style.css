@@ -64,6 +64,35 @@ h1 {
   color: #888;
 }
 
+#pan-controls {
+  position: absolute;
+  bottom: 2%;
+  left: 2%;
+  z-index: 10;
+  display: flex; /* Set to flex to use flexbox layout */
+  align-items: center; /* Align children vertically in the middle */
+}
+
+.pan-button {
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 20px;
+  line-height: 20px;
+  margin: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: white;
+  border: none;
+  outline: none;
+}
+
+.pan-vertical-container {
+  display: inline-flex; /* Set to inline-flex to keep the flex container inline */
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Center children horizontally */
+  margin: 0 5px; /* Adjust margin to your liking */
+}
+
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;

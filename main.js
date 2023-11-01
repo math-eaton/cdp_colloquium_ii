@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import proj4 from 'proj4';
+import '/style.css'; 
+
 
 // Define the custom projection with its PROJ string
 const statePlaneProjString = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
@@ -21,7 +23,7 @@ let scene, camera, renderer, controls;
 function initThreeJS() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 50; // Adjust as necessary
+    camera.position.z = 20; // Adjust as necessary
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('three-container').appendChild(renderer.domElement);
@@ -80,8 +82,25 @@ function onDocumentKeyDown(event) {
     }
 }
 
+// Function to handle panning
+function panCamera(dx, dy) {
+  camera.position.x += dx * panSpeed;
+  camera.position.y += dy * panSpeed;
+  controls.target.x += dx * panSpeed;
+  controls.target.y += dy * panSpeed;
+  controls.update();
+}
+
+
 // Add event listener for the document
 document.addEventListener('keydown', onDocumentKeyDown, false);
+
+
+// Attach click event listeners to the pan buttons
+document.getElementById('pan-up').addEventListener('click', () => panCamera(0, 1));
+document.getElementById('pan-down').addEventListener('click', () => panCamera(0, -1));
+document.getElementById('pan-left').addEventListener('click', () => panCamera(-1, 0));
+document.getElementById('pan-right').addEventListener('click', () => panCamera(1, 0));
 
 
 // Define a scaling factor for the Z values (elevation)
