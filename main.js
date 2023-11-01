@@ -122,11 +122,15 @@ function addContourLines(geojson) {
   });
 }
 
-// Function to add spheres for POINT data from GeoJSON
+// Function to add wireframe spheres for POINT data from GeoJSON
 function addGeoJSONPoints(geojson) {
-  // Material for the spheres
+  // Define the radius for the spheres
+  const sphereRadius = 0.005; 
+
+  // Material for the wireframe spheres
   const sphereMaterial = new THREE.MeshBasicMaterial({ 
     color: 0xff0000, // red color
+    wireframe: true, // Change to wireframe style
     transparent: true,
     opacity: 0.5
   });
@@ -141,8 +145,8 @@ function addGeoJSONPoints(geojson) {
         const [x, y] = toStatePlane(lon, lat);
         const z = elevation * zScale; // Apply the scaling factor to the elevation
 
-        // Create a sphere geometry for the point
-        const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32); // Adjust the size as necessary
+        // Create a sphere geometry for the point with the defined radius
+        const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 32, 32); // Use the defined radius
         const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphere.position.set(x, y, z);
         scene.add(sphere);
@@ -262,7 +266,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
     addContourLines(geojson); // Existing call to add contour lines
 
     // Fetch and add POINT data here after adding contour lines
-    fetch('data/Cellular_Tower_HIFLD_20231101.geojson')
+    fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101.geojson')
       .then(response => response.json())
       .then(pointGeojson => {
         addGeoJSONPoints(pointGeojson); // Call the new function to add points
