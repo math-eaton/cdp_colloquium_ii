@@ -54,7 +54,7 @@ function updateProgressBar() {
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
 let infoVisible = false;
-
+let globalBoundingBox
 
 
 function initThreeJS() {
@@ -564,24 +564,47 @@ function getSizeOfBoundingBox(boundingBox) {
 // }
 
 // Function to lock the camera to a top-down view
+// Function to calculate the camera Z position to view the entire bounding box
+function calculateCameraZToFitBoundingBox(boundingBox) {
+  const center = getCenterOfBoundingBox(boundingBox);
+  const size = getSizeOfBoundingBox(boundingBox);
+  const maxDim = Math.max(size.x, size.y);
+  const fov = camera.fov * (Math.PI / 180);
+  
+  // Calculate the Z position where the entire bounding box is in view
+  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+  cameraZ *= 1.1; // Scale factor to ensure everything is within view, adjust as needed
+  return cameraZ;
+}
+
+// Function to lock the camera to a top-down view
+// Use globalBoundingBox inside your functions and event listeners
+// Function to lock the camera to a top-down view
 function lockCameraTopDown(isLocked) {
-  if (isLocked) {
-    // Save current camera position and orientation if needed
-    // Lock the camera's orbit controls for rotation
-    controls.enableRotate = false;
-    camera.position.set(controls.target.x, controls.target.y, 100); // Set a fixed Z position
-    camera.lookAt(controls.target.x, controls.target.y, 0);
+  if (isLocked && globalBoundingBox) {
+    // Calculate the center from the global bounding box
+    const center = getCenterOfBoundingBox(globalBoundingBox);
+    const cameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
+    // Set the camera to the top-down view at the calculated Z position
+    camera.position.set(center.x, center.y, cameraZ);
+    camera.lookAt(center.x, center.y, 0);
+    controls.enableRotate = false; // Disable rotation
+    controls.enablePan = true; // Enable panning
   } else {
-    // Restore the camera's ability to rotate
+    // Restore previous behavior
     controls.enableRotate = true;
+    controls.enablePan = false;
+    // Optionally, restore the camera's previous Z position if needed
   }
   controls.update();
 }
 
-// Event listener for the checkbox
+// Update the checkbox event listener to pass the boundingBox
+// In your event listeners
 document.getElementById('camera-lock').addEventListener('change', (event) => {
   lockCameraTopDown(event.target.checked);
 });
+
 
 // Add this event listener to stop the propagation of the click event
 document.getElementById('camera-lock').addEventListener('click', (event) => {
@@ -642,7 +665,8 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
 
 
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
-    
+    globalBoundingBox = getBoundingBoxOfGeoJSON(geojson);
+        
     // Move the camera and set controls target
     const center = getCenterOfBoundingBox(boundingBox);
     const size = getSizeOfBoundingBox(boundingBox);
@@ -650,7 +674,8 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
     const fov = camera.fov * (Math.PI / 180);
     let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
     cameraZ *= 0.7; // adjust Z magic number
-    camera.position.set(center.x, center.y, cameraZ);
+    const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
+    camera.position.set(center.x, center.y, initialCameraZ);
     controls.target.set(center.x, center.y, 0);
 
     // Now, add the constraints to the camera and controls
