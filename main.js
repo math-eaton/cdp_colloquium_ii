@@ -526,8 +526,8 @@ function getBoundingBoxOfGeoJSON(geojson) {
 
   // Return bounding box with min and max as THREE.Vector3 objects
   return {
-    min: new THREE.Vector3(minX, minY, -Infinity),
-    max: new THREE.Vector3(maxX, maxY, Infinity)
+    min: new THREE.Vector3(minX - 2, minY - 2, -Infinity),
+    max: new THREE.Vector3(maxX + 2, maxY + 2, Infinity)
   };
 }
 
@@ -606,8 +606,24 @@ function lockCameraTopDown(isLocked) {
     }
     const center = getCenterOfBoundingBox(globalBoundingBox);
     const cameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
+    // Assuming the north is along the negative Y-axis in your projection
+    const northDirection = new THREE.Vector3(0, -1, 0);
+
+    // Position the camera at the center of the bounding box at the appropriate Z height
     camera.position.set(center.x, center.y, cameraZ);
+
+    // Look down at the center of the bounding box
     camera.lookAt(center.x, center.y, 0);
+
+    // Orient the camera to face north
+    camera.up.set(0, 0, 1); // Z is up in three.js by default
+    camera.lookAt(center.clone().add(northDirection));
+
+    // Set the rotation to look straight down to the ground
+    camera.rotation.x = 0;
+    camera.rotation.y = 0;
+    camera.rotation.z = 0;
+
     controls.enableRotate = false; // Disable rotation
     controls.enablePan = true; // Enable panning
     // Change both left and right mouse buttons to pan
@@ -616,6 +632,7 @@ function lockCameraTopDown(isLocked) {
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.PAN
     };
+    
   } else {
     // Restore previous behavior
     controls.enableRotate = true;
