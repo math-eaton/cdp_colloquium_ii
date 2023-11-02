@@ -53,7 +53,7 @@ function updateProgressBar() {
 
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
-let infoVisible = true;
+let infoVisible = false;
 
 
 
@@ -74,8 +74,6 @@ function initThreeJS() {
     scene.add(directionalLight);
     // Set the background color after initializing the renderer
     renderer.setClearColor(0x000000); // A neutral gray background
-    // Call this initially if you want the info box to start visible
-    showInfoBox();
 }
 
 function animate() {
@@ -89,6 +87,7 @@ function animate() {
 document.addEventListener('DOMContentLoaded', (event) => {
   initThreeJS();
   animate();
+  hideInfoBox() 
 });
 
 
