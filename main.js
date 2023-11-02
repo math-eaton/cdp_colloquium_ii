@@ -83,6 +83,20 @@ function animate() {
     console.log("animating")
 }
 
+// Update the camera and renderer on window resize
+function onWindowResize() {
+  // Update camera aspect ratio and renderer size
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// Add the resize event listener
+window.addEventListener('resize', onWindowResize, false);
+
+// Call the resize function initially to set up the scene
+onWindowResize();
+
 // Ensure DOM is loaded before initializing and starting animation
 document.addEventListener('DOMContentLoaded', (event) => {
   initThreeJS();
