@@ -140,10 +140,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
 function hideInfoBox() {
   const infoContainer = document.getElementById('info-container');
   const infoButton = document.getElementById('info-button');
-  infoContainer.style.opacity = '0'; // Start the fade out
-  infoContainer.style.pointerEvents = 'none'; // Make it non-interactive immediately
-  infoButton.style.display = 'block'; // Show the info button
-  infoVisible = false;
+  // Check if the info container is already hidden to prevent unnecessary style changes
+  if (infoContainer.style.opacity !== '0') {
+    infoContainer.style.opacity = '0'; // Start the fade out
+    infoContainer.style.pointerEvents = 'none'; // Make it non-interactive immediately
+    infoButton.style.display = 'block'; // Show the info button
+    infoVisible = false;
+  }
 }
 
 // Function to show the information container and hide the info button
@@ -168,7 +171,14 @@ document.getElementById('info-container').addEventListener('transitionend', func
 showInfoBox();
 
 // Set up event listeners for mousedown and keypress events to hide the info box
-document.addEventListener('mousedown', hideInfoBox);
+// Existing event listeners
+document.addEventListener('mousedown', (event) => {
+  // Check if the target is not the checkbox or its label
+  if (event.target.id !== 'camera-lock' && event.target.htmlFor !== 'camera-lock') {
+    hideInfoBox();
+  }
+});
+
 document.addEventListener('keypress', hideInfoBox);
 
 // Event listener for the info button to unhide the info box
@@ -353,7 +363,7 @@ function addPolygons(geojson, stride = 10) {
     color: 0xFF1493, // Pink color
     transparent: true,
     wireframe: true, // Set wireframe to true for mesh look
-    opacity: 0.33, // Increase opacity for visibility
+    opacity: 0.35, // Increase opacity for visibility
     side: THREE.DoubleSide // Render both sides of the polygon
   });
 
@@ -553,6 +563,31 @@ function getSizeOfBoundingBox(boundingBox) {
 //   controls.update();
 // }
 
+// Function to lock the camera to a top-down view
+function lockCameraTopDown(isLocked) {
+  if (isLocked) {
+    // Save current camera position and orientation if needed
+    // Lock the camera's orbit controls for rotation
+    controls.enableRotate = false;
+    camera.position.set(controls.target.x, controls.target.y, 100); // Set a fixed Z position
+    camera.lookAt(controls.target.x, controls.target.y, 0);
+  } else {
+    // Restore the camera's ability to rotate
+    controls.enableRotate = true;
+  }
+  controls.update();
+}
+
+// Event listener for the checkbox
+document.getElementById('camera-lock').addEventListener('change', (event) => {
+  lockCameraTopDown(event.target.checked);
+});
+
+// Add this event listener to stop the propagation of the click event
+document.getElementById('camera-lock').addEventListener('click', (event) => {
+  event.stopPropagation(); // This will prevent the click from reaching the document level
+});
+
 
 // Set material for the contour lines
 const lineMaterial = new THREE.LineBasicMaterial({
@@ -562,7 +597,7 @@ const lineMaterial = new THREE.LineBasicMaterial({
 
 
 // Fetching the contour lines GeoJSON and adding to the scene
-fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
+fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
   .then(response => response.json())
   .then(geojson => {
     addContourLines(geojson); // Existing call to add contour lines
@@ -570,7 +605,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
 
 
     // Fetch and add POINT data here after adding contour lines
-    fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101.geojson')
+    fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson')
       .then(response => response.json())
       .then(pointGeojson => {
         addGeoJSONPoints(pointGeojson); // Call the new function to add points
@@ -582,7 +617,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
       });
 
     // Fetch and add the polygon data
-    fetch('data/FM_contours_NYS_clip_20231101.geojson')
+    fetch('data/FM_contours_NYS_clip_20231101_simplified.geojson')
     .then(response => response.json())
     .then(polygonGeojson => {
       addPolygons(polygonGeojson);
@@ -594,7 +629,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
     });
 
     // Fetch and add the points data
-    fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101.geojson')
+    fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson')
     .then(response => response.json())
     .then(pointGeojson => {
       addYellowPoints(pointGeojson);
