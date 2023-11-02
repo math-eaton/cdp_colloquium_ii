@@ -24,6 +24,7 @@ a:hover {
 }
 
 body {
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   margin: 0;
   display: flex;
   place-items: center;
@@ -96,6 +97,33 @@ h1 {
 }
 
 .pan-button {
+  font-size: 20px;
+  line-height: 20px;
+  margin: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: white;
+  border: none;
+  outline: none;
+}
+
+.pan-vertical-container {
+  display: inline-flex; /* Set to inline-flex to keep the flex container inline */
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Center children horizontally */
+  margin: 0 5px; /* Adjust margin to your liking */
+}
+
+#pan-controls {
+  position: absolute;
+  bottom: 2%;
+  left: 2%;
+  z-index: 10;
+  display: flex; /* Set to flex to use flexbox layout */
+  align-items: center; /* Align children vertically in the middle */
+}
+
+.pan-button {
   font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   font-size: 20px;
   line-height: 20px;
@@ -114,6 +142,55 @@ h1 {
   margin: 0 5px; /* Adjust margin to your liking */
 }
 
+#info-button {
+  position: absolute;
+  font-size: larger;
+  bottom: 5%;
+  right: 2%; /* Adjust as needed */
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.0);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: none; /* Hidden by default */
+}
+
+#info-container {
+  opacity: 1; /* Start fully visible */
+  visibility: visible;
+  transition: opacity 0.15s ease; /* Smooth transition for fade effect */
+  position: absolute;
+  bottom: 2%;
+  left: 20%; /* Adjust this to position the box to the right of the pan controls */
+  z-index: 10;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px; /* Adjust the font size as needed */
+  max-width: 250px; /* Set a max-width for the container */
+  cursor: pointer;
+}
+
+#info-container ul {
+  padding-left: 20px;
+  opacity: 1; /* Start fully visible */
+  visibility: visible;
+}
+
+.hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+.small-text {
+  font-size: 12px; /* Smaller text for additional info */
+  opacity: 0.8; /* Slightly faded text */
+}
 
 button {
   border-radius: 8px;

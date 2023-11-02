@@ -7,8 +7,6 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 
-
-
 // Define the custom projection with its PROJ string
 const statePlaneProjString = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 proj4.defs("EPSG:32118", statePlaneProjString);
@@ -55,9 +53,8 @@ function updateProgressBar() {
 
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
+let infoVisible = true;
 
-// Add event listener for DOMContentLoaded
-document.addEventListener('DOMContentLoaded', (event) => {
 
 
 function initThreeJS() {
@@ -67,12 +64,18 @@ function initThreeJS() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('three-container').appendChild(renderer.domElement);
+
     controls = new OrbitControls(camera, renderer.domElement);
+
     let ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
     let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(0, 1, 0);
     scene.add(directionalLight);
+    // Set the background color after initializing the renderer
+    renderer.setClearColor(0x000000); // A neutral gray background
+    // Call this initially if you want the info box to start visible
+    showInfoBox();
 }
 
 function animate() {
@@ -82,8 +85,53 @@ function animate() {
     console.log("animating")
 }
 
-initThreeJS();
-animate();
+// Ensure DOM is loaded before initializing and starting animation
+document.addEventListener('DOMContentLoaded', (event) => {
+  initThreeJS();
+  animate();
+});
+
+
+// Function to hide the information container and show the info button
+function hideInfoBox() {
+  const infoContainer = document.getElementById('info-container');
+  const infoButton = document.getElementById('info-button');
+  infoContainer.style.opacity = '0'; // Start the fade out
+  infoContainer.style.pointerEvents = 'none'; // Make it non-interactive immediately
+  infoButton.style.display = 'block'; // Show the info button
+  infoVisible = false;
+}
+
+// Function to show the information container and hide the info button
+function showInfoBox() {
+  const infoContainer = document.getElementById('info-container');
+  const infoButton = document.getElementById('info-button');
+  infoContainer.style.opacity = '1'; // Start the fade in
+  infoContainer.style.visibility = 'visible'; // Make it visible immediately
+  infoContainer.style.pointerEvents = 'auto'; // Make it interactive again
+  infoButton.style.display = 'none'; // Hide the info button
+  infoVisible = true;
+}
+
+// Add the transitionend event listener
+document.getElementById('info-container').addEventListener('transitionend', function(event) {
+  if (event.propertyName === 'opacity' && getComputedStyle(this).opacity == 0) {
+    this.style.visibility = 'hidden'; // Hide the container after transition
+  }
+});
+
+// Call this initially if you want the info box to start visible
+showInfoBox();
+
+// Set up event listeners for mousedown and keypress events to hide the info box
+document.addEventListener('mousedown', hideInfoBox);
+document.addEventListener('keypress', hideInfoBox);
+
+// Event listener for the info button to unhide the info box
+document.getElementById('info-button').addEventListener('click', function () {
+    showInfoBox();
+});
+
 
 // Define pan speed
 const panSpeed = .05;
@@ -166,7 +214,6 @@ document.getElementById('pan-down').addEventListener('click', () => panCamera(0,
 document.getElementById('pan-left').addEventListener('click', () => panCamera(-1, 0));
 document.getElementById('pan-right').addEventListener('click', () => panCamera(1, 0));
 
-})
 
 // Define a scaling factor for the Z values (elevation)
 const zScale = 0.0005; // Change this value to scale the elevation up or down
@@ -252,12 +299,12 @@ function addContourLines(geojson) {
   });
 }
 
-function addPolygons(geojson, stride = 20) {
+function addPolygons(geojson, stride = 10) {
   const material = new THREE.MeshBasicMaterial({
     color: 0xFF1493, // Pink color
     transparent: true,
     wireframe: true, // Set wireframe to true for mesh look
-    opacity: 0.5, // Increase opacity for visibility
+    opacity: 0.33, // Increase opacity for visibility
     side: THREE.DoubleSide // Render both sides of the polygon
   });
 
@@ -533,5 +580,3 @@ fetch('data/cont49l010a_Clip_SimplifyLin.geojson')
   });
 
 
-// Set the background color after initializing the renderer
-renderer.setClearColor(0x000000); // A neutral gray background
