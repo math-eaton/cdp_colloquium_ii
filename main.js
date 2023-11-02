@@ -74,17 +74,46 @@ function initThreeJS() {
     scene.add(directionalLight);
     renderer.setClearColor(0x000000); // A neutral gray background
     window.addEventListener('resize', onWindowResize, false);
+    adjustCameraZoom();
 }
 
 // Resize function
 function onWindowResize() {
-  // Check if the camera and renderer are defined
   if (camera && renderer) {
+    // Update camera aspect
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+
+    // Update renderer size
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Adjust zoom based on window size
+    adjustCameraZoom();
   }
 }
+
+function adjustCameraZoom() {
+  if (camera) {
+    // Example of dynamic FOV scaling:
+    // - If the window width is 600px or less, use a FOV of 90
+    // - If the window width is 1200px or more, use a FOV of 60
+    // - Scale linearly between those values for window widths in between
+    const minWidth = 600;
+    const maxWidth = 1200;
+    const minFov = 90;
+    const maxFov = 60;
+
+    // Map the window width to the FOV range
+    const scale = (window.innerWidth - minWidth) / (maxWidth - minWidth);
+    const fov = minFov + (maxFov - minFov) * Math.max(0, Math.min(1, scale));
+
+    camera.fov = fov;
+    camera.updateProjectionMatrix();
+  }
+}
+
+// Initial call to set up the zoom level
+adjustCameraZoom();
 
 // Function to animate your scene
 function animate() {
