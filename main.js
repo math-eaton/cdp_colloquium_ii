@@ -60,13 +60,19 @@ let infoVisible = false;
 function initThreeJS() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.up.set(0, 0, 1); // Set Z as up-direction if that's the case for your projection
     camera.position.z = 20; // Adjust as necessary
+    
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('three-container').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
 
+    // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
+    controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
+    controls.maxPolarAngle = Math.PI / 2; // π/2 radians (90 degrees) - on the horizon
+    
     let ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
     let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -203,16 +209,21 @@ function onDocumentKeyDown(event) {
           camera.position.x += panSpeed;
           controls.target.x += panSpeed;
           break;
-        case 'f': // Rotate counter-clockwise
-        case 'r': // Rotate clockwise
-            const angle = (event.key === 'f' ? 1 : -1) * rotationSpeed;
-            const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-
-            vector.copy(camera.position).sub(controls.target);
-            vector.applyQuaternion(quaternion);
-            camera.position.copy(controls.target).add(vector);
-            camera.lookAt(controls.target); // Keep the camera looking at the target
-            break;
+      case 'f': // Rotate counter-clockwise
+      case 'r': // Rotate clockwise
+          const angle = (event.key === 'f' ? 1 : -1) * rotationSpeed;
+          vector.copy(camera.position).sub(controls.target);
+          const currentPolarAngle = vector.angleTo(new THREE.Vector3(0, 0, 1));
+          const newPolarAngle = currentPolarAngle + angle;
+      
+          // Check if the new angle is within the bounds
+          if (newPolarAngle >= 0 && newPolarAngle <= Math.PI / 2) {
+              const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+              vector.applyQuaternion(quaternion);
+              camera.position.copy(controls.target).add(vector);
+              camera.lookAt(controls.target); // Keep the camera looking at the target
+          }
+          break;
       }
   
       controls.update();
@@ -254,7 +265,7 @@ document.getElementById('pan-right').addEventListener('click', () => panCamera(1
 
 
 // Define a scaling factor for the Z values (elevation)
-const zScale = 0.0005; // Change this value to scale the elevation up or down
+const zScale = 0.0004; // Change this value to scale the elevation up or down
 
 // Function to get color based on elevation
 function getColorForElevation(elevation, minElevation, maxElevation) {
@@ -405,7 +416,7 @@ function addYellowPoints(geojson) {
       const z = feature.properties.Elevation * zScale; // Apply scaling factor to elevation
 
       // Reduced resolution for a more 'mesh' look
-      const sphereGeometry = new THREE.SphereGeometry(0.005, 3, 3); // Reduce widthSegments and heightSegments
+      const sphereGeometry = new THREE.SphereGeometry(0.005, 8, 8); // Reduce widthSegments and heightSegments
       const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
       sphere.position.set(x, y, z);
       scene.add(sphere);
@@ -420,7 +431,7 @@ function addGeoJSONPoints(geojson) {
 
   // Material for the wireframe spheres
   const sphereMaterial = new THREE.MeshBasicMaterial({ 
-    color: 0xff0000, // red color
+    color: 0xFA3000, // color
     wireframe: true, // Change to wireframe style
     transparent: true,
     opacity: 0.5
@@ -437,7 +448,7 @@ function addGeoJSONPoints(geojson) {
         const z = elevation * zScale; // Apply the scaling factor to the elevation
 
         // Create a sphere geometry for the point with the defined radius
-        const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 32, 32); // Use the defined radius
+        const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 8, 8); // Use the defined radius
         const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphere.position.set(x, y, z);
         scene.add(sphere);
