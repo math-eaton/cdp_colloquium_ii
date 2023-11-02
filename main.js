@@ -54,6 +54,7 @@ function updateProgressBar() {
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
 let infoVisible = false;
+let isCameraLocked = false;
 let globalBoundingBox
 
 
@@ -68,6 +69,13 @@ function initThreeJS() {
     document.getElementById('three-container').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
+
+    // Set these after creating the OrbitControls instance
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.ROTATE
+    };
 
     // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
@@ -132,7 +140,8 @@ function animate() {
 document.addEventListener('DOMContentLoaded', (event) => {
   initThreeJS();
   animate();
-  hideInfoBox() 
+  hideInfoBox();
+  lockCameraTopDown(false); 
 });
 
 
@@ -192,6 +201,11 @@ const panSpeed = .05;
 
 // Function to handle keyboard events for panning
 function onDocumentKeyDown(event) {
+  if (isCameraLocked) {
+    // Ignore R and F keys when camera is locked
+    if (event.key === 'r' || event.key === 'f') {
+      return;
+    }
   event.preventDefault();
 
   const rotationSpeed = 0.025; // Speed of rotation
@@ -237,7 +251,7 @@ function onDocumentKeyDown(event) {
       }
   
       controls.update();
-  }
+  }}
   
   document.addEventListener('keydown', onDocumentKeyDown, false);
   
@@ -411,6 +425,10 @@ function addPolygons(geojson, stride = 10) {
   }
 }
 
+// Attach the modified keydown event handler
+document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old handler if it was added before
+document.addEventListener('keydown', onDocumentKeyDown, false);
+
 
 // Function to add points as hollow yellow spheres with reduced resolution
 function addYellowPoints(geojson) {
@@ -577,27 +595,46 @@ function calculateCameraZToFitBoundingBox(boundingBox) {
   return cameraZ;
 }
 
-// Function to lock the camera to a top-down view
-// Use globalBoundingBox inside your functions and event listeners
-// Function to lock the camera to a top-down view
 function lockCameraTopDown(isLocked) {
-  if (isLocked && globalBoundingBox) {
-    // Calculate the center from the global bounding box
+  isCameraLocked = isLocked;
+  if (!controls) return; // Ensure controls are initialized
+
+  if (isLocked) {
+    if (!globalBoundingBox) {
+      console.error('globalBoundingBox is not set');
+      return;
+    }
     const center = getCenterOfBoundingBox(globalBoundingBox);
     const cameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
-    // Set the camera to the top-down view at the calculated Z position
     camera.position.set(center.x, center.y, cameraZ);
     camera.lookAt(center.x, center.y, 0);
     controls.enableRotate = false; // Disable rotation
     controls.enablePan = true; // Enable panning
+    // Change both left and right mouse buttons to pan
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN
+    };
   } else {
     // Restore previous behavior
     controls.enableRotate = true;
-    controls.enablePan = false;
-    // Optionally, restore the camera's previous Z position if needed
+    controls.enablePan = true;
+    // Restore default mouse button actions
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN
+    };
   }
   controls.update();
 }
+
+
+
+// Call this function initially to set up the default state
+lockCameraTopDown(false);
+
 
 // Update the checkbox event listener to pass the boundingBox
 // In your event listeners
