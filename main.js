@@ -72,30 +72,26 @@ function initThreeJS() {
     let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(0, 1, 0);
     scene.add(directionalLight);
-    // Set the background color after initializing the renderer
     renderer.setClearColor(0x000000); // A neutral gray background
+    window.addEventListener('resize', onWindowResize, false);
 }
 
+// Resize function
+function onWindowResize() {
+  // Check if the camera and renderer are defined
+  if (camera && renderer) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+}
+
+// Function to animate your scene
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
-    console.log("animating")
 }
-
-// Update the camera and renderer on window resize
-function onWindowResize() {
-  // Update camera aspect ratio and renderer size
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-// Add the resize event listener
-window.addEventListener('resize', onWindowResize, false);
-
-// Call the resize function initially to set up the scene
-onWindowResize();
 
 // Ensure DOM is loaded before initializing and starting animation
 document.addEventListener('DOMContentLoaded', (event) => {
