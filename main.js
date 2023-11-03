@@ -72,9 +72,9 @@ function initThreeJS() {
 
     // Set these after creating the OrbitControls instance
     controls.mouseButtons = {
-      LEFT: THREE.MOUSE.PAN,
+      LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.ROTATE
+      RIGHT: THREE.MOUSE.PAN
     };
 
     // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
@@ -141,7 +141,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
   initThreeJS();
   animate();
   hideInfoBox();
-  lockCameraTopDown(false); 
+  lockCameraTopDown(false); // Ensure this is called after controls are initialized
+  document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
 });
 
 
@@ -256,21 +257,6 @@ function onDocumentKeyDown(event) {
   document.addEventListener('keydown', onDocumentKeyDown, false);
   
 
-// function rotateAroundWorldAxis(point, axis, angle) {
-//   const vector = camera.position.clone().sub(point);
-//   const quaternion = new THREE.Quaternion();
-  
-//   // Rotate the vector around the specified axis by the angle and then reposition the camera
-//   quaternion.setFromAxisAngle(axis, angle);
-//   vector.applyQuaternion(quaternion);
-//   camera.position.copy(vector.add(point));
-
-//   // After repositioning the camera, we need to ensure it's looking back at the target
-//   camera.lookAt(controls.target);
-// }
-
-
-
 // Function to handle panning
 function panCamera(dx, dy) {
   camera.position.x += dx * panSpeed;
@@ -377,8 +363,9 @@ function addPolygons(geojson, stride = 10) {
     color: 0xFF1493, // Pink color
     transparent: true,
     wireframe: true, // Set wireframe to true for mesh look
-    opacity: 0.35, // Increase opacity for visibility
-    side: THREE.DoubleSide // Render both sides of the polygon
+    dithering: true,
+    opacity: 0.5, // Increase opacity for visibility
+    side: THREE.FrontSide // Render both sides of the polygon
   });
 
   for (let i = 0; i < geojson.features.length; i += stride) {
@@ -453,14 +440,16 @@ function addYellowPoints(geojson) {
 }
 
 // Function to add wireframe spheres for POINT data from GeoJSON
-function addGeoJSONPoints(geojson) {
-  // Define the radius for the spheres
-  const sphereRadius = 0.005; 
+// Function to add wireframe pyramids for POINT data from GeoJSON
+function addCellTowerPts(geojson) {
+  // Define the base size and height for the pyramids
+  const baseSize = 0.005; // This would be the size of one side of the pyramid's base
+  const pyramidHeight = .01; // This would be the height of the pyramid from the base to the tip
 
-  // Material for the wireframe spheres
-  const sphereMaterial = new THREE.MeshBasicMaterial({ 
-    color: 0xFA3000, // color
-    wireframe: true, // Change to wireframe style
+  // Material for the wireframe pyramids
+  const pyramidMaterial = new THREE.MeshBasicMaterial({
+    color: 0xFA3000, // Red color
+    wireframe: true,
     transparent: true,
     opacity: 0.5
   });
@@ -470,16 +459,22 @@ function addGeoJSONPoints(geojson) {
     if (feature.geometry.type === 'Point') {
       const [lon, lat] = feature.geometry.coordinates;
       const elevation = feature.properties.Elevation;
+      
       try {
         // Convert the lon/lat to State Plane coordinates
         const [x, y] = toStatePlane(lon, lat);
         const z = elevation * zScale; // Apply the scaling factor to the elevation
 
-        // Create a sphere geometry for the point with the defined radius
-        const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 8, 8); // Use the defined radius
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        sphere.position.set(x, y, z);
-        scene.add(sphere);
+        // Create a cone geometry for the pyramid with the defined base size and height
+        // The number of radial segments is set to 4 for a square base
+        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 4);
+
+        // Rotate the pyramid to point up along the Z-axis
+        pyramidGeometry.rotateX(Math.PI / 2);
+
+        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterial);
+        pyramid.position.set(x, y, z);
+        scene.add(pyramid);
       } catch (error) {
         console.error(`Error projecting point:`, error.message);
       }
@@ -488,7 +483,6 @@ function addGeoJSONPoints(geojson) {
     }
   });
 }
-
 
 
 function getBoundingBoxOfGeoJSON(geojson) {
@@ -587,7 +581,7 @@ function calculateCameraZToFitBoundingBox(boundingBox) {
   const center = getCenterOfBoundingBox(boundingBox);
   const size = getSizeOfBoundingBox(boundingBox);
   const maxDim = Math.max(size.x, size.y);
-  const fov = camera.fov * (Math.PI / 180);
+  const fov = camera.fov * (Math.PI / 100);
   
   // Calculate the Z position where the entire bounding box is in view
   let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
@@ -639,9 +633,9 @@ function lockCameraTopDown(isLocked) {
     controls.enablePan = true;
     // Restore default mouse button actions
     controls.mouseButtons = {
-      LEFT: THREE.MOUSE.ROTATE,
+      LEFT: THREE.MOUSE.PAN,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
+      RIGHT: THREE.MOUSE.ROTATE
     };
   }
   controls.update();
@@ -685,7 +679,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
     fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson')
       .then(response => response.json())
       .then(pointGeojson => {
-        addGeoJSONPoints(pointGeojson); // Call the new function to add points
+        addCellTowerPts(pointGeojson); // Call the new function to add points
         console.log("adding points")
         updateProgressBar();
       })
@@ -694,7 +688,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
       });
 
     // Fetch and add the polygon data
-    fetch('data/FM_contours_NYS_clip_20231101_simplified.geojson')
+    fetch('data/FM_contours_NYS_clip_20231101.geojson')
     .then(response => response.json())
     .then(polygonGeojson => {
       addPolygons(polygonGeojson);

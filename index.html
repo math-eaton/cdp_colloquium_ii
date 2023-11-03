@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>iso 3D</title>
   </head>
@@ -13,26 +13,25 @@
   
 
     <div id="three-container"></div>
-
     
     <div id="pan-controls">
-      <button class="pan-button" id="pan-left">&lt;</button>
+      <button class="pan-button" id="pan-left">←</button>
       <div class="pan-vertical-container">
-        <button class="pan-button" id="pan-up">^</button>
-        <button class="pan-button" id="pan-down">v</button>
+        <button class="pan-button" id="pan-up">↑</button>
+        <button class="pan-button" id="pan-down">↓</button>
       </div>
-      <button class="pan-button" id="pan-right">&gt;</button>
+      <button class="pan-button" id="pan-right">→</button>
     </div>
     
     <button id="info-button" style="display: none;">?</button>
     <div id="info-container" class="hidden">
       <ul>
-        <li>pan: w, a, s, d, right mouse</li>
-        <li>pitch: r, f</li>
+        <li>pan: right mouse</li>
+        <!-- <li>pitch: r, f</li> -->
         <li>orbit: left mouse</li>
       </ul>
       <div id="camera-controls">
-        <label for="camera-lock">Lock Top-Down View:</label>
+        <label for="camera-lock">lock top-down view</label>
         <input type="checkbox" id="camera-lock" name="camera-lock">
       </div>
       <p></p>
