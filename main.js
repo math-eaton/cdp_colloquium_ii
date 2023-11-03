@@ -417,38 +417,14 @@ document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old ha
 document.addEventListener('keydown', onDocumentKeyDown, false);
 
 
-// Function to add points as hollow yellow spheres with reduced resolution
-function addYellowPoints(geojson) {
-  const sphereMaterial = new THREE.MeshBasicMaterial({
-    color: 0xFFFF00, // Yellow color
-    wireframe: true
-  });
-
-  geojson.features.forEach(feature => {
-    if (feature.geometry.type === 'Point') {
-      const [lon, lat] = feature.geometry.coordinates;
-      const [x, y] = toStatePlane(lon, lat);
-      const z = feature.properties.Elevation * zScale; // Apply scaling factor to elevation
-
-      // Reduced resolution for a more 'mesh' look
-      const sphereGeometry = new THREE.SphereGeometry(0.005, 8, 8); // Reduce widthSegments and heightSegments
-      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-      sphere.position.set(x, y, z);
-      scene.add(sphere);
-    }
-  });
-}
-
-// Function to add wireframe spheres for POINT data from GeoJSON
-// Function to add wireframe pyramids for POINT data from GeoJSON
-function addCellTowerPts(geojson) {
+function addFMTowerPts(geojson) {
   // Define the base size and height for the pyramids
-  const baseSize = 0.005; // This would be the size of one side of the pyramid's base
-  const pyramidHeight = .01; // This would be the height of the pyramid from the base to the tip
+  const baseSize = 0.003; // This would be the size of one side of the pyramid's base
+  const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
 
   // Material for the wireframe pyramids
   const pyramidMaterial = new THREE.MeshBasicMaterial({
-    color: 0xFA3000, // Red color
+    color: 0xFFFF00, // yellow color
     wireframe: true,
     transparent: true,
     opacity: 0.5
@@ -467,7 +443,52 @@ function addCellTowerPts(geojson) {
 
         // Create a cone geometry for the pyramid with the defined base size and height
         // The number of radial segments is set to 4 for a square base
-        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 4);
+        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
+
+        // Rotate the pyramid to point up along the Z-axis
+        pyramidGeometry.rotateX(Math.PI / 2);
+
+        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterial);
+        pyramid.position.set(x, y, z);
+        scene.add(pyramid);
+      } catch (error) {
+        console.error(`Error projecting point:`, error.message);
+      }
+    } else {
+      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
+    }
+  });
+}
+
+
+// Function to add wireframe pyramids for POINT data from GeoJSON
+function addCellTowerPts(geojson) {
+  // Define the base size and height for the pyramids
+  const baseSize = 0.003; // This would be the size of one side of the pyramid's base
+  const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
+
+  // Material for the wireframe pyramids
+  const pyramidMaterial = new THREE.MeshBasicMaterial({
+    color: 0xFA3000, // Red color
+    wireframe: false,
+    transparent: true,
+    opacity: 0.4
+  });
+
+  // Parse the POINT data from the GeoJSON
+  geojson.features.forEach(feature => {
+    if (feature.geometry.type === 'Point') {
+      const [lon, lat] = feature.geometry.coordinates;
+      const elevation = feature.properties.Elevation;
+      
+      try {
+        // Convert the lon/lat to State Plane coordinates
+        const [x, y] = toStatePlane(lon, lat);
+        const z = elevation * zScale; // Apply the scaling factor to the elevation
+
+        // Create a cone geometry for the pyramid with the defined base size and height
+        // The number of radial segments is set to 4 for a square base
+        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
 
         // Rotate the pyramid to point up along the Z-axis
         pyramidGeometry.rotateX(Math.PI / 2);
@@ -703,7 +724,7 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
     fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson')
     .then(response => response.json())
     .then(pointGeojson => {
-      addYellowPoints(pointGeojson);
+      addFMTowerPts(pointGeojson);
       console.log("Yellow points added");
       updateProgressBar();
     })
