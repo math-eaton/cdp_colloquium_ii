@@ -69,7 +69,7 @@ function initThreeJS() {
     document.getElementById('three-container').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
-
+  
     // Set these after creating the OrbitControls instance
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
@@ -80,6 +80,9 @@ function initThreeJS() {
     // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
     controls.maxPolarAngle = Math.PI / 2; // π/2 radians (90 degrees) - on the horizon
+    // Set the maximum distance the camera can dolly out
+    controls.maxDistance = 5; // Adjust this value to set the maximum zoom-out level
+
     
     let ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
@@ -416,71 +419,51 @@ function addPolygons(geojson, stride = 10) {
 document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old handler if it was added before
 document.addEventListener('keydown', onDocumentKeyDown, false);
 
-function addGraticule(scene, boundingBox, gridSize, scaleFactor) {
-    const material = new THREE.LineBasicMaterial({
-      color: 0x00ff00, // bright green
-      opacity: 0.2,
-      transparent: true
-    });
-    const gridGroup = new THREE.Group();
+function addGraticule(scene, boundingBox, gridSize, plusSize, scaleFactor = 2) {
+  const material = new THREE.LineBasicMaterial({
+    color: 0x00ff00, // bright green
+    opacity: 0.5,
+    transparent: true
+  });
+  const gridGroup = new THREE.Group();
 
   // Calculate center of bounding box
   const centerX = (boundingBox.min.x + boundingBox.max.x) / 2;
   const centerY = (boundingBox.min.y + boundingBox.max.y) / 2;
 
   // Calculate scaled bounding box
-  let scaledMinX = centerX + (boundingBox.min.x - centerX) * scaleFactor;
-  let scaledMaxX = centerX + (boundingBox.max.x - centerX) * scaleFactor;
-  let scaledMinY = centerY + (boundingBox.min.y - centerY) * scaleFactor;
-  let scaledMaxY = centerY + (boundingBox.max.y - centerY) * scaleFactor;
+  const scaledMinX = centerX + (boundingBox.min.x - centerX) * scaleFactor;
+  const scaledMaxX = centerX + (boundingBox.max.x - centerX) * scaleFactor;
+  const scaledMinY = centerY + (boundingBox.min.y - centerY) * scaleFactor;
+  const scaledMaxY = centerY + (boundingBox.max.y - centerY) * scaleFactor;
 
-  // Adjust the scaled bounds to align with the grid size
-  scaledMinX = Math.ceil(scaledMinX / gridSize) * gridSize;
-  scaledMaxX = Math.floor(scaledMaxX / gridSize) * gridSize;
-  scaledMinY = Math.ceil(scaledMinY / gridSize) * gridSize;
-  scaledMaxY = Math.floor(scaledMaxY / gridSize) * gridSize;
-
-  // Ensure the adjusted scaled bounds do not exceed the original bounding box limits
-  scaledMinX = Math.max(scaledMinX, boundingBox.min.x);
-  scaledMaxX = Math.min(scaledMaxX, boundingBox.max.x);
-  scaledMinY = Math.max(scaledMinY, boundingBox.min.y);
-  scaledMaxY = Math.min(scaledMaxY, boundingBox.max.y);
-
-  // Create graticule lines within the adjusted scaled bounding box
+  // Loop over the scaled grid and create the plus signs
   for (let x = scaledMinX; x <= scaledMaxX; x += gridSize) {
-    const vertices = [
-      new THREE.Vector3(x, scaledMinY, 0),
-      new THREE.Vector3(x, scaledMaxY, 0)
-    ];
-    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
-    const line = new THREE.Line(geometry, material);
-    gridGroup.add(line);
-  }
+      for (let y = scaledMinY; y <= scaledMaxY; y += gridSize) {
+          // Horizontal line of the plus sign
+          const horizontalVertices = [
+              new THREE.Vector3(x - plusSize, y, 0),
+              new THREE.Vector3(x + plusSize, y, 0)
+          ];
+          const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalVertices);
+          const horizontalLine = new THREE.Line(horizontalGeometry, material);
+          gridGroup.add(horizontalLine);
 
-  for (let y = scaledMinY; y <= scaledMaxY; y += gridSize) {
-    const vertices = [
-      new THREE.Vector3(scaledMinX, y, 0),
-      new THREE.Vector3(scaledMaxX, y, 0)
-    ];
-    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
-    const line = new THREE.Line(geometry, material);
-    gridGroup.add(line);
+          // Vertical line of the plus sign
+          const verticalVertices = [
+              new THREE.Vector3(x, y - plusSize, 0),
+              new THREE.Vector3(x, y + plusSize, 0)
+          ];
+          const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalVertices);
+          const verticalLine = new THREE.Line(verticalGeometry, material);
+          gridGroup.add(verticalLine);
+      }
   }
-
-  // Create the outline of the graticule
-  const outlineVertices = [
-    new THREE.Vector3(scaledMinX, scaledMinY, 0), // Bottom Left
-    new THREE.Vector3(scaledMaxX, scaledMinY, 0), // Bottom Right
-    new THREE.Vector3(scaledMaxX, scaledMaxY, 0), // Top Right
-    new THREE.Vector3(scaledMinX, scaledMaxY, 0), // Top Left
-    new THREE.Vector3(scaledMinX, scaledMinY, 0)  // Back to Bottom Left to close the outline
-  ];
-  const outlineGeometry = new THREE.BufferGeometry().setFromPoints(outlineVertices);
-  const outline = new THREE.LineLoop(outlineGeometry, material); // Use LineLoop to close the outline
-  gridGroup.add(outline);
 
   scene.add(gridGroup);
 }
+
+
 
 
 function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
@@ -868,10 +851,11 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
 
 
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
-    const gridSize = 0.1; // This represents your grid cell size
-    const scaleFactor = 0.5; // This is the scale factor by which you want to shrink the graticule
+    const gridSize = 0.2; // This represents your grid cell size
+    const scaleFactor = 0.75; // This is the scale factor by which you want to shrink the graticule
+    const crossSize = gridSize * 0.1; // X% of the grid size, adjust as needed
 
-    addGraticule(scene, boundingBox, gridSize, scaleFactor);
+    addGraticule(scene, boundingBox, gridSize, crossSize);
 
     globalBoundingBox = getBoundingBoxOfGeoJSON(geojson);
     
