@@ -7,6 +7,24 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 
+// Define color scheme variables
+const colorScheme = {
+  graticuleColor: 0x00ff00, // Bright green
+  ambientLightColor: 0x404040, // Dark gray
+  directionalLightColor: 0xffffff, // White
+  backgroundColor: 0x000000, // Black
+  contourLineColor: 0xff0000, // Bright red
+  polygonColor: 0xFF1493, // Pink
+  pyramidColorFM: 0xFFFF00, // Yellow
+  pyramidColorCellular: 0xFA3000, // Red
+  lowestElevationColor: 0x0000ff, // Blue
+  middleElevationColor: 0x00ff00, // Green
+  highestElevationColor: 0xff0000, // Red
+  labelBackgroundColor: 'rgba(0, 0, 0, 0.5)', // Black with 50% opacity
+  labelTextColor: 'white' // White
+};
+
+
 // Define the custom projection with its PROJ string
 const statePlaneProjString = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 proj4.defs("EPSG:32118", statePlaneProjString);
@@ -79,17 +97,17 @@ function initThreeJS() {
 
     // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
-    controls.maxPolarAngle = Math.PI / 2; // π/2 radians (90 degrees) - on the horizon
+    controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
     // Set the maximum distance the camera can dolly out
     controls.maxDistance = 5; // Adjust this value to set the maximum zoom-out level
 
     
-    let ambientLight = new THREE.AmbientLight(0x404040);
+    let ambientLight = new THREE.AmbientLight(colorScheme.ambientLightColor);
     scene.add(ambientLight);
-    let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    let directionalLight = new THREE.DirectionalLight(colorScheme.directionalLightColor, 0.5);
     directionalLight.position.set(0, 1, 0);
     scene.add(directionalLight);
-    renderer.setClearColor(0x000000); // A neutral gray background
+    renderer.setClearColor(colorScheme.backgroundColor);
     window.addEventListener('resize', onWindowResize, false);
     adjustCameraZoom();
 }
@@ -283,9 +301,9 @@ const zScale = 0.0004; // Change this value to scale the elevation up or down
 // Function to get color based on elevation
 function getColorForElevation(elevation, minElevation, maxElevation) {
   const gradient = [
-    { stop: 0, color: new THREE.Color(0x0000ff) }, // blue at the lowest
-    { stop: 0.5, color: new THREE.Color(0x00ff00) }, // green at the middle
-    { stop: 1, color: new THREE.Color(0xff0000) }  // red at the highest
+    { stop: 0, color: new THREE.Color(colorScheme.lowestElevationColor) }, // blue at the lowest
+    { stop: 0.5, color: new THREE.Color(colorScheme.middleElevationColor) }, // green at the middle
+    { stop: 1, color: new THREE.Color(colorScheme.highestElevationColor) }  // red at the highest
   ];
 
   const t = (elevation - minElevation) / (maxElevation - minElevation);
@@ -363,7 +381,7 @@ function addContourLines(geojson) {
 
 function addPolygons(geojson, stride = 10) {
   const material = new THREE.MeshBasicMaterial({
-    color: 0xFF1493, // Pink color
+    color: colorScheme.polygonColor,
     transparent: true,
     wireframe: true, // Set wireframe to true for mesh look
     dithering: true,
@@ -421,9 +439,9 @@ document.addEventListener('keydown', onDocumentKeyDown, false);
 
 function addGraticule(scene, boundingBox, gridSize, plusSize, scaleFactor = 2) {
   const material = new THREE.LineBasicMaterial({
-    color: 0x00ff00, // bright green
-    opacity: 0.5,
-    transparent: true
+    color: colorScheme.graticuleColor, 
+    opacity: 0.5, 
+    transparent: true 
   });
   const gridGroup = new THREE.Group();
 
@@ -535,8 +553,8 @@ function addFMTowerPts(geojson) {
   const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
 
   // Material for the wireframe pyramids
-  const pyramidMaterial = new THREE.MeshBasicMaterial({
-    color: 0xFFFF00, // yellow color
+  let pyramidMaterialFM = new THREE.MeshBasicMaterial({
+    color: colorScheme.pyramidColorFM,
     wireframe: true,
     transparent: true,
     opacity: 0.5
@@ -560,7 +578,7 @@ function addFMTowerPts(geojson) {
         // Rotate the pyramid to point up along the Z-axis
         pyramidGeometry.rotateX(Math.PI / 2);
 
-        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterial);
+        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialFM);
         pyramid.position.set(x, y, z);
         scene.add(pyramid);
       } catch (error) {
@@ -580,8 +598,8 @@ function addCellTowerPts(geojson) {
   const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
 
   // Material for the wireframe pyramids
-  const pyramidMaterial = new THREE.MeshBasicMaterial({
-    color: 0xFA3000, // Red color
+  let pyramidMaterialCellular = new THREE.MeshBasicMaterial({
+    color: colorScheme.pyramidColorCellular,
     wireframe: false,
     transparent: true,
     opacity: 0.4
@@ -605,7 +623,7 @@ function addCellTowerPts(geojson) {
         // Rotate the pyramid to point up along the Z-axis
         pyramidGeometry.rotateX(Math.PI / 2);
 
-        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterial);
+        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialCellular);
         pyramid.position.set(x, y, z);
         scene.add(pyramid);
 
