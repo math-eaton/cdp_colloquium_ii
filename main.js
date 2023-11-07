@@ -63,7 +63,7 @@ function initThreeJS() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.up.set(0, 0, 1); // Set Z as up-direction if that's the case for your projection
     camera.position.z = 20; // Adjust as necessary
-    
+
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('three-container').appendChild(renderer.domElement);
@@ -416,6 +416,131 @@ function addPolygons(geojson, stride = 10) {
 document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old handler if it was added before
 document.addEventListener('keydown', onDocumentKeyDown, false);
 
+function addGraticule(scene, boundingBox, gridSize, scaleFactor) {
+  const material = new THREE.LineBasicMaterial({ color: 0x00ff00 }); // bright green
+  const gridGroup = new THREE.Group();
+
+  // Calculate center of bounding box
+  const centerX = (boundingBox.min.x + boundingBox.max.x) / 2;
+  const centerY = (boundingBox.min.y + boundingBox.max.y) / 2;
+
+  // Calculate scaled bounding box
+  let scaledMinX = centerX + (boundingBox.min.x - centerX) * scaleFactor;
+  let scaledMaxX = centerX + (boundingBox.max.x - centerX) * scaleFactor;
+  let scaledMinY = centerY + (boundingBox.min.y - centerY) * scaleFactor;
+  let scaledMaxY = centerY + (boundingBox.max.y - centerY) * scaleFactor;
+
+  // Adjust the scaled bounds to align with the grid size
+  scaledMinX = Math.ceil(scaledMinX / gridSize) * gridSize;
+  scaledMaxX = Math.floor(scaledMaxX / gridSize) * gridSize;
+  scaledMinY = Math.ceil(scaledMinY / gridSize) * gridSize;
+  scaledMaxY = Math.floor(scaledMaxY / gridSize) * gridSize;
+
+  // Ensure the adjusted scaled bounds do not exceed the original bounding box limits
+  scaledMinX = Math.max(scaledMinX, boundingBox.min.x);
+  scaledMaxX = Math.min(scaledMaxX, boundingBox.max.x);
+  scaledMinY = Math.max(scaledMinY, boundingBox.min.y);
+  scaledMaxY = Math.min(scaledMaxY, boundingBox.max.y);
+
+  // Create graticule lines within the adjusted scaled bounding box
+  for (let x = scaledMinX; x <= scaledMaxX; x += gridSize) {
+    const vertices = [
+      new THREE.Vector3(x, scaledMinY, 0),
+      new THREE.Vector3(x, scaledMaxY, 0)
+    ];
+    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
+    const line = new THREE.Line(geometry, material);
+    gridGroup.add(line);
+  }
+
+  for (let y = scaledMinY; y <= scaledMaxY; y += gridSize) {
+    const vertices = [
+      new THREE.Vector3(scaledMinX, y, 0),
+      new THREE.Vector3(scaledMaxX, y, 0)
+    ];
+    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
+    const line = new THREE.Line(geometry, material);
+    gridGroup.add(line);
+  }
+
+  // Create the outline of the graticule
+  const outlineVertices = [
+    new THREE.Vector3(scaledMinX, scaledMinY, 0), // Bottom Left
+    new THREE.Vector3(scaledMaxX, scaledMinY, 0), // Bottom Right
+    new THREE.Vector3(scaledMaxX, scaledMaxY, 0), // Top Right
+    new THREE.Vector3(scaledMinX, scaledMaxY, 0), // Top Left
+    new THREE.Vector3(scaledMinX, scaledMinY, 0)  // Back to Bottom Left to close the outline
+  ];
+  const outlineGeometry = new THREE.BufferGeometry().setFromPoints(outlineVertices);
+  const outline = new THREE.LineLoop(outlineGeometry, material); // Use LineLoop to close the outline
+  gridGroup.add(outline);
+
+  scene.add(gridGroup);
+}
+
+
+function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
+  // Create a canvas element
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  // Set font size and face
+  context.font = `${fontsize} ${fontface}`;
+
+  // Get text dimensions
+  const metrics = context.measureText(text.toUpperCase());
+  const textWidth = metrics.width;
+  canvas.width = textWidth;
+  canvas.height = parseInt(fontsize, 10); // Convert pt to px
+
+  // Set style for the background
+  context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Black background with 50% opacity
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Set style for the text
+  context.font = `${fontsize} ${fontface}`;
+  context.fillStyle = 'white';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+
+  // Create texture from the canvas
+  const texture = new THREE.CanvasTexture(canvas);
+
+  // Create sprite material with this texture
+  const material = new THREE.SpriteMaterial({ map: texture });
+
+  // Create and return the sprite
+  const sprite = new THREE.Sprite(material);
+  return sprite;
+}
+
+// function updateLabels(camera, objects, maxLabelDistance) {
+//   // Update the camera frustum
+//   camera.updateMatrix(); // make sure the camera matrix is updated
+//   camera.updateMatrixWorld(); // make sure the camera's world matrix is updated
+//   const frustum = new THREE.Frustum();
+//   frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+
+//   // Calculate the current scale based on camera zoom or position
+//   const currentScale = calculateScaleBasedOnCamera(camera);
+
+//   // Iterate through the objects
+//   objects.forEach(object => {
+//     const distance = camera.position.distanceTo(object.position);
+
+//     // Check if the object is within the maximum label distance and the frustum
+//     if (distance < maxLabelDistance && frustum.containsPoint(object.position)) {
+//       // Scale the label size based on distance and/or camera scale
+//       const labelScale = calculateLabelScale(distance, currentScale);
+//       createOrUpdateLabelForObject(object, labelScale);
+//     } else {
+//       // Hide or remove the label for the object
+//       hideOrRemoveLabelForObject(object);
+//     }
+//   });
+// }
+
 
 function addFMTowerPts(geojson) {
   // Define the base size and height for the pyramids
@@ -496,6 +621,11 @@ function addCellTowerPts(geojson) {
         const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterial);
         pyramid.position.set(x, y, z);
         scene.add(pyramid);
+
+        // const label = createTextLabel(`${feature.properties.Callsign} ${feature.properties.LocCity}`);
+        // label.position.set(x, y, z + pyramidHeight + 0.0015); // Position above the pyramid
+        // scene.add(label);
+
       } catch (error) {
         console.error(`Error projecting point:`, error.message);
       }
@@ -734,7 +864,13 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
 
 
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
+    const gridSize = 0.2; // This represents your grid cell size
+    const scaleFactor = 0.8; // This is the scale factor by which you want to shrink the graticule
+
+    addGraticule(scene, boundingBox, gridSize, scaleFactor);
+
     globalBoundingBox = getBoundingBoxOfGeoJSON(geojson);
+    
         
     // Move the camera and set controls target
     const center = getCenterOfBoundingBox(boundingBox);
