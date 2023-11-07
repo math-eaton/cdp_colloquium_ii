@@ -9,20 +9,31 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // Define color scheme variables
 const colorScheme = {
-  graticuleColor: 0x00ff00, // Bright green
-  ambientLightColor: 0x404040, // Dark gray
-  directionalLightColor: 0xffffff, // White
-  backgroundColor: 0x000000, // Black
-  contourLineColor: 0xff0000, // Bright red
-  polygonColor: 0xFF1493, // Pink
-  pyramidColorFM: 0xFFFF00, // Yellow
-  pyramidColorCellular: 0xFA3000, // Red
-  lowestElevationColor: 0x0000ff, // Blue
-  middleElevationColor: 0x00ff00, // Green
-  highestElevationColor: 0xff0000, // Red
-  labelBackgroundColor: 'rgba(0, 0, 0, 0.5)', // Black with 50% opacity
-  labelTextColor: 'white' // White
+  graticuleColor: "#00ff00", // Bright green
+  ambientLightColor: "#404040", // Dark gray
+  directionalLightColor: "#ffffff", // White
+  backgroundColor: "#000000", // Black
+  polygonColor: "#FF1493", // Pink
+  pyramidColorFM: "#FFFF00", // Yellow
+  pyramidColorCellular: "#FA3000", // Red
+  lowestElevationColor: "#0000ff", // Blue
+  middleElevationColor: "#00ff00", // Green
+  highestElevationColor: "#ff0000", // Red
 };
+
+// Alternate color scheme
+// const colorScheme = {
+//   graticuleColor: "#6F70A7",
+//   ambientLightColor: "#4e4c4c",
+//   directionalLightColor: "#ddddff",
+//   backgroundColor: "#021424",
+//   polygonColor: "#14743c",
+//   pyramidColorFM: "#FC5553",
+//   pyramidColorCellular: "#53FC86",
+//   lowestElevationColor: "#0f2df2",
+//   middleElevationColor: "#B260FC",
+//   highestElevationColor: "#ad99f9",
+// };
 
 
 // Define the custom projection with its PROJ string
@@ -747,7 +758,7 @@ function calculateCameraZToFitBoundingBox(boundingBox) {
 
 function lockCameraTopDown(isLocked) {
   isCameraLocked = isLocked;
-  if (!controls) return; // Ensure controls are initialized
+  if (!controls || !camera) return; // Ensure controls and camera are initialized
 
   if (isLocked) {
     if (!globalBoundingBox) {
@@ -756,45 +767,48 @@ function lockCameraTopDown(isLocked) {
     }
     const center = getCenterOfBoundingBox(globalBoundingBox);
     const cameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
-    // Assuming the north is along the negative Y-axis in your projection
-    const northDirection = new THREE.Vector3(0, -1, 0);
 
     // Position the camera at the center of the bounding box at the appropriate Z height
     camera.position.set(center.x, center.y, cameraZ);
 
-    // Look down at the center of the bounding box
+    // Point the camera straight down by looking at the center of the bounding box
     camera.lookAt(center.x, center.y, 0);
 
-    // Orient the camera to face north
-    camera.up.set(0, 0, 1); // Z is up in three.js by default
-    camera.lookAt(center.clone().add(northDirection));
+    // Calculate north direction in the State Plane coordinate system
+    // Adjust this vector if your north direction is different
+    const northDirection = new THREE.Vector3(0, 1, 0);
 
-    // Set the rotation to look straight down to the ground
-    camera.rotation.x = 0;
-    camera.rotation.y = 0;
-    camera.rotation.z = 0;
+    // Rotate the camera to face north by setting the up vector
+    camera.up.copy(northDirection);
+    camera.lookAt(center); // Look at the center again to apply the up vector
 
-    controls.enableRotate = false; // Disable rotation
-    controls.enablePan = true; // Enable panning
-    // Change both left and right mouse buttons to pan
+    // Disable orbit controls rotation and set to pan only
+    controls.enableRotate = false;
+    controls.enablePan = true;
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.PAN,
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.PAN
     };
-    
+
+    // Update the controls to apply changes
+    controls.update();
   } else {
     // Restore previous behavior
     controls.enableRotate = true;
     controls.enablePan = true;
-    // Restore default mouse button actions
     controls.mouseButtons = {
-      LEFT: THREE.MOUSE.PAN,
+      LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.ROTATE
+      RIGHT: THREE.MOUSE.PAN
     };
+
+    // Reset the up vector to the default (0, 1, 0) if needed
+    camera.up.set(0, 1, 0);
+
+    // Update the controls to apply changes
+    controls.update();
   }
-  controls.update();
 }
 
 
@@ -869,9 +883,9 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
 
 
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
-    const gridSize = 0.2; // This represents your grid cell size
+    const gridSize = 1; // This represents your grid cell size
     const scaleFactor = 0.75; // This is the scale factor by which you want to shrink the graticule
-    const crossSize = gridSize * 0.1; // X% of the grid size, adjust as needed
+    const crossSize = gridSize * 0.025; // X% of the grid size, adjust as needed
 
     addGraticule(scene, boundingBox, gridSize, crossSize);
 
