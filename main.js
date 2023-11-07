@@ -90,7 +90,7 @@ let globalBoundingBox
 function initThreeJS() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.up.set(0, 0, 1); // Set Z as up-direction if that's the case for your projection
+    camera.up.set(0, 0, 1); // Set Z as up-direction 
     camera.position.z = 20; // Adjust as necessary
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -789,6 +789,7 @@ function lockCameraTopDown(isLocked) {
 
     // Rotate the camera to face north by setting the up vector
     camera.up.copy(northDirection);
+    camera.up.set(0, 1, 0); 
     camera.lookAt(center); // Look at the center again to apply the up vector
 
     // With MapControls, the camera.up is typically (0, 1, 0) and should not need changing
@@ -798,6 +799,7 @@ function lockCameraTopDown(isLocked) {
   } else {
     // Restore interactive rotation if desired when not locked
     console.log("original controls!")
+    camera.up.set(0, 0, 1); 
     controls.enableRotate = true;
     controls.update();
   }
