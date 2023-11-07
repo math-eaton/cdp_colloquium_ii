@@ -417,8 +417,12 @@ document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old ha
 document.addEventListener('keydown', onDocumentKeyDown, false);
 
 function addGraticule(scene, boundingBox, gridSize, scaleFactor) {
-  const material = new THREE.LineBasicMaterial({ color: 0x00ff00 }); // bright green
-  const gridGroup = new THREE.Group();
+    const material = new THREE.LineBasicMaterial({
+      color: 0x00ff00, // bright green
+      opacity: 0.2,
+      transparent: true
+    });
+    const gridGroup = new THREE.Group();
 
   // Calculate center of bounding box
   const centerX = (boundingBox.min.x + boundingBox.max.x) / 2;
@@ -864,8 +868,8 @@ fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
 
 
     const boundingBox = getBoundingBoxOfGeoJSON(geojson);
-    const gridSize = 0.2; // This represents your grid cell size
-    const scaleFactor = 0.8; // This is the scale factor by which you want to shrink the graticule
+    const gridSize = 0.1; // This represents your grid cell size
+    const scaleFactor = 0.5; // This is the scale factor by which you want to shrink the graticule
 
     addGraticule(scene, boundingBox, gridSize, scaleFactor);
 
