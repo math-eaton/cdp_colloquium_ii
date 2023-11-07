@@ -1,6 +1,6 @@
 // Import modules
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MapControls } from 'three/addons/controls/MapControls.js';
 import proj4 from 'proj4';
 import '/style.css'; 
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
@@ -97,14 +97,14 @@ function initThreeJS() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('three-container').appendChild(renderer.domElement);
 
-    controls = new OrbitControls(camera, renderer.domElement);
-  
-    // Set these after creating the OrbitControls instance
-    controls.mouseButtons = {
-      LEFT: THREE.MOUSE.ROTATE,
-      MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
-    };
+    // Initialize MapControls
+    controls = new MapControls(camera, renderer.domElement);
+
+    // Set up the control parameters as needed for a mapping interface
+    controls.screenSpacePanning = true; // so that panning doesn't have any vertical limit
+    controls.enableRotate = false; // typically map interfaces don't use rotation
+    controls.enableDamping = true; // an optional setting to give a smoother control feeling
+    controls.dampingFactor = 0.05; // amount of damping (drag)
 
     // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
@@ -234,6 +234,14 @@ const panSpeed = .05;
 
 // Function to handle keyboard events for panning
 function onDocumentKeyDown(event) {
+
+  // Toggle camera lock on 'L' key press
+  if (event.key === 'l' || event.key === 'L') {
+    lockCameraTopDown(!isCameraLocked);
+    event.preventDefault(); // Prevent default action for 'L' key
+    return; // Exit the function after toggling the lock
+}
+  
   if (isCameraLocked) {
     // Ignore R and F keys when camera is locked
     if (event.key === 'r' || event.key === 'f') {
@@ -244,6 +252,7 @@ function onDocumentKeyDown(event) {
   const rotationSpeed = 0.025; // Speed of rotation
   const vector = new THREE.Vector3(); // Create once and reuse it to avoid garbage collection
   const axis = new THREE.Vector3(1, 0, 0); // X axis for world space rotation
+  
 
   console.log(`Key pressed: ${event.key}`); // Log which key was pressed
 
@@ -782,31 +791,14 @@ function lockCameraTopDown(isLocked) {
     camera.up.copy(northDirection);
     camera.lookAt(center); // Look at the center again to apply the up vector
 
-    // Disable orbit controls rotation and set to pan only
-    controls.enableRotate = false;
-    controls.enablePan = true;
-    controls.mouseButtons = {
-      LEFT: THREE.MOUSE.PAN,
-      MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
-    };
-
-    // Update the controls to apply changes
+    // With MapControls, the camera.up is typically (0, 1, 0) and should not need changing
+    controls.enablePan = true; // Enable panning
+    controls.enableRotate = false; // Disable rotation
     controls.update();
   } else {
-    // Restore previous behavior
+    // Restore interactive rotation if desired when not locked
+    console.log("original controls!")
     controls.enableRotate = true;
-    controls.enablePan = true;
-    controls.mouseButtons = {
-      LEFT: THREE.MOUSE.ROTATE,
-      MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
-    };
-
-    // Reset the up vector to the default (0, 1, 0) if needed
-    camera.up.set(0, 1, 0);
-
-    // Update the controls to apply changes
     controls.update();
   }
 }
