@@ -55,16 +55,25 @@ let itemsToLoad = 4; // Update this with the number of assets you are loading
 let itemsLoaded = 0;
 const spinnerCharacters = ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'];
 let currentSpinnerIndex = 0;
+let lastSpinnerUpdateTime = 0;
+const spinnerUpdateRate = 75; // Update spinner every 75 ms
 
-// Call this function to update the spinner
-function updateSpinner() {
-  const progressBar = document.getElementById('progress-bar');
-  progressBar.textContent = spinnerCharacters[currentSpinnerIndex];
-  currentSpinnerIndex = (currentSpinnerIndex + 1) % spinnerCharacters.length;
+// Call this function to update the spinner using requestAnimationFrame
+function animateSpinner(timestamp) {
+  // Check if it's time to update the spinner character
+  if (timestamp - lastSpinnerUpdateTime > spinnerUpdateRate) {
+    lastSpinnerUpdateTime = timestamp;
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.textContent = spinnerCharacters[currentSpinnerIndex];
+    currentSpinnerIndex = (currentSpinnerIndex + 1) % spinnerCharacters.length;
+  }
+
+  // Continue the spinner animation
+  requestAnimationFrame(animateSpinner);
 }
 
-// Start spinner animation
-const spinnerInterval = setInterval(updateSpinner, 100); // Update spinner every N ms
+// Start the spinner animation
+requestAnimationFrame(animateSpinner);
 
 // Initialize the progress bar to start at 0%
 let progressBar = document.getElementById('progress-bar');
@@ -72,10 +81,10 @@ progressBar.style.width = '0%';
 
 // Define your steps and their durations
 const loadingSteps = [
-  { progress: 25, duration: 750 },  // 25% in 750ms
-  { progress: 50, duration: 750 },  // 50% in 750ms
-  { progress: 75, duration: 750 },  // 75% in 750ms
-  { progress: 100, duration: 750 }  // 100% in 750ms
+  // { progress: 25, duration: 150 },  // 25% in 750ms
+  // { progress: 50, duration: 450 },  // 50% in 750ms
+  // { progress: 75, duration: 750 },  // 75% in 750ms
+  { progress: 100, duration: 3000 }  // 100% in 750ms
 ];
 
 let currentStep = 0;

@@ -73,15 +73,16 @@ h1 {
 }
 
 #progress-bar {
+  font-size: x-large;
   position: absolute;
-  left: 25%;
+  left: 33%;
   display: block;
   height: 20px;
   width: 0;
   /* background-color: #33cc33; */
   line-height: 20px;
   text-align: center;
-  color: rgb(255, 0, 0);
+  color: rgb(255, 255, 255);
   transition: width 0.5s ease; /* Add a transition for smooth width change */
 }
 
