@@ -16,6 +16,7 @@
     "vite": "^4.5.0"
   },
   "dependencies": {
+    "ascii-progress": "^2.0.0",
     "proj4": "^2.9.2",
     "three": "^0.158.0"
   }

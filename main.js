@@ -48,6 +48,9 @@ function toStatePlane(lon, lat) {
   return proj4("EPSG:32118").forward([lon, lat]);
 }
 
+//////////////////////////////////////
+// loading screen! //////////////////
+
 let itemsToLoad = 4; // Update this with the number of assets you are loading
 let itemsLoaded = 0;
 const spinnerCharacters = ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'];
@@ -61,21 +64,58 @@ function updateSpinner() {
 }
 
 // Start spinner animation
-const spinnerInterval = setInterval(updateSpinner, 100); // Update spinner every 100ms
+const spinnerInterval = setInterval(updateSpinner, 100); // Update spinner every N ms
 
-function updateProgressBar() {
-  itemsLoaded++;
-  const progress = (itemsLoaded / itemsToLoad) * 100;
+// Initialize the progress bar to start at 0%
+let progressBar = document.getElementById('progress-bar');
+progressBar.style.width = '0%';
+
+// Define your steps and their durations
+const loadingSteps = [
+  { progress: 25, duration: 750 },  // 25% in 750ms
+  { progress: 50, duration: 750 },  // 50% in 750ms
+  { progress: 75, duration: 750 },  // 75% in 750ms
+  { progress: 100, duration: 750 }  // 100% in 750ms
+];
+
+let currentStep = 0;
+let startTime = null;
+let lastProgress = 0;
+
+// Function to update the progress bar smoothly
+function animateProgressBar(timestamp) {
+  if (startTime === null) startTime = timestamp;
+  const step = loadingSteps[currentStep];
+
+  // Calculate progress based on time elapsed
+  const elapsedTime = timestamp - startTime;
+  const progress = lastProgress + (step.progress - lastProgress) * (elapsedTime / step.duration);
+
+  // Set the width of the progress bar
   const progressBar = document.getElementById('progress-bar');
-  progressBar.style.width = `${(progress / itemsToLoad) * 33}%`; // Set width to a third of total progress
+  progressBar.style.width = `${progress}%`;
 
-  if (itemsLoaded === itemsToLoad) {
-    clearInterval(spinnerInterval); // Stop the spinner animation
-    progressBar.textContent = "Loading complete!"; // Change the text content
-    // All items are loaded, hide the progress bar and show the visualization
-    const visualizationContainer = document.getElementById('three-container');
-    progressBar.style.display = 'none';
-    visualizationContainer.style.visibility = 'visible'; // Reveal the visualization
+  // Check if we should move to the next step
+  if (elapsedTime < step.duration) {
+    // Continue the animation
+    requestAnimationFrame(animateProgressBar);
+  } else {
+    // Move to the next step
+    startTime = timestamp;
+    lastProgress = step.progress;
+    currentStep++;
+
+    if (currentStep < loadingSteps.length) {
+      requestAnimationFrame(animateProgressBar);
+    } else {
+      // Animation complete
+      progressBar.textContent = "Loading complete!";
+      // Hide the progress bar or transition to your visualization
+      const visualizationContainer = document.getElementById('three-container');
+      progressBar.style.display = 'none';
+      visualizationContainer.style.visibility = 'visible';
+
+    }
   }
 }
 
@@ -177,9 +217,13 @@ function animate() {
 
 document.addEventListener('DOMContentLoaded', (event) => {
   const startButton = document.getElementById('start-button');
+  const progressBar = document.getElementById('progress-bar');
   const threeContainer = document.getElementById('three-container');
   const panControls = document.getElementById('pan-controls');
   const infoButton = document.getElementById('info-button');
+
+  // Initially hide the progress bar
+  progressBar.style.visibility = 'hidden'; 
 
   // Function to enable the interactive elements
   function enableInteraction() {
@@ -189,18 +233,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
     panControls.style.opacity = '1';
     infoButton.style.pointerEvents = 'auto';
     infoButton.style.opacity = '1';
+    progressBar.style.visibility = 'visible'; 
+    requestAnimationFrame(animateProgressBar)
 
+    // Start button event listener
+    startButton.addEventListener('click', () => {
+      enableInteraction(); // Call this function on start button click
+      // initAudio(); // Uncomment this if you need to initialize audio here
+    });
+    
     // Remove the start button after it's clicked
     startButton.remove();
 
+    // Hide the progress bar with a delay
+    setTimeout(() => {
+      const progressBar = document.getElementById('progress-bar');
+      // progressBar.style.display = 'none';
+    }, 500); // Delay hiding the progress bar for 500ms
+
     // Call the functions to initialize the audio and start the visualization
     // initAudio();
+    loadGeoJSONData();
     initThreeJS();
     animate();
     hideInfoBox();
     lockCameraTopDown(false); // Ensure this is called after controls are initialized
     document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
-    loadGeoJSONData();
 
   }
 
@@ -917,7 +975,7 @@ function loadGeoJSONData(){
     .then(response => response.json())
     .then(geojson => {
       addContourLines(geojson); // Existing call to add contour lines
-      updateProgressBar();
+      // updateProgressBar();
 
 
       // Fetch and add POINT data here after adding contour lines
@@ -927,7 +985,7 @@ function loadGeoJSONData(){
           // Call the addCellTowerPts function with the loaded buffer
           addCellTowerPts(pointGeojson, audioListener, audioBuffer);
           console.log("adding points");
-          updateProgressBar();
+          // updateProgressBar();
         })
           .catch(error => {
           console.error('Error loading points GeoJSON:', error);
@@ -939,7 +997,7 @@ function loadGeoJSONData(){
       .then(polygonGeojson => {
         addPolygons(polygonGeojson);
         console.log("Polygons added");
-        updateProgressBar();
+        // updateProgressBar();
       })
       .catch(error => {
         console.error('Error loading polygon GeoJSON:', error);
@@ -951,7 +1009,7 @@ function loadGeoJSONData(){
       .then(pointGeojson => {
         addFMTowerPts(pointGeojson);
         console.log("Yellow points added");
-        updateProgressBar();
+        // updateProgressBar();
       })
       .catch(error => {
         console.error('Error loading points GeoJSON:', error);
