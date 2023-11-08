@@ -180,10 +180,36 @@ h1 {
   visibility: visible;
 }
 
-#camera-lock{
+/* #camera-lock{
 
   
+} */
+
+#three-container,
+#pan-controls,
+#info-button {
+  pointer-events: none;
+  opacity: 0.5; /* Make it look disabled */
 }
+
+#start-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100; /* Make sure it's above other elements */
+}
+
+button#start-button {
+  padding: 10px 20px;
+  font-size: 1.5em;
+  background-color: #000000; /* Green background for visibility */
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+
 
 .hidden {
   visibility: hidden;

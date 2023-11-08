@@ -9,13 +9,13 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // Define color scheme variables
 const colorScheme = {
-  graticuleColor: "#00ff00", // Bright green
+  graticuleColor: "#2f2f2f0b", // Bright green
   ambientLightColor: "#404040", // Dark gray
   directionalLightColor: "#ffffff", // White
   backgroundColor: "#000000", // Black
   polygonColor: "#FF1493", // Pink
   pyramidColorFM: "#FFFF00", // Yellow
-  pyramidColorCellular: "#FA3000", // Red
+  pyramidColorCellular: "#FA3000", // Red-orange
   lowestElevationColor: "#0000ff", // Blue
   middleElevationColor: "#00ff00", // Green
   highestElevationColor: "#ff0000", // Red
@@ -110,7 +110,11 @@ function initThreeJS() {
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
     controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
     // Set the maximum distance the camera can dolly out
-    controls.maxDistance = 5; // Adjust this value to set the maximum zoom-out level
+    controls.maxDistance = 5;
+    controls.minDistance = 0.2; 
+
+    const audioListener = new THREE.AudioListener();
+    camera.add(audioListener);
 
     
     let ambientLight = new THREE.AmbientLight(colorScheme.ambientLightColor);
@@ -122,6 +126,9 @@ function initThreeJS() {
     window.addEventListener('resize', onWindowResize, false);
     adjustCameraZoom();
 }
+
+///////////////////////////////////////////////////// 
+// DOM MODS AND EVENT LISTENERS ////////////////////
 
 // Resize function
 function onWindowResize() {
@@ -168,13 +175,37 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Ensure DOM is loaded before initializing and starting animation
 document.addEventListener('DOMContentLoaded', (event) => {
-  initThreeJS();
-  animate();
-  hideInfoBox();
-  lockCameraTopDown(false); // Ensure this is called after controls are initialized
-  document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
+  const startButton = document.getElementById('start-button');
+  const threeContainer = document.getElementById('three-container');
+  const panControls = document.getElementById('pan-controls');
+  const infoButton = document.getElementById('info-button');
+
+  // Function to enable the interactive elements
+  function enableInteraction() {
+    threeContainer.style.pointerEvents = 'auto';
+    threeContainer.style.opacity = '1';
+    panControls.style.pointerEvents = 'auto';
+    panControls.style.opacity = '1';
+    infoButton.style.pointerEvents = 'auto';
+    infoButton.style.opacity = '1';
+
+    // Remove the start button after it's clicked
+    startButton.remove();
+
+    // Call the functions to initialize the audio and start the visualization
+    // initAudio();
+    initThreeJS();
+    animate();
+    hideInfoBox();
+    lockCameraTopDown(false); // Ensure this is called after controls are initialized
+    document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
+    loadGeoJSONData();
+
+  }
+
+  // Start button event listener
+  startButton.addEventListener('click', enableInteraction);
 });
 
 
@@ -228,6 +259,26 @@ document.getElementById('info-button').addEventListener('click', function () {
     showInfoBox();
 });
 
+// Declare the audioListener at the top level so it's accessible everywhere
+let audioListener;
+
+// Add a user gesture event listener to resume the audio context
+document.addEventListener('click', function initAudio() {
+  // Check if audioListener is already initialized to avoid multiple initializations
+  if (!audioListener) {
+    audioListener = new THREE.AudioListener();
+    camera.add(audioListener);
+    // Resume the audio context if it's not in the running state
+    if (audioListener.context.state === 'suspended') {
+      audioListener.context.resume();
+    }
+  }
+  // Remove the event listener after the initial interaction
+  document.removeEventListener('click', initAudio);
+});
+
+///////////////////////////////////////////////////// 
+// CAMERA SETTINGS AND CONTROLS ////////////////////
 
 // Define pan speed
 const panSpeed = .05;
@@ -313,353 +364,6 @@ document.getElementById('pan-up').addEventListener('click', () => panCamera(0, 1
 document.getElementById('pan-down').addEventListener('click', () => panCamera(0, -1));
 document.getElementById('pan-left').addEventListener('click', () => panCamera(-1, 0));
 document.getElementById('pan-right').addEventListener('click', () => panCamera(1, 0));
-
-
-// Define a scaling factor for the Z values (elevation)
-const zScale = 0.0004; // Change this value to scale the elevation up or down
-
-// Function to get color based on elevation
-function getColorForElevation(elevation, minElevation, maxElevation) {
-  const gradient = [
-    { stop: 0, color: new THREE.Color(colorScheme.lowestElevationColor) }, // blue at the lowest
-    { stop: 0.5, color: new THREE.Color(colorScheme.middleElevationColor) }, // green at the middle
-    { stop: 1, color: new THREE.Color(colorScheme.highestElevationColor) }  // red at the highest
-  ];
-
-  const t = (elevation - minElevation) / (maxElevation - minElevation);
-
-  let lowerStop = gradient[0], upperStop = gradient[gradient.length - 1];
-  for (let i = 0; i < gradient.length - 1; i++) {
-    if (t >= gradient[i].stop && t <= gradient[i + 1].stop) {
-      lowerStop = gradient[i];
-      upperStop = gradient[i + 1];
-      break;
-    }
-  }
-
-  const color = lowerStop.color.clone().lerp(upperStop.color, (t - lowerStop.stop) / (upperStop.stop - lowerStop.stop));
-  return color;
-}
-
-// Define a variable to store the minimum elevation
-// This should be determined from the addContourLines function
-let globalMinElevation = Infinity;
-
-// Updated addContourLines function to update globalMinElevation
-function addContourLines(geojson) {
-  // Determine min and max elevation from the geojson
-  const elevations = geojson.features.map(f => f.properties.Contour);
-  const minElevation = Math.min(...elevations);
-  globalMinElevation = Math.min(globalMinElevation, minElevation); // Update the global minimum elevation
-  const maxElevation = Math.max(...elevations);
-
-  geojson.features.forEach((feature, index) => {
-    const contour = feature.properties.Contour; // Elevation value
-    const coordinates = feature.geometry.coordinates; // Array of [lon, lat] pairs
-
-    const color = getColorForElevation(contour, minElevation, maxElevation);
-    let material = new THREE.LineBasicMaterial({ color: color });
-
-    // Function to process a single line
-    const processLine = (lineCoords, contourValue) => {
-      let vertices = [];
-      lineCoords.forEach((pair) => {
-        if (!Array.isArray(pair) || pair.length !== 2 || pair.some(c => isNaN(c))) {
-          console.error(`Feature ${index} has invalid coordinates`, pair);
-          return;
-        }
-        const [lon, lat] = pair;
-        try {
-          const [x, y] = toStatePlane(lon, lat);
-          const z = contourValue * zScale; // Scale the elevation for visibility
-          vertices.push(x, y, z);
-        } catch (error) {
-          console.error(`Feature ${index} error in toStatePlane:`, error.message);
-        }
-      });
-
-      if (vertices.length > 0) {
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        const line = new THREE.Line(geometry, material);
-        scene.add(line);
-      }
-    };
-
-    // Check geometry type and process accordingly
-    if (feature.geometry.type === 'LineString') {
-      processLine(coordinates, contour);
-    } else if (feature.geometry.type === 'MultiLineString') {
-      coordinates.forEach(lineCoords => {
-        processLine(lineCoords, contour);
-      });
-    } else {
-      console.error(`Unsupported geometry type: ${feature.geometry.type}`);
-    }
-  });
-}
-
-function addPolygons(geojson, stride = 10) {
-  const material = new THREE.MeshBasicMaterial({
-    color: colorScheme.polygonColor,
-    transparent: true,
-    wireframe: true, // Set wireframe to true for mesh look
-    dithering: true,
-    opacity: 0.5, // Increase opacity for visibility
-    side: THREE.FrontSide // Render both sides of the polygon
-  });
-
-  for (let i = 0; i < geojson.features.length; i += stride) {
-    const feature = geojson.features[i];
-    try {
-      const shapeCoords = feature.geometry.coordinates[0]; // Assuming no holes in the polygon for simplicity
-      const vertices = [];
-      let centroid = new THREE.Vector3(0, 0, 0);
-
-      // Convert coordinates to vertices and calculate centroid
-      shapeCoords.forEach(coord => {
-        const [x, y] = toStatePlane(coord[0], coord[1]);
-        const z = globalMinElevation * zScale; // Set Z to the lowest contour elevation
-        vertices.push(new THREE.Vector3(x, y, z));
-        centroid.add(new THREE.Vector3(x, y, z));
-      });
-
-      centroid.divideScalar(shapeCoords.length); // Average to find centroid
-      vertices.unshift(centroid); // Add centroid as the first vertex
-
-      const shapeGeometry = new THREE.BufferGeometry();
-      const positions = [];
-
-      // The centroid is the first vertex, and it's connected to every other vertex
-      for (let j = 1; j <= shapeCoords.length; j++) {
-        // Add centroid
-        positions.push(centroid.x, centroid.y, centroid.z);
-
-        // Add current vertex
-        positions.push(vertices[j % shapeCoords.length].x, vertices[j % shapeCoords.length].y, vertices[j % shapeCoords.length].z);
-
-        // Add next vertex
-        positions.push(vertices[(j + 1) % shapeCoords.length].x, vertices[(j + 1) % shapeCoords.length].y, vertices[(j + 1) % shapeCoords.length].z);
-      }
-
-      shapeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      shapeGeometry.computeVertexNormals();
-
-      const mesh = new THREE.Mesh(shapeGeometry, material);
-      scene.add(mesh);
-    } catch (error) {
-      console.error(`Error processing feature at index ${i}:`, error);
-    }
-  }
-}
-
-// Attach the modified keydown event handler
-document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old handler if it was added before
-document.addEventListener('keydown', onDocumentKeyDown, false);
-
-function addGraticule(scene, boundingBox, gridSize, plusSize, scaleFactor = 2) {
-  const material = new THREE.LineBasicMaterial({
-    color: colorScheme.graticuleColor, 
-    opacity: 0.5, 
-    transparent: true 
-  });
-  const gridGroup = new THREE.Group();
-
-  // Calculate center of bounding box
-  const centerX = (boundingBox.min.x + boundingBox.max.x) / 2;
-  const centerY = (boundingBox.min.y + boundingBox.max.y) / 2;
-
-  // Calculate scaled bounding box
-  const scaledMinX = centerX + (boundingBox.min.x - centerX) * scaleFactor;
-  const scaledMaxX = centerX + (boundingBox.max.x - centerX) * scaleFactor;
-  const scaledMinY = centerY + (boundingBox.min.y - centerY) * scaleFactor;
-  const scaledMaxY = centerY + (boundingBox.max.y - centerY) * scaleFactor;
-
-  // Loop over the scaled grid and create the plus signs
-  for (let x = scaledMinX; x <= scaledMaxX; x += gridSize) {
-      for (let y = scaledMinY; y <= scaledMaxY; y += gridSize) {
-          // Horizontal line of the plus sign
-          const horizontalVertices = [
-              new THREE.Vector3(x - plusSize, y, 0),
-              new THREE.Vector3(x + plusSize, y, 0)
-          ];
-          const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalVertices);
-          const horizontalLine = new THREE.Line(horizontalGeometry, material);
-          gridGroup.add(horizontalLine);
-
-          // Vertical line of the plus sign
-          const verticalVertices = [
-              new THREE.Vector3(x, y - plusSize, 0),
-              new THREE.Vector3(x, y + plusSize, 0)
-          ];
-          const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalVertices);
-          const verticalLine = new THREE.Line(verticalGeometry, material);
-          gridGroup.add(verticalLine);
-      }
-  }
-
-  scene.add(gridGroup);
-}
-
-
-
-
-function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
-  // Create a canvas element
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-
-  // Set font size and face
-  context.font = `${fontsize} ${fontface}`;
-
-  // Get text dimensions
-  const metrics = context.measureText(text.toUpperCase());
-  const textWidth = metrics.width;
-  canvas.width = textWidth;
-  canvas.height = parseInt(fontsize, 10); // Convert pt to px
-
-  // Set style for the background
-  context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Black background with 50% opacity
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Set style for the text
-  context.font = `${fontsize} ${fontface}`;
-  context.fillStyle = 'white';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
-
-  // Create texture from the canvas
-  const texture = new THREE.CanvasTexture(canvas);
-
-  // Create sprite material with this texture
-  const material = new THREE.SpriteMaterial({ map: texture });
-
-  // Create and return the sprite
-  const sprite = new THREE.Sprite(material);
-  return sprite;
-}
-
-// function updateLabels(camera, objects, maxLabelDistance) {
-//   // Update the camera frustum
-//   camera.updateMatrix(); // make sure the camera matrix is updated
-//   camera.updateMatrixWorld(); // make sure the camera's world matrix is updated
-//   const frustum = new THREE.Frustum();
-//   frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-
-//   // Calculate the current scale based on camera zoom or position
-//   const currentScale = calculateScaleBasedOnCamera(camera);
-
-//   // Iterate through the objects
-//   objects.forEach(object => {
-//     const distance = camera.position.distanceTo(object.position);
-
-//     // Check if the object is within the maximum label distance and the frustum
-//     if (distance < maxLabelDistance && frustum.containsPoint(object.position)) {
-//       // Scale the label size based on distance and/or camera scale
-//       const labelScale = calculateLabelScale(distance, currentScale);
-//       createOrUpdateLabelForObject(object, labelScale);
-//     } else {
-//       // Hide or remove the label for the object
-//       hideOrRemoveLabelForObject(object);
-//     }
-//   });
-// }
-
-
-function addFMTowerPts(geojson) {
-  // Define the base size and height for the pyramids
-  const baseSize = 0.003; // This would be the size of one side of the pyramid's base
-  const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
-
-  // Material for the wireframe pyramids
-  let pyramidMaterialFM = new THREE.MeshBasicMaterial({
-    color: colorScheme.pyramidColorFM,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.5
-  });
-
-  // Parse the POINT data from the GeoJSON
-  geojson.features.forEach(feature => {
-    if (feature.geometry.type === 'Point') {
-      const [lon, lat] = feature.geometry.coordinates;
-      const elevation = feature.properties.Elevation;
-      
-      try {
-        // Convert the lon/lat to State Plane coordinates
-        const [x, y] = toStatePlane(lon, lat);
-        const z = elevation * zScale; // Apply the scaling factor to the elevation
-
-        // Create a cone geometry for the pyramid with the defined base size and height
-        // The number of radial segments is set to 4 for a square base
-        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
-
-        // Rotate the pyramid to point up along the Z-axis
-        pyramidGeometry.rotateX(Math.PI / 2);
-
-        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialFM);
-        pyramid.position.set(x, y, z);
-        scene.add(pyramid);
-      } catch (error) {
-        console.error(`Error projecting point:`, error.message);
-      }
-    } else {
-      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
-    }
-  });
-}
-
-
-// Function to add wireframe pyramids for POINT data from GeoJSON
-function addCellTowerPts(geojson) {
-  // Define the base size and height for the pyramids
-  const baseSize = 0.003; // This would be the size of one side of the pyramid's base
-  const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
-
-  // Material for the wireframe pyramids
-  let pyramidMaterialCellular = new THREE.MeshBasicMaterial({
-    color: colorScheme.pyramidColorCellular,
-    wireframe: false,
-    transparent: true,
-    opacity: 0.4
-  });
-
-  // Parse the POINT data from the GeoJSON
-  geojson.features.forEach(feature => {
-    if (feature.geometry.type === 'Point') {
-      const [lon, lat] = feature.geometry.coordinates;
-      const elevation = feature.properties.Elevation;
-      
-      try {
-        // Convert the lon/lat to State Plane coordinates
-        const [x, y] = toStatePlane(lon, lat);
-        const z = elevation * zScale; // Apply the scaling factor to the elevation
-
-        // Create a cone geometry for the pyramid with the defined base size and height
-        // The number of radial segments is set to 4 for a square base
-        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
-
-        // Rotate the pyramid to point up along the Z-axis
-        pyramidGeometry.rotateX(Math.PI / 2);
-
-        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialCellular);
-        pyramid.position.set(x, y, z);
-        scene.add(pyramid);
-
-        // const label = createTextLabel(`${feature.properties.Callsign} ${feature.properties.LocCity}`);
-        // label.position.set(x, y, z + pyramidHeight + 0.0015); // Position above the pyramid
-        // scene.add(label);
-
-      } catch (error) {
-        console.error(`Error projecting point:`, error.message);
-      }
-    } else {
-      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
-    }
-  });
-}
-
 
 function getBoundingBoxOfGeoJSON(geojson) {
   let minX = Infinity;
@@ -823,6 +527,310 @@ document.getElementById('camera-lock').addEventListener('click', (event) => {
   event.stopPropagation(); // This will prevent the click from reaching the document level
 });
 
+///////////////////////////////////////////////////// 
+// GEOGRAPHIC DATA VIS /////////////////////////////
+
+// Define a scaling factor for the Z values (elevation)
+const zScale = 0.0004; // Change this value to scale the elevation up or down
+
+// Function to get color based on elevation
+function getColorForElevation(elevation, minElevation, maxElevation) {
+  const gradient = [
+    { stop: 0, color: new THREE.Color(colorScheme.lowestElevationColor) }, // blue at the lowest
+    { stop: 0.5, color: new THREE.Color(colorScheme.middleElevationColor) }, // green at the middle
+    { stop: 1, color: new THREE.Color(colorScheme.highestElevationColor) }  // red at the highest
+  ];
+
+  const t = (elevation - minElevation) / (maxElevation - minElevation);
+
+  let lowerStop = gradient[0], upperStop = gradient[gradient.length - 1];
+  for (let i = 0; i < gradient.length - 1; i++) {
+    if (t >= gradient[i].stop && t <= gradient[i + 1].stop) {
+      lowerStop = gradient[i];
+      upperStop = gradient[i + 1];
+      break;
+    }
+  }
+
+  const color = lowerStop.color.clone().lerp(upperStop.color, (t - lowerStop.stop) / (upperStop.stop - lowerStop.stop));
+  return color;
+}
+
+// Define a variable to store the minimum elevation
+// This should be determined from the addContourLines function
+let globalMinElevation = Infinity;
+
+// Updated addContourLines function to update globalMinElevation
+function addContourLines(geojson) {
+  // Determine min and max elevation from the geojson
+  const elevations = geojson.features.map(f => f.properties.Contour);
+  const minElevation = Math.min(...elevations);
+  globalMinElevation = Math.min(globalMinElevation, minElevation); // Update the global minimum elevation
+  const maxElevation = Math.max(...elevations);
+
+  geojson.features.forEach((feature, index) => {
+    const contour = feature.properties.Contour; // Elevation value
+    const coordinates = feature.geometry.coordinates; // Array of [lon, lat] pairs
+
+    const color = getColorForElevation(contour, minElevation, maxElevation);
+    let material = new THREE.LineBasicMaterial({ color: color });
+
+    // Function to process a single line
+    const processLine = (lineCoords, contourValue) => {
+      let vertices = [];
+      lineCoords.forEach((pair) => {
+        if (!Array.isArray(pair) || pair.length !== 2 || pair.some(c => isNaN(c))) {
+          console.error(`Feature ${index} has invalid coordinates`, pair);
+          return;
+        }
+        const [lon, lat] = pair;
+        try {
+          const [x, y] = toStatePlane(lon, lat);
+          const z = contourValue * zScale; // Scale the elevation for visibility
+          vertices.push(x, y, z);
+        } catch (error) {
+          console.error(`Feature ${index} error in toStatePlane:`, error.message);
+        }
+      });
+
+      if (vertices.length > 0) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+      }
+    };
+
+    // Check geometry type and process accordingly
+    if (feature.geometry.type === 'LineString') {
+      processLine(coordinates, contour);
+    } else if (feature.geometry.type === 'MultiLineString') {
+      coordinates.forEach(lineCoords => {
+        processLine(lineCoords, contour);
+      });
+    } else {
+      console.error(`Unsupported geometry type: ${feature.geometry.type}`);
+    }
+  });
+}
+
+function addPolygons(geojson, stride = 10) {
+  const material = new THREE.MeshBasicMaterial({
+    color: colorScheme.polygonColor,
+    transparent: true,
+    wireframe: true, // Set wireframe to true for mesh look
+    dithering: true,
+    opacity: 0.5, // Increase opacity for visibility
+    side: THREE.FrontSide // Render both sides of the polygon
+  });
+
+  for (let i = 0; i < geojson.features.length; i += stride) {
+    const feature = geojson.features[i];
+    try {
+      const shapeCoords = feature.geometry.coordinates[0]; // Assuming no holes in the polygon for simplicity
+      const vertices = [];
+      let centroid = new THREE.Vector3(0, 0, 0);
+
+      // Convert coordinates to vertices and calculate centroid
+      shapeCoords.forEach(coord => {
+        const [x, y] = toStatePlane(coord[0], coord[1]);
+        const z = globalMinElevation * zScale; // Set Z to the lowest contour elevation
+        vertices.push(new THREE.Vector3(x, y, z));
+        centroid.add(new THREE.Vector3(x, y, z));
+      });
+
+      centroid.divideScalar(shapeCoords.length); // Average to find centroid
+      vertices.unshift(centroid); // Add centroid as the first vertex
+
+      const shapeGeometry = new THREE.BufferGeometry();
+      const positions = [];
+
+      // The centroid is the first vertex, and it's connected to every other vertex
+      for (let j = 1; j <= shapeCoords.length; j++) {
+        // Add centroid
+        positions.push(centroid.x, centroid.y, centroid.z);
+
+        // Add current vertex
+        positions.push(vertices[j % shapeCoords.length].x, vertices[j % shapeCoords.length].y, vertices[j % shapeCoords.length].z);
+
+        // Add next vertex
+        positions.push(vertices[(j + 1) % shapeCoords.length].x, vertices[(j + 1) % shapeCoords.length].y, vertices[(j + 1) % shapeCoords.length].z);
+      }
+
+      shapeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      shapeGeometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(shapeGeometry, material);
+      scene.add(mesh);
+    } catch (error) {
+      console.error(`Error processing feature at index ${i}:`, error);
+    }
+  }
+}
+
+// Attach the modified keydown event handler
+document.removeEventListener('keydown', onDocumentKeyDown); // Remove the old handler if it was added before
+document.addEventListener('keydown', onDocumentKeyDown, false);
+
+function addGraticule(scene, boundingBox, gridSize, crossSize, scaleFactor = 2) {
+  const material = new THREE.LineBasicMaterial({
+    color: colorScheme.graticuleColor, 
+    opacity: 0.2, 
+    transparent: true 
+  });
+  const gridGroup = new THREE.Group();
+
+  // Calculate center of bounding box
+  const centerX = (boundingBox.min.x + boundingBox.max.x) / 2;
+  const centerY = (boundingBox.min.y + boundingBox.max.y) / 2;
+
+  // Calculate scaled bounding box
+  const scaledMinX = centerX + (boundingBox.min.x - centerX) * scaleFactor;
+  const scaledMaxX = centerX + (boundingBox.max.x - centerX) * scaleFactor;
+  const scaledMinY = centerY + (boundingBox.min.y - centerY) * scaleFactor;
+  const scaledMaxY = centerY + (boundingBox.max.y - centerY) * scaleFactor;
+
+  // Loop over the scaled grid and create the plus signs
+  for (let x = scaledMinX; x <= scaledMaxX; x += gridSize) {
+      for (let y = scaledMinY; y <= scaledMaxY; y += gridSize) {
+          // Horizontal line of the plus sign
+          const horizontalVertices = [
+              new THREE.Vector3(x - crossSize, y, 0),
+              new THREE.Vector3(x + crossSize, y, 0)
+          ];
+          const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalVertices);
+          const horizontalLine = new THREE.Line(horizontalGeometry, material);
+          gridGroup.add(horizontalLine);
+
+          // Vertical line of the plus sign
+          const verticalVertices = [
+              new THREE.Vector3(x, y - crossSize, 0),
+              new THREE.Vector3(x, y + crossSize, 0)
+          ];
+          const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalVertices);
+          const verticalLine = new THREE.Line(verticalGeometry, material);
+          gridGroup.add(verticalLine);
+      }
+  }
+
+  scene.add(gridGroup);
+}
+
+
+function addFMTowerPts(geojson) {
+  // Define the base size and height for the pyramids
+  const baseSize = 0.003; // This would be the size of one side of the pyramid's base
+  const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
+
+  // Material for the wireframe pyramids
+  let pyramidMaterialFM = new THREE.MeshBasicMaterial({
+    color: colorScheme.pyramidColorFM,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.5
+  });
+
+  // Parse the POINT data from the GeoJSON
+  geojson.features.forEach(feature => {
+    if (feature.geometry.type === 'Point') {
+      const [lon, lat] = feature.geometry.coordinates;
+      const elevation = feature.properties.Elevation;
+      
+      try {
+        // Convert the lon/lat to State Plane coordinates
+        const [x, y] = toStatePlane(lon, lat);
+        const z = elevation * zScale; // Apply the scaling factor to the elevation
+
+        // Create a cone geometry for the pyramid with the defined base size and height
+        // The number of radial segments is set to 4 for a square base
+        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
+
+        // Rotate the pyramid to point up along the Z-axis
+        pyramidGeometry.rotateX(Math.PI / 2);
+
+        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialFM);
+        pyramid.position.set(x, y, z);
+        scene.add(pyramid);
+      } catch (error) {
+        console.error(`Error projecting point:`, error.message);
+      }
+    } else {
+      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
+    }
+  });
+}
+
+
+// Function to add wireframe pyramids for POINT data from GeoJSON
+function addCellTowerPts(geojson, audioListener, buffer) {
+  // Define the base size and height for the pyramids
+  const baseSize = 0.003; // This would be the size of one side of the pyramid's base
+  const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
+
+  // Material for the wireframe pyramids
+  let pyramidMaterialCellular = new THREE.MeshBasicMaterial({
+    color: colorScheme.pyramidColorCellular,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.4
+  });
+
+   // Parse the POINT data from the GeoJSON
+   geojson.features.forEach(feature => {
+    if (feature.geometry.type === 'Point') {
+      const [lon, lat] = feature.geometry.coordinates;
+      const elevation = feature.properties.Elevation;
+
+      try {
+        // Convert the lon/lat to State Plane coordinates
+        const [x, y] = toStatePlane(lon, lat);
+        const z = elevation * zScale; // Apply the scaling factor to the elevation
+
+        // Create a cone geometry for the pyramid with the defined base size and height
+        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 4);
+        pyramidGeometry.rotateX(Math.PI / 2); // Rotate the pyramid to point up along the Z-axis
+
+        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialCellular);
+        pyramid.position.set(x, y, z);
+        scene.add(pyramid);
+
+        // Positional audio
+        const sound = new THREE.PositionalAudio(audioListener);
+        sound.setBuffer(buffer);
+        sound.setRefDistance(1);
+        sound.setLoop(true);
+        sound.setVolume(0.5);
+        pyramid.add(sound); // Attach the sound to the pyramid mesh
+        sound.play(); // Start playing the sound
+
+      } catch (error) {
+        console.error(`Error projecting point:`, error.message);
+      }
+    } else {
+      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
+    }
+  });
+}
+
+
+///////////////////////////////////////////////////// 
+// AUDIO INIT //////////////////////////////////////
+
+
+// // Define the audio loader and load the audio file
+// const audioLoader = new THREE.AudioLoader();
+let audioBuffer; // This will hold the loaded audio buffer
+
+// // Then, inside the audio loader callback
+// audioLoader.load('AKWF_0001.wav', function(buffer) {
+//   // Store the loaded audio buffer for later use
+//   audioBuffer = buffer;
+//   // Once the audio is loaded, fetch the GeoJSON data
+//   loadGeoJSONData();
+// }, undefined, function(err) {
+//   console.error('An error occurred while loading the audio file:', err);
+// });
+
 
 // Set material for the contour lines
 const lineMaterial = new THREE.LineBasicMaterial({
@@ -831,80 +839,153 @@ const lineMaterial = new THREE.LineBasicMaterial({
 });
 
 
+///////////////////////////////////////////////////// 
+// TEXT VISUALIZATION //////////////////////////////
+
+
+function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
+  // Create a canvas element
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  // Set font size and face
+  context.font = `${fontsize} ${fontface}`;
+
+  // Get text dimensions
+  const metrics = context.measureText(text.toUpperCase());
+  const textWidth = metrics.width;
+  canvas.width = textWidth;
+  canvas.height = parseInt(fontsize, 10); // Convert pt to px
+
+  // Set style for the background
+  context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Black background with 50% opacity
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Set style for the text
+  context.font = `${fontsize} ${fontface}`;
+  context.fillStyle = 'white';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+
+  // Create texture from the canvas
+  const texture = new THREE.CanvasTexture(canvas);
+
+  // Create sprite material with this texture
+  const material = new THREE.SpriteMaterial({ map: texture });
+
+  // Create and return the sprite
+  const sprite = new THREE.Sprite(material);
+  return sprite;
+}
+
+// function updateLabels(camera, objects, maxLabelDistance) {
+//   // Update the camera frustum
+//   camera.updateMatrix(); // make sure the camera matrix is updated
+//   camera.updateMatrixWorld(); // make sure the camera's world matrix is updated
+//   const frustum = new THREE.Frustum();
+//   frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+
+//   // Calculate the current scale based on camera zoom or position
+//   const currentScale = calculateScaleBasedOnCamera(camera);
+
+//   // Iterate through the objects
+//   objects.forEach(object => {
+//     const distance = camera.position.distanceTo(object.position);
+
+//     // Check if the object is within the maximum label distance and the frustum
+//     if (distance < maxLabelDistance && frustum.containsPoint(object.position)) {
+//       // Scale the label size based on distance and/or camera scale
+//       const labelScale = calculateLabelScale(distance, currentScale);
+//       createOrUpdateLabelForObject(object, labelScale);
+//     } else {
+//       // Hide or remove the label for the object
+//       hideOrRemoveLabelForObject(object);
+//     }
+//   });
+// }
+
+
+///////////////////////////////////////////////////// 
+// FETCH EXTERNAL DATA /////////////////////////////
+
+
+
 // Fetching the contour lines GeoJSON and adding to the scene
-fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
-  .then(response => response.json())
-  .then(geojson => {
-    addContourLines(geojson); // Existing call to add contour lines
-    updateProgressBar();
+function loadGeoJSONData(){
+  fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
+    .then(response => response.json())
+    .then(geojson => {
+      addContourLines(geojson); // Existing call to add contour lines
+      updateProgressBar();
 
 
-    // Fetch and add POINT data here after adding contour lines
-    fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson')
+      // Fetch and add POINT data here after adding contour lines
+      fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson')
+        .then(response => response.json())
+        .then(pointGeojson => {
+          // Call the addCellTowerPts function with the loaded buffer
+          addCellTowerPts(pointGeojson, audioListener, audioBuffer);
+          console.log("adding points");
+          updateProgressBar();
+        })
+          .catch(error => {
+          console.error('Error loading points GeoJSON:', error);
+        });
+
+      // Fetch and add the polygon data
+      fetch('data/FM_contours_NYS_clip_20231101.geojson')
+      .then(response => response.json())
+      .then(polygonGeojson => {
+        addPolygons(polygonGeojson);
+        console.log("Polygons added");
+        updateProgressBar();
+      })
+      .catch(error => {
+        console.error('Error loading polygon GeoJSON:', error);
+      });
+
+      // Fetch and add the points data
+      fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson')
       .then(response => response.json())
       .then(pointGeojson => {
-        addCellTowerPts(pointGeojson); // Call the new function to add points
-        console.log("adding points")
+        addFMTowerPts(pointGeojson);
+        console.log("Yellow points added");
         updateProgressBar();
       })
       .catch(error => {
         console.error('Error loading points GeoJSON:', error);
       });
 
-    // Fetch and add the polygon data
-    fetch('data/FM_contours_NYS_clip_20231101.geojson')
-    .then(response => response.json())
-    .then(polygonGeojson => {
-      addPolygons(polygonGeojson);
-      console.log("Polygons added");
-      updateProgressBar();
+
+      const boundingBox = getBoundingBoxOfGeoJSON(geojson);
+      const gridSize = 0.5; // This represents your grid cell size
+      const crossSize = gridSize * 0.05; // X% of the grid size, adjust as needed
+
+      // addGraticule(scene, boundingBox, gridSize, crossSize);
+
+      globalBoundingBox = getBoundingBoxOfGeoJSON(geojson);
+      
+          
+      // Move the camera and set controls target
+      const center = getCenterOfBoundingBox(boundingBox);
+      const size = getSizeOfBoundingBox(boundingBox);
+      const maxDim = Math.max(size.x, size.y);
+      const fov = camera.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+      cameraZ *= 0.7; // adjust Z magic number
+      const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
+      camera.position.set(center.x, center.y, initialCameraZ);
+      controls.target.set(center.x, center.y, 0);
+
+      // Now, add the constraints to the camera and controls
+      constrainCamera(controls, boundingBox);
+
+      // Call this after setting the position and target
+      controls.update();
     })
     .catch(error => {
-      console.error('Error loading polygon GeoJSON:', error);
+      console.error('Error loading GeoJSON:', error);
     });
-
-    // Fetch and add the points data
-    fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson')
-    .then(response => response.json())
-    .then(pointGeojson => {
-      addFMTowerPts(pointGeojson);
-      console.log("Yellow points added");
-      updateProgressBar();
-    })
-    .catch(error => {
-      console.error('Error loading points GeoJSON:', error);
-    });
-
-
-    const boundingBox = getBoundingBoxOfGeoJSON(geojson);
-    const gridSize = 1; // This represents your grid cell size
-    const scaleFactor = 0.75; // This is the scale factor by which you want to shrink the graticule
-    const crossSize = gridSize * 0.025; // X% of the grid size, adjust as needed
-
-    addGraticule(scene, boundingBox, gridSize, crossSize);
-
-    globalBoundingBox = getBoundingBoxOfGeoJSON(geojson);
-    
-        
-    // Move the camera and set controls target
-    const center = getCenterOfBoundingBox(boundingBox);
-    const size = getSizeOfBoundingBox(boundingBox);
-    const maxDim = Math.max(size.x, size.y);
-    const fov = camera.fov * (Math.PI / 180);
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-    cameraZ *= 0.7; // adjust Z magic number
-    const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
-    camera.position.set(center.x, center.y, initialCameraZ);
-    controls.target.set(center.x, center.y, 0);
-
-    // Now, add the constraints to the camera and controls
-    constrainCamera(controls, boundingBox);
-
-    // Call this after setting the position and target
-    controls.update();
-  })
-  .catch(error => {
-    console.error('Error loading GeoJSON:', error);
-  });
-
+}
 
