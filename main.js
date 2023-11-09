@@ -876,13 +876,17 @@ function addCellTowerPts(geojson, audioListener, buffer) {
 
         const pyramidHeightScaled = pyramidHeight * zScale;
         const textSprite = makeTextSprite(` ${label} `, {
+        
           fontsize: 24,
-          borderColor: { r: 255, g: 0, b: 0, a: 1.0 },
-          backgroundColor: { r: 255, g: 100, b: 100, a: 0.8 }
+          strokeColor: "rgba(255, 255, 255, 0.9)",
+          strokeWidth: 1,
+
+          // borderColor: { r: 255, g: 0, b: 0, a: 1.0 },
+          // backgroundColor: { r: 255, g: 100, b: 100, a: 0.8 }
         });
     
         // Position the sprite above the pyramid
-        textSprite.position.set(x, y, z + pyramidHeightScaled + 0.01);
+        textSprite.position.set(x, y, z + pyramidHeightScaled + 0.015);
 
         textSprite.scale.set(0.05, 0.025, 1.0);
     
@@ -936,7 +940,10 @@ function makeTextSprite(message, parameters) {
   
   var fontsize = parameters.hasOwnProperty("fontsize") ? 
     parameters["fontsize"] : 18;
-  
+
+  var strokeColor = parameters.hasOwnProperty("strokeColor") ? 
+    parameters["strokeColor"] : "rgba(0, 0, 0, 0.8)";
+
   var canvas = document.createElement('canvas');
   var context = canvas.getContext('2d');
 
@@ -947,10 +954,24 @@ function makeTextSprite(message, parameters) {
   context.scale(scale, scale);
 
   context.font = "Bold " + fontsize + "px " + fontface;
-  context.fillStyle = "rgba(255, 255, 255, 1.0)";
+  
+  // Set text fill style to transparent
+  context.fillStyle = "rgba(255, 255, 255, 0.0)";
+
+  // Set stroke style to the provided color or default black
+  context.strokeStyle = strokeColor;
+  context.lineWidth = parameters.hasOwnProperty("strokeWidth") ? 
+    parameters["strokeWidth"] : 1; // Default to a width of N if not specified
+
+  // Align text for centering
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(message, canvas.width / (2 * scale), canvas.height / (2 * scale));
+
+  // First stroke the text and then fill it to create the outline effect
+  var x = canvas.width / (2 * scale);
+  var y = canvas.height / (2 * scale);
+  context.strokeText(message, x, y);
+  context.fillText(message, x, y);
 
   var texture = new THREE.Texture(canvas);
   texture.needsUpdate = true;
@@ -958,7 +979,7 @@ function makeTextSprite(message, parameters) {
   var spriteMaterial = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
-    depthTest: false
+    depthTest: false // Set to false to prevent the sprite from being occluded by other objects in the scene
   });
   
   var sprite = new THREE.Sprite(spriteMaterial);
@@ -967,86 +988,6 @@ function makeTextSprite(message, parameters) {
   return sprite;
 }
 
-
-// Function to draw rounded rectangles
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-}
-
-
-// function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
-//   // Create a canvas element
-//   const canvas = document.createElement('canvas');
-//   const context = canvas.getContext('2d');
-
-//   // Set font size and face
-//   context.font = `${fontsize} ${fontface}`;
-
-//   // Get text dimensions
-//   const metrics = context.measureText(text.toUpperCase());
-//   const textWidth = metrics.width;
-//   canvas.width = textWidth;
-//   canvas.height = parseInt(fontsize, 10); // Convert pt to px
-
-//   // Set style for the background
-//   context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Black background with 50% opacity
-//   context.fillRect(0, 0, canvas.width, canvas.height);
-
-//   // Set style for the text
-//   context.font = `${fontsize} ${fontface}`;
-//   context.fillStyle = 'white';
-//   context.textAlign = 'center';
-//   context.textBaseline = 'middle';
-//   context.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
-
-//   // Create texture from the canvas
-//   const texture = new THREE.CanvasTexture(canvas);
-
-//   // Create sprite material with this texture
-//   const material = new THREE.SpriteMaterial({ map: texture });
-
-//   // Create and return the sprite
-//   const sprite = new THREE.Sprite(material);
-//   return sprite;
-// }
-
-// function updateLabels(camera, objects, maxLabelDistance) {
-//   // Update the camera frustum
-//   camera.updateMatrix(); // make sure the camera matrix is updated
-//   camera.updateMatrixWorld(); // make sure the camera's world matrix is updated
-//   const frustum = new THREE.Frustum();
-//   frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-
-//   // Calculate the current scale based on camera zoom or position
-//   const currentScale = calculateScaleBasedOnCamera(camera);
-
-//   // Iterate through the objects
-//   objects.forEach(object => {
-//     const distance = camera.position.distanceTo(object.position);
-
-//     // Check if the object is within the maximum label distance and the frustum
-//     if (distance < maxLabelDistance && frustum.containsPoint(object.position)) {
-//       // Scale the label size based on distance and/or camera scale
-//       const labelScale = calculateLabelScale(distance, currentScale);
-//       createOrUpdateLabelForObject(object, labelScale);
-//     } else {
-//       // Hide or remove the label for the object
-//       hideOrRemoveLabelForObject(object);
-//     }
-//   });
-// }
 
 
 ///////////////////////////////////////////////////// 
