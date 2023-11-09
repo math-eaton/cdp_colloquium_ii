@@ -84,7 +84,7 @@ const loadingSteps = [
   // { progress: 25, duration: 150 },  // 25% in 750ms
   // { progress: 50, duration: 450 },  // 50% in 750ms
   // { progress: 75, duration: 750 },  // 75% in 750ms
-  { progress: 100, duration: 3000 }  // 100% in 750ms
+  { progress: 100, duration: 600 }  // 100% in 750ms
 ];
 
 let currentStep = 0;
@@ -101,8 +101,7 @@ function animateProgressBar(timestamp) {
   const progress = lastProgress + (step.progress - lastProgress) * (elapsedTime / step.duration);
 
   // Set the width of the progress bar
-  const progressBar = document.getElementById('progress-bar');
-  progressBar.style.width = `${progress}%`;
+  // progressBar.style.width = `${progress}%`;
 
   // Check if we should move to the next step
   if (elapsedTime < step.duration) {
@@ -118,16 +117,18 @@ function animateProgressBar(timestamp) {
       requestAnimationFrame(animateProgressBar);
     } else {
       // Animation complete
-      progressBar.textContent = "Loading complete!";
-      // Hide the progress bar or transition to your visualization
-      const visualizationContainer = document.getElementById('three-container');
-      progressBar.style.display = 'none';
-      visualizationContainer.style.visibility = 'visible';
-
+      // progressBar.textContent = "lfg";
+      // Transition to your visualization
+      setTimeout(() => {
+        progressBar.style.display = 'none'; // Optionally hide the progress bar
+        const visualizationContainer = document.getElementById('three-container');
+        const panControls = document.getElementById('pan-controls');
+        visualizationContainer.style.visibility = 'visible'; // Make the three.js container visible
+        panControls.style.visibility = 'visible'; // Make the pan-controls visible
+      }, 500); // Short delay for the transition, can be adjusted or removed as needed
     }
   }
 }
-
 
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
@@ -234,12 +235,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
   // Initially hide the progress bar
   progressBar.style.visibility = 'hidden'; 
 
+  // Function to initialize the scene and other components
+  function initialize() {
+    // initAudio(); // Initialize audio if necessary
+    loadGeoJSONData(); // Load your GeoJSON or other data
+    initThreeJS(); // Initialize Three.js
+    hideInfoBox(); // Hide the information box if it should be hidden initially
+  }
+
   // Function to enable the interactive elements
   function enableInteraction() {
     threeContainer.style.pointerEvents = 'auto';
     threeContainer.style.opacity = '1';
     panControls.style.pointerEvents = 'auto';
-    panControls.style.opacity = '1';
+    // panControls.style.opacity = '1';
     infoButton.style.pointerEvents = 'auto';
     infoButton.style.opacity = '1';
     progressBar.style.visibility = 'visible'; 
@@ -262,10 +271,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Call the functions to initialize the audio and start the visualization
     // initAudio();
-    loadGeoJSONData();
-    initThreeJS();
     animate();
-    hideInfoBox();
     lockCameraTopDown(false); // Ensure this is called after controls are initialized
     document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
 
@@ -273,6 +279,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   // Start button event listener
   startButton.addEventListener('click', enableInteraction);
+
+  // Call initialize immediately on page load
+  initialize();
+
 });
 
 

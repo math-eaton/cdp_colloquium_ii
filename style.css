@@ -75,7 +75,7 @@ h1 {
 #progress-bar {
   font-size: x-large;
   position: absolute;
-  left: 33%;
+  left: 50%;
   display: block;
   height: 20px;
   width: 0;
@@ -98,6 +98,7 @@ h1 {
   z-index: 10;
   display: flex; /* Set to flex to use flexbox layout */
   align-items: center; /* Align children vertically in the middle */
+  visibility: hidden; /* Hide pan-controls initially */
 }
 
 .pan-button {
