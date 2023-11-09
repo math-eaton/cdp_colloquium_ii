@@ -829,7 +829,7 @@ function addFMTowerPts(geojson) {
 }
 
 
-// Function to add wireframe pyramids for POINT data from GeoJSON
+// Function to add wireframe pyramids and text labels for POINT data from GeoJSON
 function addCellTowerPts(geojson, audioListener, buffer) {
   // Define the base size and height for the pyramids
   const baseSize = 0.003; // This would be the size of one side of the pyramid's base
@@ -843,8 +843,8 @@ function addCellTowerPts(geojson, audioListener, buffer) {
     opacity: 0.4
   });
 
-   // Parse the POINT data from the GeoJSON
-   geojson.features.forEach(feature => {
+  // Parse the POINT data from the GeoJSON
+  geojson.features.forEach((feature, index) => {
     if (feature.geometry.type === 'Point') {
       const [lon, lat] = feature.geometry.coordinates;
       const elevation = feature.properties.Elevation;
@@ -862,14 +862,32 @@ function addCellTowerPts(geojson, audioListener, buffer) {
         pyramid.position.set(x, y, z);
         scene.add(pyramid);
 
-        // Positional audio
-        const sound = new THREE.PositionalAudio(audioListener);
-        sound.setBuffer(buffer);
-        sound.setRefDistance(1);
-        sound.setLoop(true);
-        sound.setVolume(0.5);
-        pyramid.add(sound); // Attach the sound to the pyramid mesh
-        sound.play(); // Start playing the sound
+        // // Positional audio
+        // const sound = new THREE.PositionalAudio(audioListener);
+        // sound.setBuffer(buffer);
+        // sound.setRefDistance(1);
+        // sound.setLoop(true);
+        // sound.setVolume(0.5);
+        // pyramid.add(sound); // Attach the sound to the pyramid mesh
+        // sound.play(); // Start playing the sound
+
+        // Ensure Callsign or another property is correctly referenced
+        const label = feature.properties.Callsign || `Tower ${index}`;
+
+        const pyramidHeightScaled = pyramidHeight * zScale;
+        const textSprite = makeTextSprite(` ${label} `, {
+          fontsize: 24,
+          borderColor: { r: 255, g: 0, b: 0, a: 1.0 },
+          backgroundColor: { r: 255, g: 100, b: 100, a: 0.8 }
+        });
+    
+        // Position the sprite above the pyramid
+        textSprite.position.set(x, y, z + pyramidHeightScaled + 0.01);
+
+        textSprite.scale.set(0.05, 0.025, 1.0);
+    
+        scene.add(textSprite);
+        console.log(`creating label for ${label}`);
 
       } catch (error) {
         console.error(`Error projecting point:`, error.message);
@@ -910,42 +928,99 @@ const lineMaterial = new THREE.LineBasicMaterial({
 ///////////////////////////////////////////////////// 
 // TEXT VISUALIZATION //////////////////////////////
 
+function makeTextSprite(message, parameters) {
+  if (parameters === undefined) parameters = {};
+  
+  var fontface = parameters.hasOwnProperty("fontface") ? 
+    parameters["fontface"] : "Arial";
+  
+  var fontsize = parameters.hasOwnProperty("fontsize") ? 
+    parameters["fontsize"] : 18;
+  
+  var canvas = document.createElement('canvas');
+  var context = canvas.getContext('2d');
 
-function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
-  // Create a canvas element
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
+  // Scale the canvas size up to increase the resolution of the text
+  var scale = window.devicePixelRatio; // Adjust to your needs
+  canvas.width = 256 * scale;
+  canvas.height = 128 * scale;
+  context.scale(scale, scale);
 
-  // Set font size and face
-  context.font = `${fontsize} ${fontface}`;
+  context.font = "Bold " + fontsize + "px " + fontface;
+  context.fillStyle = "rgba(255, 255, 255, 1.0)";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(message, canvas.width / (2 * scale), canvas.height / (2 * scale));
 
-  // Get text dimensions
-  const metrics = context.measureText(text.toUpperCase());
-  const textWidth = metrics.width;
-  canvas.width = textWidth;
-  canvas.height = parseInt(fontsize, 10); // Convert pt to px
+  var texture = new THREE.Texture(canvas);
+  texture.needsUpdate = true;
 
-  // Set style for the background
-  context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Black background with 50% opacity
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Set style for the text
-  context.font = `${fontsize} ${fontface}`;
-  context.fillStyle = 'white';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
-
-  // Create texture from the canvas
-  const texture = new THREE.CanvasTexture(canvas);
-
-  // Create sprite material with this texture
-  const material = new THREE.SpriteMaterial({ map: texture });
-
-  // Create and return the sprite
-  const sprite = new THREE.Sprite(material);
+  var spriteMaterial = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false
+  });
+  
+  var sprite = new THREE.Sprite(spriteMaterial);
+  sprite.scale.set(0.5 * scale, 0.25 * scale, 1.0); // Scale the sprite to your preference
+  
   return sprite;
 }
+
+
+// Function to draw rounded rectangles
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+
+// function createTextLabel(text, fontsize = '4pt', fontface = 'monospace') {
+//   // Create a canvas element
+//   const canvas = document.createElement('canvas');
+//   const context = canvas.getContext('2d');
+
+//   // Set font size and face
+//   context.font = `${fontsize} ${fontface}`;
+
+//   // Get text dimensions
+//   const metrics = context.measureText(text.toUpperCase());
+//   const textWidth = metrics.width;
+//   canvas.width = textWidth;
+//   canvas.height = parseInt(fontsize, 10); // Convert pt to px
+
+//   // Set style for the background
+//   context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Black background with 50% opacity
+//   context.fillRect(0, 0, canvas.width, canvas.height);
+
+//   // Set style for the text
+//   context.font = `${fontsize} ${fontface}`;
+//   context.fillStyle = 'white';
+//   context.textAlign = 'center';
+//   context.textBaseline = 'middle';
+//   context.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+
+//   // Create texture from the canvas
+//   const texture = new THREE.CanvasTexture(canvas);
+
+//   // Create sprite material with this texture
+//   const material = new THREE.SpriteMaterial({ map: texture });
+
+//   // Create and return the sprite
+//   const sprite = new THREE.Sprite(material);
+//   return sprite;
+// }
 
 // function updateLabels(camera, objects, maxLabelDistance) {
 //   // Update the camera frustum
