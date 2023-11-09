@@ -53,6 +53,7 @@ function toStatePlane(lon, lat) {
 
 let itemsToLoad = 4; // Update this with the number of assets you are loading
 let itemsLoaded = 0;
+let bufferDuration = 600;
 const spinnerCharacters = ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'];
 let currentSpinnerIndex = 0;
 let lastSpinnerUpdateTime = 0;
@@ -84,7 +85,7 @@ const loadingSteps = [
   // { progress: 25, duration: 150 },  // 25% in 750ms
   // { progress: 50, duration: 450 },  // 50% in 750ms
   // { progress: 75, duration: 750 },  // 75% in 750ms
-  { progress: 100, duration: 600 }  // 100% in 750ms
+  { progress: 100, duration: bufferDuration }  // 100% in 750ms
 ];
 
 let currentStep = 0;
@@ -122,9 +123,7 @@ function animateProgressBar(timestamp) {
       setTimeout(() => {
         progressBar.style.display = 'none'; // Optionally hide the progress bar
         const visualizationContainer = document.getElementById('three-container');
-        const panControls = document.getElementById('pan-controls');
         visualizationContainer.style.visibility = 'visible'; // Make the three.js container visible
-        panControls.style.visibility = 'visible'; // Make the pan-controls visible
       }, 500); // Short delay for the transition, can be adjusted or removed as needed
     }
   }
@@ -229,11 +228,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const startButton = document.getElementById('start-button');
   const progressBar = document.getElementById('progress-bar');
   const threeContainer = document.getElementById('three-container');
-  const panControls = document.getElementById('pan-controls');
   const infoButton = document.getElementById('info-button');
 
   // Initially hide the progress bar
-  progressBar.style.visibility = 'hidden'; 
+  progressBar.style.visibility = 'hidden';
+  infoButton.style.visibility = 'hidden'; 
 
   // Function to initialize the scene and other components
   function initialize() {
@@ -247,8 +246,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   function enableInteraction() {
     threeContainer.style.pointerEvents = 'auto';
     threeContainer.style.opacity = '1';
-    panControls.style.pointerEvents = 'auto';
-    // panControls.style.opacity = '1';
     infoButton.style.pointerEvents = 'auto';
     infoButton.style.opacity = '1';
     progressBar.style.visibility = 'visible'; 
@@ -266,8 +263,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     // Hide the progress bar with a delay
     setTimeout(() => {
       const progressBar = document.getElementById('progress-bar');
-      // progressBar.style.display = 'none';
-    }, 500); // Delay hiding the progress bar for 500ms
+      infoButton.style.visibility = 'visible'; 
+      console.log(bufferDuration)
+    }, bufferDuration); // Delay hiding the progress bar for N ms
 
     // Call the functions to initialize the audio and start the visualization
     // initAudio();
@@ -434,13 +432,6 @@ function panCamera(dx, dy) {
   controls.target.y += dy * panSpeed;
   controls.update();
 }
-
-
-// Attach click event listeners to the pan buttons
-document.getElementById('pan-up').addEventListener('click', () => panCamera(0, 1));
-document.getElementById('pan-down').addEventListener('click', () => panCamera(0, -1));
-document.getElementById('pan-left').addEventListener('click', () => panCamera(-1, 0));
-document.getElementById('pan-right').addEventListener('click', () => panCamera(1, 0));
 
 function getBoundingBoxOfGeoJSON(geojson) {
   let minX = Infinity;
