@@ -17,12 +17,12 @@ const colorScheme = {
   backgroundColor: "#000000", // Black
   polygonColor: "#FF1493", // Pink
   pyramidColorFM: "#FFFF00", // Yellow
-  pyramidColorCellular: "#FA3000", // Red-orange
+  pyramidColorCellular: "#ffffff", // white
   lowestElevationColor: "#0000ff", // Blue
   middleElevationColor: "#00ff00", // Green
   highestElevationColor: "#ff0000", // Red
   mstFmColor: "#FFFF00", // yellow
-  mstCellColor: "#FA3000" // redorange
+  mstCellColor: "#f3f0ef" // offwhite
 };
 
 // Alternate color scheme
@@ -904,7 +904,7 @@ function addCellTowerPts(geojson, audioListener, buffer) {
   // Material for the wireframe pyramids
   let pyramidMaterialCellular = new THREE.MeshBasicMaterial({
     color: colorScheme.pyramidColorCellular,
-    wireframe: false,
+    wireframe: true,
     transparent: true,
     opacity: 0.4
   });
