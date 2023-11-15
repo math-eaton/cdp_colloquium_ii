@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "ascii-progress": "^2.0.0",
+    "convex-hull": "^1.0.3",
+    "graphology": "^0.25.4",
     "proj4": "^2.9.2",
     "three": "^0.158.0"
   }
