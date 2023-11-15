@@ -8,6 +8,13 @@ import Graph from 'graphology';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
+// Define global geographic layer groups
+let fmTransmitterPoints = new THREE.Group();
+let fmMSTLines = new THREE.Group();
+let cellTransmitterPoints = new THREE.Group();
+let cellMSTLines = new THREE.Group();
+let contourLines = new THREE.Group();
+let fmPropagationPolygons = new THREE.Group();
 
 // Define color scheme variables
 const colorScheme = {
@@ -351,6 +358,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 
+/////////////////////////////////////
+///////// MAP LEGEND ///////////////
+
+
 // Function to hide the information container and show the info button
 function hideInfoBox() {
   const infoContainer = document.getElementById('info-container');
@@ -402,6 +413,71 @@ document.getElementById('info-button').addEventListener('click', function () {
     showInfoBox();
 });
 
+
+// Function to add checkboxes for layer visibility control
+function addLayerVisibilityControls() {
+  const infoContainer = document.getElementById('info-container');
+  const layers = [
+    { name: 'fm transmitter points', color: colorScheme.pyramidColorFM },
+    { name: 'fm minimum spanning tree lines', color: colorScheme.mstFmColor },
+    { name: 'cell transmitter points', color: colorScheme.pyramidColorCellular },
+    { name: 'cell MST lines', color: colorScheme.mstCellColor },
+    { name: 'contour lines', color: colorScheme.lowestElevationColor },
+    { name: 'fm propagation polygons', color: colorScheme.polygonColor }
+  ];
+
+  layers.forEach(layer => {
+    const container = document.createElement('div');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = layer.name;
+    checkbox.name = layer.name;
+    checkbox.checked = true;  // Set to true if you want the layers to be visible by default
+
+    const label = document.createElement('label');
+    label.htmlFor = layer.name;
+    label.textContent = layer.name;
+    label.style.color = layer.color;  // Set the label text color based on the layer color
+
+    container.appendChild(checkbox);
+    container.appendChild(label);
+    infoContainer.appendChild(container);
+
+    // Add event listener to toggle layer visibility
+    checkbox.addEventListener('change', function() {
+      toggleLayerVisibility(layer.name, this.checked);
+    });
+  });
+}
+
+// You can then map these to the names used in the checkboxes
+const layerObjects = {
+  'fm transmitter points': fmTransmitterPoints,
+  'fm minimum spanning tree lines': fmMSTLines,
+  'cell transmitter points': cellTransmitterPoints,
+  'cell MST lines': cellMSTLines,
+  'contour lines': contourLines,
+  'fm propagation polygons': fmPropagationPolygons
+};
+
+// Function to toggle layer visibility
+function toggleLayerVisibility(layerName, isVisible) {
+  // Check if the layer object exists
+  if (layerObjects[layerName]) {
+    // Set the visibility of the layer
+    layerObjects[layerName].visible = isVisible;
+  } else {
+    console.warn(`Layer "${layerName}" not found in the scene.`);
+  }
+
+  // Update the renderer if needed
+  // renderer.render(scene, camera);
+}
+
+///////////////////////////////////////////////////////
+// AUDIO LISTENERS ///////////////////////////////////
+
 // Declare the audioListener at the top level so it's accessible everywhere
 let audioListener;
 
@@ -419,6 +495,9 @@ document.addEventListener('click', function initAudio() {
   // Remove the event listener after the initial interaction
   document.removeEventListener('click', initAudio);
 });
+
+///////////////////////////////////////////////////
+// MOUSEOVER TRANSITIONS /////////////////////////
 
 // add mouseover polygon opacity shifts &
 // reduce mouseover event listener transactions
@@ -718,6 +797,9 @@ let globalMinElevation = Infinity;
 
 // Updated addContourLines function to update globalMinElevation
 function addContourLines(geojson) {
+
+  contourLines = new THREE.Group(); // Create a new group for contour lines
+
   // Determine min and max elevation from the geojson
   const elevations = geojson.features.map(f => f.properties.Contour);
   const minElevation = Math.min(...elevations);
@@ -753,8 +835,9 @@ function addContourLines(geojson) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         const line = new THREE.Line(geometry, material);
-        scene.add(line);
+        contourLines.add(line);
       }
+      scene.add(contourLines); // Add the group to the scene
     };
 
     // Check geometry type and process accordingly
@@ -771,7 +854,8 @@ function addContourLines(geojson) {
 }
 
 function addPolygons(geojson, stride = 10) {
-  let polygons = []; // This array will store references to your polygon meshes
+  fmPropagationPolygons = new THREE.Group(); // Create a new group for polygons
+  // let polygons = []; // This array will store references to your polygon meshes
 
   for (let i = 0; i < geojson.features.length; i += stride) {
     const feature = geojson.features[i];
@@ -823,17 +907,21 @@ function addPolygons(geojson, stride = 10) {
       const mesh = new THREE.Mesh(shapeGeometry, material);
       mesh.name = 'polygon-' + i;
       scene.add(mesh);
-      polygons.push(mesh); // Add the mesh to the polygons array
+      fmPropagationPolygons.add(mesh);
     } catch (error) {
       console.error(`Error processing feature at index ${i}:`, error);
     }
   }
-
-  return polygons; // Return the array of polygons
+  // Add the fmPropagationPolygons group to the scene
+  scene.add(fmPropagationPolygons);
 }
 
 
 function addFMTowerPts(geojson) {
+
+  let fmTransmitterPoints = new THREE.Group();
+  let fmMSTLines = new THREE.Group();
+
   // Define the base size and height for the pyramids
   const baseSize = 0.003; // Size of one side of the pyramid's base
   const pyramidHeight = .015; // Height of the pyramid from the base to the tip
@@ -865,7 +953,7 @@ function addFMTowerPts(geojson) {
 
         const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialFM);
         pyramid.position.set(x, y, z);
-        scene.add(pyramid);
+        fmTransmitterPoints.add(pyramid);
 
         // Add the position to the points array for convex hull calculation
         points.push(new THREE.Vector3(x, y, z));
@@ -877,26 +965,33 @@ function addFMTowerPts(geojson) {
     }
   });
 
+  scene.add(fmTransmitterPoints);
+
   // Create and add the convex hull to the scene
   if (points.length > 0) {
     // createConvexHullLines(points);
     // console.log("creating convex hull with " + points)
 
-    // Construct the graph from points
-    const graph = constructGraph(points);
-
     // Construct the MST
     const fmMstEdges = primsAlgorithm(points);
 
     // Draw the MST
-    drawMSTEdges(fmMstEdges, colorScheme.mstFmColor);
+    drawMSTEdges(fmMstEdges, colorScheme.mstFmColor, fmMSTLines); 
 
   }
+
+  scene.add(fmMSTLines);
+  console.log('adding mstlines')
+
 }
 
 
 // Function to add wireframe pyramids and text labels for POINT data from GeoJSON
 function addCellTowerPts(geojson, audioListener, buffer) {
+
+  cellTransmitterPoints = new THREE.Group();
+  cellMSTLines = new THREE.Group();
+
   // Define the base size and height for the pyramids
   const baseSize = 0.003; // This would be the size of one side of the pyramid's base
   const pyramidHeight = .015; // This would be the height of the pyramid from the base to the tip
@@ -930,7 +1025,7 @@ geojson.features.forEach((feature, index) => {
 
         const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialCellular);
         pyramid.position.set(x, y, z);
-        scene.add(pyramid);
+        scene.add(cellTransmitterPoints);
 
         // // Positional audio
         // const sound = new THREE.PositionalAudio(audioListener);
@@ -942,13 +1037,13 @@ geojson.features.forEach((feature, index) => {
         // sound.play(); // Start playing the sound
 
         // Check for coincident points and get a z-offset
+        const label = feature.properties.Callsign || `Tower ${index}`;
         // const zOffset = getCoincidentPointOffset(lon, lat, 8, 0.00001);
-        const labelContent = feature.properties.Callsign || `Tower ${index}`;
-        const zOffset = getCoincidentPointOffset(lon, lat, labelContent);
+        const zOffset = getCoincidentPointOffset(lon, lat, label, 4, 0.0001);
 
 
         // Ensure Callsign or another property is correctly referenced
-        const label = feature.properties.Callsign || `Tower ${index}`;
+        // const label = feature.properties.Callsign || `Tower ${index}`;
 
         const textSprite = makeTextSprite(` ${label} `, {
         
@@ -988,16 +1083,12 @@ geojson.features.forEach((feature, index) => {
     // createConvexHullLines(points);
     // console.log("creating convex hull with " + points)
 
-    // Construct the graph from points
-    const graph = constructGraph(points);
-
-    // Construct the MST
     const cellMstEdges = primsAlgorithm(points);
-
-    // Draw the MST
-    drawMSTEdges(cellMstEdges, colorScheme.mstCellColor);
-
+    drawMSTEdges(cellMstEdges, colorScheme.mstCellColor, cellMSTLines); // Pass cellMSTLines as the target group
   }
+
+  // Add the cellMSTLines group to the scene
+  scene.add(cellMSTLines);
 }
 
 
@@ -1070,25 +1161,6 @@ function createConvexHullLines(points) {
   });
 }
 
-function constructGraph(points) {
-  const graph = new Graph();
-
-  // Add nodes
-  points.forEach((point, index) => {
-    graph.addNode(index, { point: point });
-  });
-
-  // Add edges with distance as weight
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const distance = points[i].distanceTo(points[j]);
-      graph.addEdge(i, j, { weight: distance });
-    }
-  }
-
-  return graph;
-}
-
 function primsAlgorithm(points) {
   const numPoints = points.length;
   const edges = new Array(numPoints);
@@ -1127,17 +1199,14 @@ function primsAlgorithm(points) {
   return edges;
 }
 
-function drawMSTEdges(mstEdges, color) {
+function drawMSTEdges(mstEdges, color, targetGroup) {
   mstEdges.forEach(edge => {
     const material = new THREE.LineBasicMaterial({ color: color });
     const geometry = new THREE.BufferGeometry().setFromPoints([edge.from, edge.to]);
     const line = new THREE.Line(geometry, material);
-    console.log(`Drawing line from ${edge.from.x}, ${edge.from.y}, ${edge.from.z} to ${edge.to.x}, ${edge.to.y}, ${edge.to.z}`);
-    scene.add(line);
+    targetGroup.add(line); // Add the line to the specified target group
   });
 }
-
-
 
 ///////////////////////////////////////////////////// 
 // AUDIO INIT //////////////////////////////////////
