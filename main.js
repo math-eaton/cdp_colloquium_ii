@@ -1025,8 +1025,10 @@ geojson.features.forEach((feature, index) => {
 
         const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialCellular);
         pyramid.position.set(x, y, z);
-        scene.add(cellTransmitterPoints);
-
+  
+        // Add the pyramid to the cellTransmitterPoints group
+        cellTransmitterPoints.add(pyramid);
+  
         // // Positional audio
         // const sound = new THREE.PositionalAudio(audioListener);
         // sound.setBuffer(buffer);
@@ -1086,8 +1088,8 @@ geojson.features.forEach((feature, index) => {
     const cellMstEdges = primsAlgorithm(points);
     drawMSTEdges(cellMstEdges, colorScheme.mstCellColor, cellMSTLines); // Pass cellMSTLines as the target group
   }
-
-  // Add the cellMSTLines group to the scene
+  // add groups to scene
+  scene.add(cellTransmitterPoints);
   scene.add(cellMSTLines);
 }
 
