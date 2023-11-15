@@ -24,12 +24,12 @@ const colorScheme = {
   backgroundColor: "#000000", // Black
   polygonColor: "#FF1493", // Pink
   pyramidColorFM: "#FFFF00", // Yellow
-  pyramidColorCellular: "#ffffff", // white
+  pyramidColorCellular: "#FF5F1F", // neon orange
   lowestElevationColor: "#0000ff", // Blue
   middleElevationColor: "#00ff00", // Green
   highestElevationColor: "#ff0000", // Red
   mstFmColor: "#FFFF00", // yellow
-  mstCellColor: "#f3f0ef" // offwhite
+  mstCellColor: "#FF5F1F" // neon orange
 };
 
 // Alternate color scheme
@@ -976,7 +976,7 @@ function addFMTowerPts(geojson) {
     const fmMstEdges = primsAlgorithm(points);
 
     // Draw the MST
-    drawMSTEdges(fmMstEdges, colorScheme.mstFmColor, fmMSTLines); 
+    drawMSTEdges(fmMstEdges, '#FFFFFF', colorScheme.mstFmColor, 0.00025, 0.00075, fmMSTLines);
 
   }
 
@@ -1086,7 +1086,7 @@ geojson.features.forEach((feature, index) => {
     // console.log("creating convex hull with " + points)
 
     const cellMstEdges = primsAlgorithm(points);
-    drawMSTEdges(cellMstEdges, colorScheme.mstCellColor, cellMSTLines); // Pass cellMSTLines as the target group
+    drawMSTEdges(cellMstEdges, '#FFFFFF', colorScheme.mstCellColor, 0.00025, 0.00075, cellMSTLines);
   }
   // add groups to scene
   scene.add(cellTransmitterPoints);
@@ -1201,14 +1201,31 @@ function primsAlgorithm(points) {
   return edges;
 }
 
-function drawMSTEdges(mstEdges, color, targetGroup) {
+// Function to create and add MST lines with glow effect
+function drawMSTEdges(mstEdges, coreColor, glowColor, coreRadius, glowRadius, targetGroup) {
   mstEdges.forEach(edge => {
-    const material = new THREE.LineBasicMaterial({ color: color });
-    const geometry = new THREE.BufferGeometry().setFromPoints([edge.from, edge.to]);
-    const line = new THREE.Line(geometry, material);
-    targetGroup.add(line); // Add the line to the specified target group
+    // Create a path for the edge
+    const path = new THREE.CurvePath();
+    path.add(new THREE.LineCurve3(edge.from, edge.to));
+
+    // Core tube
+    const coreGeometry = new THREE.TubeGeometry(path, 1, coreRadius, 8, false);
+    const coreMaterial = new THREE.MeshBasicMaterial({ color: coreColor });
+    const coreTube = new THREE.Mesh(coreGeometry, coreMaterial);
+    targetGroup.add(coreTube);
+
+    // Glow tube
+    const glowGeometry = new THREE.TubeGeometry(path, 1, glowRadius, 8, false);
+    const glowMaterial = new THREE.MeshBasicMaterial({ 
+      color: glowColor, 
+      transparent: true, 
+      opacity: 0.5 
+    });
+    const glowTube = new THREE.Mesh(glowGeometry, glowMaterial);
+    targetGroup.add(glowTube);
   });
 }
+
 
 ///////////////////////////////////////////////////// 
 // AUDIO INIT //////////////////////////////////////
