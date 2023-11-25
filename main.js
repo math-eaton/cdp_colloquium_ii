@@ -190,7 +190,7 @@ function initThreeJS() {
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
     controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
     // Set the maximum distance the camera can dolly out
-    controls.maxDistance = 5;
+    controls.maxDistance = 4.5;
     controls.minDistance = 0.2; 
 
     const audioListener = new THREE.AudioListener();
@@ -797,17 +797,21 @@ let globalMinElevation = Infinity;
 
 // Updated addContourLines function to update globalMinElevation
 function addContourLines(geojson) {
+  if (!geojson || !geojson.features) {
+    console.error('Invalid GeoJSON data');
+    return;
+  }
 
-  contourLines = new THREE.Group(); // Create a new group for contour lines
+  let contourLines = new THREE.Group(); // Create a new group for contour lines
 
   // Determine min and max elevation from the geojson
-  const elevations = geojson.features.map(f => f.properties.Contour);
+  const elevations = geojson.features.map(f => f.properties.contour);
   const minElevation = Math.min(...elevations);
   globalMinElevation = Math.min(globalMinElevation, minElevation); // Update the global minimum elevation
   const maxElevation = Math.max(...elevations);
 
   geojson.features.forEach((feature, index) => {
-    const contour = feature.properties.Contour; // Elevation value
+    const contour = feature.properties.contour; // Elevation value
     const coordinates = feature.geometry.coordinates; // Array of [lon, lat] pairs
 
     const color = getColorForElevation(contour, minElevation, maxElevation);
@@ -837,7 +841,6 @@ function addContourLines(geojson) {
         const line = new THREE.Line(geometry, material);
         contourLines.add(line);
       }
-      scene.add(contourLines); // Add the group to the scene
     };
 
     // Check geometry type and process accordingly
@@ -851,7 +854,10 @@ function addContourLines(geojson) {
       console.error(`Unsupported geometry type: ${feature.geometry.type}`);
     }
   });
+
+  scene.add(contourLines); // Add the group to the scene
 }
+
 
 function addPolygons(geojson, stride = 10) {
   fmPropagationPolygons = new THREE.Group(); // Create a new group for polygons
@@ -1341,7 +1347,7 @@ function makeTextSprite(message, parameters) {
 
 // Fetching the contour lines GeoJSON and adding to the scene
 function loadGeoJSONData(){
-  fetch('data/cont49l010a_Clip_SimplifyLin_simplified.geojson')
+  fetch('data/stanford_contours_simplified1000m_20231124.geojson')
     .then(response => response.json())
     .then(geojson => {
       addContourLines(geojson); // Existing call to add contour lines
