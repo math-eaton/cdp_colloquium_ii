@@ -47,25 +47,19 @@ const colorScheme = {
 //   highestElevationColor: "#ad99f9",
 // };
 
+
 // Define the custom projection with its PROJ string
-const albersProjString = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs";;
-proj4.defs("ESRI:102008", albersProjString);
+const statePlaneProjString = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+proj4.defs("EPSG:32118", statePlaneProjString);
 
-// Define a scale factor
-const scale = 0.0001; // Adjust this scale factor based on your scene's requirements
-
-function toGeoAlbers(lon, lat) {
+// Use this function to convert lon/lat to State Plane coordinates
+function toStatePlane(lon, lat) {
   if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
     throw new Error(`Invalid coordinates: longitude (${lon}), latitude (${lat})`);
   }
-  let [x, y] = proj4("ESRI:102008").forward([lon, lat]);
-
-  // Apply the scale factor to the converted coordinates
-  x *= scale;
-  y *= scale;
-
-  return [x, y];
+  return proj4("EPSG:32118").forward([lon, lat]);
 }
+
 
 
 //////////////////////////////////////
@@ -168,8 +162,7 @@ let polygons = [];
 function initThreeJS() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.up.set(0, 0, 1); // Set Z as up-direction
-    camera.position.z = 100;
+    camera.up.set(0, 0, 1); // Set Z as up-direction 
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -197,7 +190,7 @@ function initThreeJS() {
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
     controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
     // Set the maximum distance the camera can dolly out
-    controls.maxDistance = 70; // max camera zoom
+    controls.maxDistance = 5.5; // max camera zoom
     controls.minDistance = 0.2; // min camera zoom
 
     const audioListener = new THREE.AudioListener();
@@ -638,7 +631,7 @@ function getBoundingBoxOfGeoJSON(geojson) {
         const [lon, lat] = coord;
 
         // Transform the coordinates
-        const [x, y] = toGeoAlbers(lon, lat);
+        const [x, y] = toStatePlane(lon, lat);
 
         // Update the min and max values
         minX = Math.min(minX, x);
@@ -786,7 +779,7 @@ document.getElementById('camera-lock').addEventListener('click', (event) => {
 // GEOGRAPHIC DATA VIS /////////////////////////////
 
 // Define a scaling factor for the Z values (elevation)
-const zScale = 0.006; // Change this value to scale the elevation up or down
+const zScale = 0.0004; // Change this value to scale the elevation up or down
 
 // Function to get color based on elevation
 function getColorForElevation(elevation, minElevation, maxElevation) {
@@ -852,11 +845,11 @@ function addContourLines(geojson) {
         }
         const [lon, lat] = pair;
         try {
-          const [x, y] = toGeoAlbers(lon, lat);
+          const [x, y] = toStatePlane(lon, lat);
           const z = contourValue * zScale; // Scale the elevation for visibility
           vertices.push(x, y, z);
         } catch (error) {
-          console.error(`Feature ${index} error in toGeoAlbers:`, error.message);
+          console.error(`Feature ${index} error in toStatePlane:`, error.message);
         }
       });
 
@@ -908,7 +901,7 @@ function addPolygons(geojson, stride = 10) {
 
       // Convert coordinates to vertices and calculate centroid
       shapeCoords.forEach(coord => {
-        const [x, y] = toGeoAlbers(coord[0], coord[1]);
+        const [x, y] = toStatePlane(coord[0], coord[1]);
         const z = globalMinElevation * zScale; // Set Z to the lowest contour elevation
         vertices.push(new THREE.Vector3(x, y, z));
         centroid.add(new THREE.Vector3(x, y, z));
@@ -975,7 +968,7 @@ function addFMTowerPts(geojson) {
 
       try {
         // Convert the lon/lat to State Plane coordinates
-        const [x, y] = toGeoAlbers(lon, lat);
+        const [x, y] = toStatePlane(lon, lat);
         const z = elevation * zScale; // Apply the scaling factor to the elevation
 
         // Create a cone geometry for the pyramid
@@ -1047,7 +1040,7 @@ geojson.features.forEach((feature, index) => {
 
       try {
         // Convert the lon/lat to State Plane coordinates
-        const [x, y] = toGeoAlbers(lon, lat);
+        const [x, y] = toStatePlane(lon, lat);
         const z = elevation * zScale; // Apply the scaling factor to the elevation
 
         // Create a cone geometry for the pyramid with the defined base size and height
@@ -1267,7 +1260,7 @@ function visualizeBoundingBoxGeoJSON(geojson) {
 
     feature.geometry.coordinates[0].forEach(coord => {
       const [lon, lat] = coord; // Assuming each coordinate is [longitude, latitude]
-      const [x, y] = toGeoAlbers(lon, lat); // Convert to your coordinate system
+      const [x, y] = toStatePlane(lon, lat); // Convert to your coordinate system
       const z = zScale * 20; // Adjust Z based on your requirements
       vertices.push(new THREE.Vector3(x, y, z));
     });
@@ -1275,7 +1268,7 @@ function visualizeBoundingBoxGeoJSON(geojson) {
     // Close the loop by adding the first point at the end
     if (feature.geometry.coordinates[0].length > 2) {
       const [lon, lat] = feature.geometry.coordinates[0][0];
-      const [x, y] = toGeoAlbers(lon, lat);
+      const [x, y] = toStatePlane(lon, lat);
       const z = zScale * 20; // Adjust Z based on your requirements
       vertices.push(new THREE.Vector3(x, y, z));
     }
