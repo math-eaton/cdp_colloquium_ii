@@ -286,4 +286,5 @@ button:focus-visible {
   display: inline-block;
   animation: spin 500ms steps(8, end) infinite;
   content: '←'; /* Initial character */
+  transform: translateZ(0); /* Trigger hardware acceleration */
 }

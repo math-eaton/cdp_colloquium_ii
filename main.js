@@ -229,7 +229,11 @@ async function initialize() {
   document.getElementById('info-button').style.display = 'none';
 
   // initAudio(); // Initialize audio if necessary
-  await loadGeoJSONData(); // Load your GeoJSON or other data
+  try {
+    await loadGeoJSONData(); // This will now wait for all GeoJSON files to be processed
+  } catch (error) {
+    console.error('Error during initialization:', error);
+  }
 
   // Hide the spinner and show the start button
   document.getElementById('progress-bar').style.display = 'none';
@@ -1351,40 +1355,82 @@ function makeTextSprite(message, parameters) {
 
 // Fetching the contour lines GeoJSON and adding to the scene
 async function loadGeoJSONData() {
-  try {
-    // Fetch and add contour lines
-    const contourResponse = await fetch('data/stanford_contours_simplified1000m_20231124.geojson');
-    const contourGeojson = await contourResponse.json();
-    await addContourLines(contourGeojson);
+  const urls = [
+    'data/stanford_contours_simplified1000m_20231124.geojson',
+    'data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson',
+    'data/FM_contours_NYS_clip_20231101.geojson',
+    'data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson',
+    'data/NYS_fullElevDEM_boundingBox.geojson'
+  ]
 
-    // Fetch and add Cellular Tower points
-    const cellTowerResponse = await fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson');
-    const cellTowerGeojson = await cellTowerResponse.json();
-    await addCellTowerPts(cellTowerGeojson, audioListener, audioBuffer);
+  // Create a promise for each worker task
+  const workerPromises = urls.map(url => {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker('geojsonWorker.js');
 
-    // Fetch and add FM contour polygons
-    const fmContoursResponse = await fetch('data/FM_contours_NYS_clip_20231101.geojson');
-    const fmContoursGeojson = await fmContoursResponse.json();
-    await addPolygons(fmContoursGeojson);
+      worker.postMessage(url);
+      worker.onmessage = function(e) {
+        if (e.data.status === 'success') {
+          resolve({ url: e.data.url, data: e.data.data });
+        } else {
+          reject(new Error(e.data.error));
+        }
+        worker.terminate(); // Terminate worker after it sends a message
+      };
+    });
+  });
 
-    // Fetch and add FM Transmitter points
-    const fmTransmitterResponse = await fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson');
-    const fmTransmitterGeojson = await fmTransmitterResponse.json();
-    await addFMTowerPts(fmTransmitterGeojson);
+  // Await all promises
+  const results = await Promise.all(workerPromises);
+  results.forEach(result => handleGeoJSONData(result.url, result.data));
 
-    // Fetch and visualize bounding box
-    const boundingBoxResponse = await fetch('data/NYS_fullElevDEM_boundingBox.geojson');
-    const boundingBoxGeojson = await boundingBoxResponse.json();
-    await visualizeBoundingBoxGeoJSON(boundingBoxGeojson);
+  // Continue with the rest of your initialization logic
+  postLoadOperations();
+}
 
-    // Post-load operations
-    const boundingBox = getBoundingBoxOfGeoJSON(contourGeojson);
+let contourGeojsonData, cellTowerGeojsonData, fmContoursGeojsonData, fmTransmitterGeojsonData, boundingBoxGeojsonData;
+
+function handleGeoJSONData(url, data) {
+  switch (url) {
+    case 'data/stanford_contours_simplified1000m_20231124.geojson':
+      contourGeojsonData = data;
+      addContourLines(data);
+      break;
+
+    case 'data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson':
+      cellTowerGeojsonData = data;
+      addCellTowerPts(data, audioListener, audioBuffer);
+      break;
+
+    case 'data/FM_contours_NYS_clip_20231101.geojson':
+      fmContoursGeojsonData = data;
+      addPolygons(data);
+      break;
+
+    case 'data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson':
+      fmTransmitterGeojsonData = data;
+      addFMTowerPts(data);
+      break;
+
+    case 'data/NYS_fullElevDEM_boundingBox.geojson':
+      boundingBoxGeojsonData = data;
+      visualizeBoundingBoxGeoJSON(data);
+      break;
+
+    default:
+      console.warn('Unrecognized URL:', url);
+      break;
+  }
+}
+
+function postLoadOperations() {
+    const boundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
     const gridSize = 0.5; // This represents your grid cell size
     const crossSize = gridSize * 0.05; // X% of the grid size, adjust as needed
 
     // addGraticule(scene, boundingBox, gridSize, crossSize);
 
-    globalBoundingBox = getBoundingBoxOfGeoJSON(contourGeojson);
+    globalBoundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
     
         
     // Move the camera and set controls target
@@ -1405,7 +1451,4 @@ async function loadGeoJSONData() {
     controls.update();
     // After data is loaded, reveal the start button
     document.getElementById('start-container').style.display = 'block';
-  } catch (error) {
-    console.error('Error loading data:', error);
   }
-}
