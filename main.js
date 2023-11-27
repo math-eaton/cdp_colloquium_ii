@@ -298,63 +298,52 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-document.addEventListener('DOMContentLoaded', (event) => {
-  const startButton = document.getElementById('start-button');
-  const progressBar = document.getElementById('progress-bar');
+// Function to initialize the scene and other components
+async function initialize() {
+  initThreeJS(); // Initialize Three.js
+
+  // hide legend items etc on pageload
+  document.getElementById('info-container').style.display = 'none';
+  document.getElementById('info-button').style.display = 'none';
+
+  // initAudio(); // Initialize audio if necessary
+  await loadGeoJSONData(); // Load your GeoJSON or other data
+
+  // Hide the spinner and show the start button
+  document.getElementById('progress-bar').style.display = 'none';
+  document.getElementById('start-button').style.display = 'block';
+}
+
+// Function to enable the interactive elements
+function enableInteraction() {
   const threeContainer = document.getElementById('three-container');
+  const progressBar = document.getElementById('progress-bar');
   const infoButton = document.getElementById('info-button');
 
-  // Initially hide the progress bar
-  progressBar.style.visibility = 'hidden';
-  infoButton.style.visibility = 'hidden'; 
+  threeContainer.style.pointerEvents = 'auto';
+  threeContainer.style.opacity = '1';
+  infoButton.style.pointerEvents = 'auto';
+  infoButton.style.opacity = '1';
+  progressBar.style.visibility = 'visible'; 
+  requestAnimationFrame(animateProgressBar);
 
-  // Function to initialize the scene and other components
-  function initialize() {
-    // initAudio(); // Initialize audio if necessary
-    loadGeoJSONData(); // Load your GeoJSON or other data
-    initThreeJS(); // Initialize Three.js
-    hideInfoBox(); // Hide the information box if it should be hidden initially
-  }
+  // Start the visualization
+  animate();
+  lockCameraTopDown(false); // Ensure this is called after controls are initialized
+  document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
+}
 
-  // Function to enable the interactive elements
-  function enableInteraction() {
-    threeContainer.style.pointerEvents = 'auto';
-    threeContainer.style.opacity = '1';
-    infoButton.style.pointerEvents = 'auto';
-    infoButton.style.opacity = '1';
-    progressBar.style.visibility = 'visible'; 
-    requestAnimationFrame(animateProgressBar)
-
-    // Start button event listener
-    startButton.addEventListener('click', () => {
-      enableInteraction(); // Call this function on start button click
-      // initAudio(); // Uncomment this if you need to initialize audio here
-    });
-    
-    // Remove the start button after it's clicked
-    startButton.remove();
-
-    // Hide the progress bar with a delay
-    setTimeout(() => {
-      const progressBar = document.getElementById('progress-bar');
-      infoButton.style.visibility = 'visible'; 
-      // console.log(bufferDuration)
-    }, bufferDuration); // Delay hiding the progress bar for N ms
-
-    // Call the functions to initialize the audio and start the visualization
-    // initAudio();
-    animate();
-    lockCameraTopDown(false); // Ensure this is called after controls are initialized
-    document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
-
-  }
-
-  // Start button event listener
-  startButton.addEventListener('click', enableInteraction);
-
+document.addEventListener('DOMContentLoaded', (event) => {
   // Call initialize immediately on page load
   initialize();
 
+  const startButton = document.getElementById('start-button');
+
+  // Start button event listener
+  startButton.addEventListener('click', () => {
+    enableInteraction(); // Call this function on start button click
+    startButton.remove(); // Remove the start button after it's clicked
+  });
 });
 
 
@@ -815,69 +804,78 @@ let globalMinElevation = Infinity;
 
 // Updated addContourLines function to update globalMinElevation
 function addContourLines(geojson) {
-  if (!geojson || !geojson.features) {
-    console.error('Invalid GeoJSON data');
-    return;
-  }
+  return new Promise((resolve, reject) => {
+    if (!geojson || !geojson.features) {
+      reject('Invalid GeoJSON data');
+      return;
+    }
 
-  let contourLines = new THREE.Group(); // Create a new group for contour lines
+    let contourLines = new THREE.Group(); // Create a new group for contour lines
 
-  // Determine min and max elevation from the geojson
-  const elevations = geojson.features.map(f => f.properties.contour);
-  const minElevation = Math.min(...elevations);
-  globalMinElevation = Math.min(globalMinElevation, minElevation); // Update the global minimum elevation
-  const maxElevation = Math.max(...elevations);
+    // Determine min and max elevation from the geojson
+    const elevations = geojson.features.map(f => f.properties.contour);
+    const minElevation = Math.min(...elevations);
+    globalMinElevation = Math.min(globalMinElevation, minElevation); // Update the global minimum elevation
+    const maxElevation = Math.max(...elevations);
 
-  geojson.features.forEach((feature, index) => {
-    const contour = feature.properties.contour; // Elevation value
-    const coordinates = feature.geometry.coordinates; // Array of [lon, lat] pairs
+    geojson.features.forEach((feature, index) => {
+      const contour = feature.properties.contour; // Elevation value
+      const coordinates = feature.geometry.coordinates; // Array of [lon, lat] pairs
 
-    const color = getColorForElevation(contour, minElevation, maxElevation);
-    let material = new THREE.LineBasicMaterial({ color: color });
+      const color = getColorForElevation(contour, minElevation, maxElevation);
+      let material = new THREE.LineBasicMaterial({ color: color });
 
-    // Function to process a single line
-    const processLine = (lineCoords, contourValue) => {
-      let vertices = [];
-      lineCoords.forEach((pair) => {
-        if (!Array.isArray(pair) || pair.length !== 2 || pair.some(c => isNaN(c))) {
-          console.error(`Feature ${index} has invalid coordinates`, pair);
-          return;
+      // Function to process a single line
+      const processLine = (lineCoords, contourValue) => {
+        let vertices = [];
+        lineCoords.forEach((pair) => {
+          if (!Array.isArray(pair) || pair.length !== 2 || pair.some(c => isNaN(c))) {
+            console.error(`Feature ${index} has invalid coordinates`, pair);
+            return;
+          }
+          const [lon, lat] = pair;
+          try {
+            const [x, y] = toStatePlane(lon, lat);
+            const z = contourValue * zScale; // Scale the elevation for visibility
+            vertices.push(x, y, z);
+          } catch (error) {
+            console.error(`Feature ${index} error in toStatePlane:`, error.message);
+          }
+        });
+
+        if (vertices.length > 0) {
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+          const line = new THREE.Line(geometry, material);
+          contourLines.add(line);
         }
-        const [lon, lat] = pair;
-        try {
-          const [x, y] = toStatePlane(lon, lat);
-          const z = contourValue * zScale; // Scale the elevation for visibility
-          vertices.push(x, y, z);
-        } catch (error) {
-          console.error(`Feature ${index} error in toStatePlane:`, error.message);
-        }
-      });
+      };
 
-      if (vertices.length > 0) {
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        const line = new THREE.Line(geometry, material);
-        contourLines.add(line);
+      // Check geometry type and process accordingly
+      if (feature.geometry.type === 'LineString') {
+        processLine(coordinates, contour);
+      } else if (feature.geometry.type === 'MultiLineString') {
+        coordinates.forEach(lineCoords => {
+          processLine(lineCoords, contour);
+        });
+      } else {
+        console.error(`Unsupported geometry type: ${feature.geometry.type}`);
       }
-    };
+    });
 
-    // Check geometry type and process accordingly
-    if (feature.geometry.type === 'LineString') {
-      processLine(coordinates, contour);
-    } else if (feature.geometry.type === 'MultiLineString') {
-      coordinates.forEach(lineCoords => {
-        processLine(lineCoords, contour);
-      });
-    } else {
-      console.error(`Unsupported geometry type: ${feature.geometry.type}`);
+    try {
+      scene.add(contourLines); // Add the group to the scene
+      resolve(); // Resolve the promise when done
+    } catch (error) {
+      reject(`Error in addContourLines: ${error.message}`);
     }
   });
-
-  scene.add(contourLines); // Add the group to the scene
 }
 
 
 function addPolygons(geojson, stride = 10) {
+  return new Promise((resolve, reject) => {
+    try {
   fmPropagationPolygons = new THREE.Group(); // Create a new group for polygons
   // let polygons = []; // This array will store references to your polygon meshes
 
@@ -936,12 +934,19 @@ function addPolygons(geojson, stride = 10) {
       console.error(`Error processing feature at index ${i}:`, error);
     }
   }
-  // Add the fmPropagationPolygons group to the scene
-  scene.add(fmPropagationPolygons);
+      // Add the fmPropagationPolygons group to the scene
+      scene.add(fmPropagationPolygons);
+      resolve(); // Resolve the promise when done
+    } catch (error) {
+      reject(`Error in addPolygons: ${error.message}`);
+    }
+  });
 }
 
 
 function addFMTowerPts(geojson) {
+  return new Promise((resolve, reject) => {
+    try {
 
   let fmTransmitterPoints = new THREE.Group();
   let fmMSTLines = new THREE.Group();
@@ -1004,14 +1009,19 @@ function addFMTowerPts(geojson) {
 
   }
 
-  scene.add(fmMSTLines);
-  console.log('adding mstlines')
-
+      scene.add(fmMSTLines);
+      resolve(); // Resolve the promise when done
+    } catch (error) {
+      reject(`Error in addFMTowerPts: ${error.message}`);
+    }
+  });
 }
 
 
 // Function to add wireframe pyramids and text labels for POINT data from GeoJSON
 function addCellTowerPts(geojson, audioListener, buffer) {
+  return new Promise((resolve, reject) => {
+    try {
 
   cellTransmitterPoints = new THREE.Group();
   cellMSTLines = new THREE.Group();
@@ -1115,6 +1125,11 @@ geojson.features.forEach((feature, index) => {
   // add groups to scene
   scene.add(cellTransmitterPoints);
   scene.add(cellMSTLines);
+  resolve(); // Resolve the promise when done
+} catch (error) {
+  reject(`Error in addCellTowerPts: ${error.message}`);
+}
+});
 }
 
 
@@ -1252,30 +1267,38 @@ function drawMSTEdges(mstEdges, coreColor, glowColor, coreRadius, glowRadius, ta
 
 // Function to visualize bounding box from GeoJSON
 function visualizeBoundingBoxGeoJSON(geojson) {
-  const material = new THREE.LineBasicMaterial({ color: colorScheme.boundingBoxColor }); // bounding box color
+  return new Promise((resolve, reject) => {
+    try {
+      const material = new THREE.LineBasicMaterial({ color: colorScheme.boundingBoxColor }); // bounding box color
 
-  geojson.features.forEach(feature => {
-    const geometry = new THREE.BufferGeometry();
-    const vertices = [];
+      geojson.features.forEach(feature => {
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
 
-    feature.geometry.coordinates[0].forEach(coord => {
-      const [lon, lat] = coord; // Assuming each coordinate is [longitude, latitude]
-      const [x, y] = toStatePlane(lon, lat); // Convert to your coordinate system
-      const z = zScale * 20; // Adjust Z based on your requirements
-      vertices.push(new THREE.Vector3(x, y, z));
-    });
+        feature.geometry.coordinates[0].forEach(coord => {
+          const [lon, lat] = coord; // Assuming each coordinate is [longitude, latitude]
+          const [x, y] = toStatePlane(lon, lat); // Convert to your coordinate system
+          const z = zScale * 20; // Adjust Z based on your requirements
+          vertices.push(new THREE.Vector3(x, y, z));
+        });
 
-    // Close the loop by adding the first point at the end
-    if (feature.geometry.coordinates[0].length > 2) {
-      const [lon, lat] = feature.geometry.coordinates[0][0];
-      const [x, y] = toStatePlane(lon, lat);
-      const z = zScale * 20; // Adjust Z based on your requirements
-      vertices.push(new THREE.Vector3(x, y, z));
+        // Close the loop by adding the first point at the end
+        if (feature.geometry.coordinates[0].length > 2) {
+          const [lon, lat] = feature.geometry.coordinates[0][0];
+          const [x, y] = toStatePlane(lon, lat);
+          const z = zScale * 20; // Adjust Z based on your requirements
+          vertices.push(new THREE.Vector3(x, y, z));
+        }
+
+        geometry.setFromPoints(vertices);
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+      });
+
+      resolve(); // Resolve the promise when done
+    } catch (error) {
+      reject(`Error in visualizeBoundingBoxGeoJSON: ${error.message}`);
     }
-
-    geometry.setFromPoints(vertices);
-    const line = new THREE.Line(geometry, material);
-    scene.add(line);
   });
 }
 
@@ -1393,91 +1416,62 @@ function makeTextSprite(message, parameters) {
 
 
 // Fetching the contour lines GeoJSON and adding to the scene
-function loadGeoJSONData(){
-  fetch('data/stanford_contours_simplified1000m_20231124.geojson')
-    .then(response => response.json())
-    .then(geojson => {
-      addContourLines(geojson); // Existing call to add contour lines
-      // updateProgressBar();
+async function loadGeoJSONData() {
+  try {
+    // Fetch and add contour lines
+    const contourResponse = await fetch('data/stanford_contours_simplified1000m_20231124.geojson');
+    const contourGeojson = await contourResponse.json();
+    await addContourLines(contourGeojson);
 
+    // Fetch and add Cellular Tower points
+    const cellTowerResponse = await fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson');
+    const cellTowerGeojson = await cellTowerResponse.json();
+    await addCellTowerPts(cellTowerGeojson, audioListener, audioBuffer);
 
-      // Fetch and add POINT data here after adding contour lines
-      fetch('data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson')
-        .then(response => response.json())
-        .then(pointGeojson => {
-          // Call the addCellTowerPts function with the loaded buffer
-          addCellTowerPts(pointGeojson, audioListener, audioBuffer);
-          // console.log("adding points");
-          // updateProgressBar();
-        })
-          .catch(error => {
-          console.error('Error loading points GeoJSON:', error);
-        });
+    // Fetch and add FM contour polygons
+    const fmContoursResponse = await fetch('data/FM_contours_NYS_clip_20231101.geojson');
+    const fmContoursGeojson = await fmContoursResponse.json();
+    await addPolygons(fmContoursGeojson);
 
-      // Fetch and add the polygon data
-      fetch('data/FM_contours_NYS_clip_20231101.geojson')
-      .then(response => response.json())
-      .then(polygonGeojson => {
-        addPolygons(polygonGeojson);
-        // console.log("Polygons added");
-        // updateProgressBar();
-      })
-      .catch(error => {
-        console.error('Error loading polygon GeoJSON:', error);
-      });
+    // Fetch and add FM Transmitter points
+    const fmTransmitterResponse = await fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson');
+    const fmTransmitterGeojson = await fmTransmitterResponse.json();
+    await addFMTowerPts(fmTransmitterGeojson);
 
-      // Fetch and add the points data
-      fetch('data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson')
-      .then(response => response.json())
-      .then(pointGeojson => {
-        addFMTowerPts(pointGeojson);
-        // console.log("Yellow points added");
-        // updateProgressBar();
-      })
-      .catch(error => {
-        console.error('Error loading points GeoJSON:', error);
-      });
+    // Fetch and visualize bounding box
+    const boundingBoxResponse = await fetch('data/NYS_fullElevDEM_boundingBox.geojson');
+    const boundingBoxGeojson = await boundingBoxResponse.json();
+    await visualizeBoundingBoxGeoJSON(boundingBoxGeojson);
 
-      // Fetch the bounding box GeoJSON
-      fetch('data/NYS_fullElevDEM_boundingBox.geojson')
-      .then(response => response.json())
-      .then(boundingBoxGeojson => {
-        visualizeBoundingBoxGeoJSON(boundingBoxGeojson);
-      })
-      .catch(error => {
-        console.error('Error loading bounding box GeoJSON:', error);
-      });
+    // Post-load operations
+    const boundingBox = getBoundingBoxOfGeoJSON(contourGeojson);
+    const gridSize = 0.5; // This represents your grid cell size
+    const crossSize = gridSize * 0.05; // X% of the grid size, adjust as needed
 
+    // addGraticule(scene, boundingBox, gridSize, crossSize);
 
+    globalBoundingBox = getBoundingBoxOfGeoJSON(contourGeojson);
+    
+        
+    // Move the camera and set controls target
+    const center = getCenterOfBoundingBox(boundingBox);
+    const size = getSizeOfBoundingBox(boundingBox);
+    const maxDim = Math.max(size.x, size.y);
+    const fov = camera.fov * (Math.PI / 180);
+    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+    cameraZ *= 0.7; // adjust Z magic number
+    const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
+    camera.position.set(center.x, center.y, initialCameraZ);
+    controls.target.set(center.x, center.y, 0);
 
-      const boundingBox = getBoundingBoxOfGeoJSON(geojson);
-      const gridSize = 0.5; // This represents your grid cell size
-      const crossSize = gridSize * 0.05; // X% of the grid size, adjust as needed
+    // Now, add the constraints to the camera and controls
+    constrainCamera(controls, boundingBox);
 
-      // addGraticule(scene, boundingBox, gridSize, crossSize);
-
-      globalBoundingBox = getBoundingBoxOfGeoJSON(geojson);
-      
-          
-      // Move the camera and set controls target
-      const center = getCenterOfBoundingBox(boundingBox);
-      const size = getSizeOfBoundingBox(boundingBox);
-      const maxDim = Math.max(size.x, size.y);
-      const fov = camera.fov * (Math.PI / 180);
-      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-      cameraZ *= 0.7; // adjust Z magic number
-      const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
-      camera.position.set(center.x, center.y, initialCameraZ);
-      controls.target.set(center.x, center.y, 0);
-
-      // Now, add the constraints to the camera and controls
-      constrainCamera(controls, boundingBox);
-
-      // Call this after setting the position and target
-      controls.update();
-    })
-    .catch(error => {
-      console.error('Error loading GeoJSON:', error);
-    });
+    // Call this after setting the position and target
+    controls.update();
+    // After data is loaded, reveal the start button
+    document.getElementById('start-container').style.display = 'block';
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
 }
-

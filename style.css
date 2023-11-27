@@ -73,7 +73,7 @@ h1 {
   overflow: visible;
 }
 
-#progress-bar {
+#spinner {
   font-size: x-large;
   position: absolute;
   left: 50%;
