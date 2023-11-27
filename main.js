@@ -303,6 +303,7 @@ async function initialize() {
   initThreeJS(); // Initialize Three.js
 
   // hide legend items etc on pageload
+  document.getElementById('start-button').style.display = 'none';
   document.getElementById('info-container').style.display = 'none';
   document.getElementById('info-button').style.display = 'none';
 
@@ -314,36 +315,39 @@ async function initialize() {
   document.getElementById('start-button').style.display = 'block';
 }
 
-// Function to enable the interactive elements
 function enableInteraction() {
   const threeContainer = document.getElementById('three-container');
-  const progressBar = document.getElementById('progress-bar');
   const infoButton = document.getElementById('info-button');
 
-  threeContainer.style.pointerEvents = 'auto';
-  threeContainer.style.opacity = '1';
-  infoButton.style.pointerEvents = 'auto';
-  infoButton.style.opacity = '1';
-  progressBar.style.visibility = 'visible'; 
-  requestAnimationFrame(animateProgressBar);
+  // Render the scene once before making it visible
+  renderer.render(scene, camera);
 
-  // Start the visualization
-  animate();
-  lockCameraTopDown(false); // Ensure this is called after controls are initialized
-  document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
+  // Use requestAnimationFrame to ensure the rendering is done
+  requestAnimationFrame(() => {
+    // Reveal the container and info button simultaneously
+    threeContainer.style.visibility = 'visible';
+    threeContainer.style.opacity = '1';
+    threeContainer.style.pointerEvents = 'auto';
+
+    infoButton.style.pointerEvents = 'auto';
+
+    // Start the animation loop
+    animate();
+    lockCameraTopDown(false); // Ensure this is called after controls are initialized
+    document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
+  });
 }
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  // Call initialize immediately on page load
   initialize();
 
   const startButton = document.getElementById('start-button');
-
-  // Start button event listener
+  const infoButton = document.getElementById('info-button');
+  
   startButton.addEventListener('click', () => {
     enableInteraction(); // Call this function on start button click
     startButton.remove(); // Remove the start button after it's clicked
-  });
+    });
 });
 
 
@@ -355,12 +359,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
 function hideInfoBox() {
   const infoContainer = document.getElementById('info-container');
   const infoButton = document.getElementById('info-button');
+
   // Check if the info container is already hidden to prevent unnecessary style changes
   if (infoContainer.style.opacity !== '0') {
     infoContainer.style.opacity = '0'; // Start the fade out
     infoContainer.style.pointerEvents = 'none'; // Make it non-interactive immediately
-    infoButton.style.display = 'block'; // Show the info button
     infoVisible = false;
+
+    // Begin fade-in effect for the info-button
+    infoButton.style.opacity = 0;
+    infoButton.style.transition = 'opacity 10ms ease-in-out';
+    infoButton.style.display = 'block';
+
+    // Set a timeout to change the opacity, initiating the fade-in effect
+    setTimeout(() => {
+      infoButton.style.opacity = 1;
+    }, 90); // Slight delay to ensure the transition effect is applied
   }
 }
 
@@ -372,7 +386,9 @@ function showInfoBox() {
   infoContainer.style.visibility = 'visible'; // Make it visible immediately
   infoContainer.style.pointerEvents = 'auto'; // Make it interactive again
   infoButton.style.display = 'none'; // Hide the info button
+  infoContainer.style.display = 'block';
   infoVisible = true;
+  infoContainer.classList.remove("hidden");
 }
 
 // Add the transitionend event listener
@@ -381,9 +397,6 @@ document.getElementById('info-container').addEventListener('transitionend', func
     this.style.visibility = 'hidden'; // Hide the container after transition
   }
 });
-
-// Call this initially if you want the info box to start visible
-showInfoBox();
 
 // Set up event listeners for mousedown and keypress events to hide the info box
 // Existing event listeners
