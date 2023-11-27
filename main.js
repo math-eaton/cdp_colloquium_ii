@@ -65,89 +65,6 @@ function toStatePlane(lon, lat) {
 //////////////////////////////////////
 // loading screen! //////////////////
 
-let itemsToLoad = 4; // Update this with the number of assets you are loading
-let itemsLoaded = 0;
-let bufferDuration = 600;
-const spinnerCharacters = ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'];
-let currentSpinnerIndex = 0;
-let lastSpinnerUpdateTime = 0;
-const spinnerUpdateRate = 75; // Update spinner every 75 ms
-// Create a material for the ray line
-const rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for visibility
-// Create a geometry for the ray line
-const rayGeometry = new THREE.BufferGeometry();
-const rayLine = new THREE.Line(rayGeometry, rayMaterial);
-
-// Call this function to update the spinner using requestAnimationFrame
-function animateSpinner(timestamp) {
-  // Check if it's time to update the spinner character
-  if (timestamp - lastSpinnerUpdateTime > spinnerUpdateRate) {
-    lastSpinnerUpdateTime = timestamp;
-    const progressBar = document.getElementById('progress-bar');
-    progressBar.textContent = spinnerCharacters[currentSpinnerIndex];
-    currentSpinnerIndex = (currentSpinnerIndex + 1) % spinnerCharacters.length;
-  }
-
-  // Continue the spinner animation
-  requestAnimationFrame(animateSpinner);
-}
-
-// Start the spinner animation
-requestAnimationFrame(animateSpinner);
-
-// Initialize the progress bar to start at 0%
-let progressBar = document.getElementById('progress-bar');
-progressBar.style.width = '0%';
-
-// Define your steps and their durations
-const loadingSteps = [
-  // { progress: 25, duration: 150 },  // 25% in 750ms
-  // { progress: 50, duration: 450 },  // 50% in 750ms
-  // { progress: 75, duration: 750 },  // 75% in 750ms
-  { progress: 100, duration: bufferDuration }  // 100% in 750ms
-];
-
-let currentStep = 0;
-let startTime = null;
-let lastProgress = 0;
-
-// Function to update the progress bar smoothly
-function animateProgressBar(timestamp) {
-  if (startTime === null) startTime = timestamp;
-  const step = loadingSteps[currentStep];
-
-  // Calculate progress based on time elapsed
-  const elapsedTime = timestamp - startTime;
-  const progress = lastProgress + (step.progress - lastProgress) * (elapsedTime / step.duration);
-
-  // Set the width of the progress bar
-  // progressBar.style.width = `${progress}%`;
-
-  // Check if we should move to the next step
-  if (elapsedTime < step.duration) {
-    // Continue the animation
-    requestAnimationFrame(animateProgressBar);
-  } else {
-    // Move to the next step
-    startTime = timestamp;
-    lastProgress = step.progress;
-    currentStep++;
-
-    if (currentStep < loadingSteps.length) {
-      requestAnimationFrame(animateProgressBar);
-    } else {
-      // Animation complete
-      // progressBar.textContent = "lfg";
-      // Transition to your visualization
-      setTimeout(() => {
-        progressBar.style.display = 'none'; // Optionally hide the progress bar
-        const visualizationContainer = document.getElementById('three-container');
-        visualizationContainer.style.visibility = 'visible'; // Make the three.js container visible
-      }, 500); // Short delay for the transition, can be adjusted or removed as needed
-    }
-  }
-}
-
 // Three.js - Initialize the Scene
 let scene, camera, renderer, controls;
 let infoVisible = false;
@@ -157,7 +74,11 @@ let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let polygons = [];
 
-
+// Create a material for the ray line
+const rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for visibility
+// Create a geometry for the ray line
+const rayGeometry = new THREE.BufferGeometry();
+const rayLine = new THREE.Line(rayGeometry, rayMaterial);
 
 function initThreeJS() {
     scene = new THREE.Scene();

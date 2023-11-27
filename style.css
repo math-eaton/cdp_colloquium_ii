@@ -73,7 +73,7 @@ h1 {
   overflow: visible;
 }
 
-#spinner {
+#progress-bar {
   font-size: x-large;
   position: absolute;
   left: 50%;
@@ -268,4 +268,22 @@ button:focus-visible {
 
     
   }
+}
+
+@keyframes spin {
+  0% { content: '←'; }
+  12.5% { content: '↖'; }
+  25% { content: '↑'; }
+  37.5% { content: '↗'; }
+  50% { content: '→'; }
+  62.5% { content: '↘'; }
+  75% { content: '↓'; }
+  87.5% { content: '↙'; }
+  100% { content: '←'; }
+}
+
+#progress-bar::after {
+  display: inline-block;
+  animation: spin 500ms steps(8, end) infinite;
+  content: '←'; /* Initial character */
 }
