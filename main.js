@@ -25,11 +25,12 @@ const colorScheme = {
   polygonColor: "#FF1493", // Pink
   pyramidColorFM: "#FFFF00", // Yellow
   pyramidColorCellular: "#FF5F1F", // neon orange
-  lowestElevationColor: "#0000ff", // Blue
-  middleElevationColor: "#00ff00", // Green
-  highestElevationColor: "#ff0000", // Red
+  // lowestElevationColor: "#0000ff", // Blue
+  // middleElevationColor: "#00ff00", // Green
+  // highestElevationColor: "#ff0000", // Red
   mstFmColor: "#FFFF00", // yellow
-  mstCellColor: "#FF5F1F" // neon orange
+  mstCellColor: "#FF5F1F", // neon orange
+  boundingBoxColor: "#0000FF"
 };
 
 // Alternate color scheme
@@ -162,7 +163,6 @@ function initThreeJS() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.up.set(0, 0, 1); // Set Z as up-direction 
-    camera.position.z = 20; // Adjust as necessary
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -181,7 +181,7 @@ function initThreeJS() {
     controls = new MapControls(camera, renderer.domElement);
 
     // Set up the control parameters as needed for a mapping interface
-    controls.screenSpacePanning = true; // so that panning doesn't have any vertical limit
+    controls.screenSpacePanning = false;
     controls.enableRotate = false; // typically map interfaces don't use rotation
     controls.enableDamping = true; // an optional setting to give a smoother control feeling
     controls.dampingFactor = 0.05; // amount of damping (drag)
@@ -190,8 +190,8 @@ function initThreeJS() {
     controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
     controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
     // Set the maximum distance the camera can dolly out
-    controls.maxDistance = 4.5;
-    controls.minDistance = 0.2; 
+    controls.maxDistance = 5.5; // max camera zoom
+    controls.minDistance = 0.2; // min camera zoom
 
     const audioListener = new THREE.AudioListener();
     camera.add(audioListener);
@@ -592,12 +592,25 @@ function onDocumentKeyDown(event) {
   document.addEventListener('keydown', onDocumentKeyDown, false);
   
 
-// Function to handle panning
+// Define pan speed
+const minPanSpeed = 0.05; // Minimum panning speed (when zoomed out)
+const maxPanSpeed = 0.2;  // Maximum panning speed (when zoomed in)
+
+// Function to handle panning with dynamic speed
 function panCamera(dx, dy) {
-  camera.position.x += dx * panSpeed;
-  camera.position.y += dy * panSpeed;
-  controls.target.x += dx * panSpeed;
-  controls.target.y += dy * panSpeed;
+  // Calculate dynamic pan speed based on camera's distance from the target
+  const distance = camera.position.distanceTo(controls.target);
+  const panSpeed = THREE.MathUtils.lerp(maxPanSpeed, minPanSpeed, distance / controls.maxDistance);
+
+  // Apply the calculated pan speed
+  const deltaX = dx * panSpeed;
+  const deltaY = dy * panSpeed;
+
+  camera.position.x += deltaX;
+  camera.position.y += deltaY;
+  controls.target.x += deltaX;
+  controls.target.y += deltaY;
+
   controls.update();
 }
 
@@ -771,9 +784,13 @@ const zScale = 0.0004; // Change this value to scale the elevation up or down
 // Function to get color based on elevation
 function getColorForElevation(elevation, minElevation, maxElevation) {
   const gradient = [
-    { stop: 0, color: new THREE.Color(colorScheme.lowestElevationColor) }, // blue at the lowest
-    { stop: 0.5, color: new THREE.Color(colorScheme.middleElevationColor) }, // green at the middle
-    { stop: 1, color: new THREE.Color(colorScheme.highestElevationColor) }  // red at the highest
+    { stop: 0.0, color: new THREE.Color("#0000ff") }, // Blue at the lowest
+    { stop: 0.2, color: new THREE.Color("#007fff") }, // Lighter blue
+    { stop: 0.4, color: new THREE.Color("#00ff95") }, // Cyan-ish blue
+    { stop: 0.5, color: new THREE.Color("#00ff00") }, // Green at the middle
+    { stop: 0.6, color: new THREE.Color("#bfff00") }, // Yellow-green
+    { stop: 0.8, color: new THREE.Color("#ffbf00") }, // Orange
+    { stop: 1.0, color: new THREE.Color("#ff0000") }  // Red at the highest
   ];
 
   const t = (elevation - minElevation) / (maxElevation - minElevation);
@@ -790,6 +807,7 @@ function getColorForElevation(elevation, minElevation, maxElevation) {
   const color = lowerStop.color.clone().lerp(upperStop.color, (t - lowerStop.stop) / (upperStop.stop - lowerStop.stop));
   return color;
 }
+
 
 // Define a variable to store the minimum elevation
 // This should be determined from the addContourLines function
@@ -1232,6 +1250,35 @@ function drawMSTEdges(mstEdges, coreColor, glowColor, coreRadius, glowRadius, ta
   });
 }
 
+// Function to visualize bounding box from GeoJSON
+function visualizeBoundingBoxGeoJSON(geojson) {
+  const material = new THREE.LineBasicMaterial({ color: colorScheme.boundingBoxColor }); // bounding box color
+
+  geojson.features.forEach(feature => {
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+
+    feature.geometry.coordinates[0].forEach(coord => {
+      const [lon, lat] = coord; // Assuming each coordinate is [longitude, latitude]
+      const [x, y] = toStatePlane(lon, lat); // Convert to your coordinate system
+      const z = zScale * 20; // Adjust Z based on your requirements
+      vertices.push(new THREE.Vector3(x, y, z));
+    });
+
+    // Close the loop by adding the first point at the end
+    if (feature.geometry.coordinates[0].length > 2) {
+      const [lon, lat] = feature.geometry.coordinates[0][0];
+      const [x, y] = toStatePlane(lon, lat);
+      const z = zScale * 20; // Adjust Z based on your requirements
+      vertices.push(new THREE.Vector3(x, y, z));
+    }
+
+    geometry.setFromPoints(vertices);
+    const line = new THREE.Line(geometry, material);
+    scene.add(line);
+  });
+}
+
 
 ///////////////////////////////////////////////////// 
 // AUDIO INIT //////////////////////////////////////
@@ -1390,6 +1437,17 @@ function loadGeoJSONData(){
       .catch(error => {
         console.error('Error loading points GeoJSON:', error);
       });
+
+      // Fetch the bounding box GeoJSON
+      fetch('data/NYS_fullElevDEM_boundingBox.geojson')
+      .then(response => response.json())
+      .then(boundingBoxGeojson => {
+        visualizeBoundingBoxGeoJSON(boundingBoxGeojson);
+      })
+      .catch(error => {
+        console.error('Error loading bounding box GeoJSON:', error);
+      });
+
 
 
       const boundingBox = getBoundingBoxOfGeoJSON(geojson);
