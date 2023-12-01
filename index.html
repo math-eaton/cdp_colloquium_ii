@@ -5,8 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/3D_mapping/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>iso 3D</title>
-    <script type="module" crossorigin src="/3D_mapping/assets/index-5d1ad5ca.js"></script>
-    <link rel="stylesheet" href="/3D_mapping/assets/index-91a0ba4d.css">
+    <script type="module" crossorigin src="/3D_mapping/assets/index-66c7f55d.js"></script>
+    <link rel="stylesheet" href="/3D_mapping/assets/index-9a42eaf5.css">
   </head>
   <body>
 
@@ -24,15 +24,18 @@
     <button id="info-button" style="opacity: 0;">?</button>
     <div id="info-container" class="hidden">
       <ul>
-        <li>pan: right mouse</li>
-        <li>orbit: left mouse</li>
+        <div id="legend-controls">
+        </div>
       </ul>
-      <div id="camera-controls">
-        <label for="camera-lock">lock top-down view</label>
-        <input type="checkbox" id="camera-lock" name="camera-lock">
-      </div>
-      <p></p>
-      <p class="small-text">click to hide</p>
+      <!-- <div id="camera-controls" class="custom-checkbox-container">
+        <input type="checkbox" id="camera-lock" name="camera-lock" class="hidden-checkbox">
+        <label for="camera-lock" class="custom-checkbox-label">
+            <span class="custom-checkbox"></span>
+            lock top-down view
+        </label>
+      </div> -->
+              <p></p>
+      <span id="hide-legend" class="small-text" style="cursor: pointer; text-decoration: underline;">click to hide</span>
     </div>
     
     
