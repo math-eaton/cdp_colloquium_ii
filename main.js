@@ -14,7 +14,7 @@ let fmMSTLines = new THREE.Group();
 let cellTransmitterPoints = new THREE.Group();
 let cellMSTLines = new THREE.Group();
 let contourLines = new THREE.Group();
-let fmPropagationPolygons = new THREE.Group();
+let propagationPolygons = new THREE.Group();
 
 // Define color scheme variables
 const colorScheme = {
@@ -356,7 +356,7 @@ function addLayerVisibilityControls() {
     { name: 'cell transmitter points', color: colorScheme.pyramidColorCellular },
     { name: 'cell MST lines', color: colorScheme.mstCellColor },
     { name: 'contour lines', color: colorScheme.contoursLabelColor },
-    { name: 'fm propagation polygons', color: colorScheme.polygonColor }
+    { name: 'propagation polygons', color: colorScheme.polygonColor }
   ];
 
   layers.forEach(layer => {
@@ -405,7 +405,7 @@ const layerObjects = {
   'cell transmitter points': cellTransmitterPoints,
   'cell MST lines': cellMSTLines,
   'contour lines': contourLines,
-  'fm propagation polygons': fmPropagationPolygons
+  'propagation polygons': propagationPolygons
 };
 
 // Function to toggle layer visibility
@@ -884,13 +884,13 @@ function addPolygons(geojson, stride = 10) {
       const mesh = new THREE.Mesh(shapeGeometry, material);
       mesh.name = 'polygon-' + i;
       scene.add(mesh);
-      fmPropagationPolygons.add(mesh);
+      propagationPolygons.add(mesh);
     } catch (error) {
       console.error(`Error processing feature at index ${i}:`, error);
     }
   }
-      // Add the fmPropagationPolygons group to the scene
-      scene.add(fmPropagationPolygons);
+      // Add the propagationPolygons group to the scene
+      scene.add(propagationPolygons);
       resolve(); // Resolve the promise when done
     } catch (error) {
       reject(`Error in addPolygons: ${error.message}`);
@@ -936,8 +936,40 @@ function addFMTowerPts(geojson) {
         pyramid.position.set(x, y, z);
         fmTransmitterPoints.add(pyramid);
 
+    
+        // Check for coincident points and get a z-offset
+        const label = `fm`;
+        const zOffset = getCoincidentPointOffset(lon, lat, 8, 0.00001);
+        // const zOffset = getCoincidentPointOffset(lon, lat, label, 4, 0.0001);
+
+
+        // Ensure Callsign or another property is correctly referenced
+        // const label = feature.properties.Callsign || `Tower ${index}`;
+
+        const textSprite = makeTextSprite(` ${label} `, {
+        
+          fontsize: 24,
+          strokeColor: "rgba(255, 255, 255, 0.9)",
+          strokeWidth: 1,
+
+          // borderColor: { r: 255, g: 0, b: 0, a: 1.0 },
+          // backgroundColor: { r: 255, g: 100, b: 100, a: 0.8 }
+        });
+    
+        // Position the sprite above the pyramid
+        const pyramidHeightScaled = pyramidHeight * zScale;
+
+        // Position the sprite above the pyramid, applying the offset for coincident points
+        textSprite.position.set(x, y, z + pyramidHeightScaled + zOffset + 0.009);
+        textSprite.scale.set(0.05, 0.025, 1.0);
+    
+
+        fmTransmitterPoints.add(textSprite);
+        // console.log(`creating label for ${label}`);
+
         // Add the position to the points array for convex hull calculation
         points.push(new THREE.Vector3(x, y, z));
+
       } catch (error) {
         console.error(`Error projecting point:`, error.message);
       }
@@ -989,7 +1021,6 @@ function addCellTowerPts(geojson, audioListener, buffer) {
 
   const points = []; // Array to store points for the convex hull
 
-  // Parse the POINT data from the GeoJSON
 // Parse the POINT data from the GeoJSON
 geojson.features.forEach((feature, index) => {
   if (feature.geometry.type === 'Point') {
@@ -1022,9 +1053,9 @@ geojson.features.forEach((feature, index) => {
         // sound.play(); // Start playing the sound
 
         // Check for coincident points and get a z-offset
-        const label = feature.properties.Callsign || `Tower ${index}`;
-        // const zOffset = getCoincidentPointOffset(lon, lat, 8, 0.00001);
-        const zOffset = getCoincidentPointOffset(lon, lat, label, 4, 0.0001);
+        const label = `cell`;
+        const zOffset = getCoincidentPointOffset(lon, lat, 8, 0.00001);
+        // const zOffset = getCoincidentPointOffset(lon, lat, label, 4, 0.0001);
 
 
         // Ensure Callsign or another property is correctly referenced
@@ -1048,7 +1079,7 @@ geojson.features.forEach((feature, index) => {
         textSprite.scale.set(0.05, 0.025, 1.0);
     
 
-        scene.add(textSprite);
+        cellTransmitterPoints.add(textSprite); // Add the label to the cellTransmitterPoints group
         // console.log(`creating label for ${label}`);
 
         // Add the position to the points array for convex hull calculation
