@@ -30,7 +30,8 @@ const colorScheme = {
   // highestElevationColor: "#ff0000", // Red
   mstFmColor: "#FFFF00", // yellow
   mstCellColor: "#FF5F1F", // neon orange
-  boundingBoxColor: "#0000FF"
+  boundingBoxColor: "#0000FF",
+  contoursLabelColor: "#00ff00"
 };
 
 // Alternate color scheme
@@ -354,23 +355,33 @@ function addLayerVisibilityControls() {
     { name: 'fm minimum spanning tree lines', color: colorScheme.mstFmColor },
     { name: 'cell transmitter points', color: colorScheme.pyramidColorCellular },
     { name: 'cell MST lines', color: colorScheme.mstCellColor },
-    { name: 'contour lines', color: colorScheme.lowestElevationColor },
+    { name: 'contour lines', color: colorScheme.contoursLabelColor },
     { name: 'fm propagation polygons', color: colorScheme.polygonColor }
   ];
 
   layers.forEach(layer => {
     const container = document.createElement('div');
+    container.className = 'custom-checkbox-container';
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = layer.name;
-    checkbox.name = layer.name;
-    checkbox.checked = true;  // Set to true if you want the layers to be visible by default
+    checkbox.className = 'hidden-checkbox';
+    checkbox.checked = true;
 
     const label = document.createElement('label');
     label.htmlFor = layer.name;
-    label.textContent = layer.name;
-    label.style.color = layer.color;  // Set the label text color based on the layer color
+    label.className = 'custom-checkbox-label';
+
+    const customCheckbox = document.createElement('span');
+    customCheckbox.className = 'custom-checkbox';
+
+    const labelText = document.createElement('span');
+    labelText.textContent = layer.name;
+    labelText.style.color = layer.color; // Set the text color
+
+    label.appendChild(customCheckbox);
+    label.appendChild(labelText);
 
     container.appendChild(checkbox);
     container.appendChild(label);
@@ -700,17 +711,17 @@ function lockCameraTopDown(isLocked) {
 lockCameraTopDown(false);
 
 
-// Update the checkbox event listener to pass the boundingBox
-// In your event listeners
-document.getElementById('camera-lock').addEventListener('change', (event) => {
-  lockCameraTopDown(event.target.checked);
-});
+// // Update the checkbox event listener to pass the boundingBox
+// // In your event listeners
+// document.getElementById('camera-lock').addEventListener('change', (event) => {
+//   lockCameraTopDown(event.target.checked);
+// });
 
 
-// Add this event listener to stop the propagation of the click event
-document.getElementById('camera-lock').addEventListener('click', (event) => {
-  event.stopPropagation(); // This will prevent the click from reaching the document level
-});
+// // Add this event listener to stop the propagation of the click event
+// document.getElementById('camera-lock').addEventListener('click', (event) => {
+//   event.stopPropagation(); // This will prevent the click from reaching the document level
+// });
 
 ///////////////////////////////////////////////////// 
 // GEOGRAPHIC DATA VIS /////////////////////////////
