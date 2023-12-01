@@ -49,15 +49,15 @@ const colorScheme = {
 
 
 // Define the custom projection with its PROJ string
-const statePlaneProjString = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-proj4.defs("EPSG:32118", statePlaneProjString);
+const statePlaneProjString = "+proj=longlat +lat_0=40 +lon_0=-76.58333333333333 +k=0.9999375 +x_0=249999.9998983998 +y_0=0 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs";
+proj4.defs("EPSG:2261", statePlaneProjString);
 
 // Use this function to convert lon/lat to State Plane coordinates
 function toStatePlane(lon, lat) {
   if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
     throw new Error(`Invalid coordinates: longitude (${lon}), latitude (${lat})`);
   }
-  return proj4("EPSG:32118").forward([lon, lat]);
+  return proj4("EPSG:2261").forward([lon, lat]);
 }
 
 
@@ -125,6 +125,7 @@ function initThreeJS() {
     scene.add(directionalLight);
     renderer.setClearColor(colorScheme.backgroundColor);
     window.addEventListener('resize', onWindowResize, false);
+    addLayerVisibilityControls();
     adjustCameraZoom();
 }
 
@@ -240,6 +241,7 @@ async function initialize() {
   document.getElementById('start-button').style.display = 'block';
 }
 
+
 function enableInteraction() {
   const threeContainer = document.getElementById('three-container');
   const infoButton = document.getElementById('info-button');
@@ -285,23 +287,23 @@ function hideInfoBox() {
   const infoContainer = document.getElementById('info-container');
   const infoButton = document.getElementById('info-button');
 
-  // Check if the info container is already hidden to prevent unnecessary style changes
-  if (infoContainer.style.opacity !== '0') {
-    infoContainer.style.opacity = '0'; // Start the fade out
-    infoContainer.style.pointerEvents = 'none'; // Make it non-interactive immediately
-    infoVisible = false;
+  infoContainer.style.opacity = '0'; // Start the fade out
+  infoContainer.style.pointerEvents = 'none'; // Make it non-interactive immediately
+  infoVisible = false;
 
-    // Begin fade-in effect for the info-button
-    infoButton.style.opacity = 0;
-    infoButton.style.transition = 'opacity 10ms ease-in-out';
-    infoButton.style.display = 'block';
+  // Begin fade-in effect for the info-button
+  infoButton.style.opacity = 0;
+  infoButton.style.transition = 'opacity 10ms ease-in-out';
+  infoButton.style.display = 'block';
 
-    // Set a timeout to change the opacity, initiating the fade-in effect
-    setTimeout(() => {
-      infoButton.style.opacity = 1;
-    }, 90); // Slight delay to ensure the transition effect is applied
-  }
+  setTimeout(() => {
+    infoButton.style.opacity = 1;
+  }, 90); // Slight delay to ensure the transition effect is applied
 }
+
+// Add an event listener to the hide legend element
+document.getElementById('hide-legend').addEventListener('click', hideInfoBox);
+
 
 // Function to show the information container and hide the info button
 function showInfoBox() {
@@ -326,8 +328,11 @@ document.getElementById('info-container').addEventListener('transitionend', func
 // Set up event listeners for mousedown and keypress events to hide the info box
 // Existing event listeners
 document.addEventListener('mousedown', (event) => {
-  // Check if the target is not the checkbox or its label
-  if (event.target.id !== 'camera-lock' && event.target.htmlFor !== 'camera-lock') {
+  // Get the info-container element
+  const infoContainer = document.getElementById('info-container');
+
+  // Check if the click is outside the info-container
+  if (!infoContainer.contains(event.target) && event.target.id !== 'info-button') {
     hideInfoBox();
   }
 });
@@ -343,7 +348,7 @@ document.getElementById('info-button').addEventListener('click', function () {
 
 // Function to add checkboxes for layer visibility control
 function addLayerVisibilityControls() {
-  const infoContainer = document.getElementById('info-container');
+  const legendControls = document.getElementById('legend-controls'); // Targeting the new div
   const layers = [
     { name: 'fm transmitter points', color: colorScheme.pyramidColorFM },
     { name: 'fm minimum spanning tree lines', color: colorScheme.mstFmColor },
@@ -369,14 +374,18 @@ function addLayerVisibilityControls() {
 
     container.appendChild(checkbox);
     container.appendChild(label);
-    infoContainer.appendChild(container);
+    legendControls.appendChild(container);
 
     // Add event listener to toggle layer visibility
     checkbox.addEventListener('change', function() {
+      console.log(`Toggling visibility for ${layer.name}`);
       toggleLayerVisibility(layer.name, this.checked);
     });
+
   });
 }
+
+
 
 // You can then map these to the names used in the checkboxes
 const layerObjects = {
@@ -399,8 +408,9 @@ function toggleLayerVisibility(layerName, isVisible) {
   }
 
   // Update the renderer if needed
-  // renderer.render(scene, camera);
+  renderer.render(scene, camera);
 }
+
 
 ///////////////////////////////////////////////////////
 // AUDIO LISTENERS ///////////////////////////////////
@@ -748,8 +758,6 @@ function addContourLines(geojson) {
       return;
     }
 
-    let contourLines = new THREE.Group(); // Create a new group for contour lines
-
     // Determine min and max elevation from the geojson
     const elevations = geojson.features.map(f => f.properties.contour);
     const minElevation = Math.min(...elevations);
@@ -814,8 +822,6 @@ function addContourLines(geojson) {
 function addPolygons(geojson, stride = 10) {
   return new Promise((resolve, reject) => {
     try {
-  fmPropagationPolygons = new THREE.Group(); // Create a new group for polygons
-  // let polygons = []; // This array will store references to your polygon meshes
 
   for (let i = 0; i < geojson.features.length; i += stride) {
     const feature = geojson.features[i];
@@ -885,9 +891,6 @@ function addPolygons(geojson, stride = 10) {
 function addFMTowerPts(geojson) {
   return new Promise((resolve, reject) => {
     try {
-
-  let fmTransmitterPoints = new THREE.Group();
-  let fmMSTLines = new THREE.Group();
 
   // Define the base size and height for the pyramids
   const baseSize = 0.003; // Size of one side of the pyramid's base
@@ -960,9 +963,6 @@ function addFMTowerPts(geojson) {
 function addCellTowerPts(geojson, audioListener, buffer) {
   return new Promise((resolve, reject) => {
     try {
-
-  cellTransmitterPoints = new THREE.Group();
-  cellMSTLines = new THREE.Group();
 
   // Define the base size and height for the pyramids
   const baseSize = 0.003; // This would be the size of one side of the pyramid's base
@@ -1068,6 +1068,37 @@ geojson.features.forEach((feature, index) => {
   reject(`Error in addCellTowerPts: ${error.message}`);
 }
 });
+}
+
+
+// Function to load and position the raster image
+function loadAndPositionRaster() {
+  const textureLoader = new THREE.TextureLoader();
+
+  // Define the corner coordinates of your raster image in lon/lat
+  const topLeftLonLat = [-76.6, 40.8]; // Replace with actual coordinates
+  const bottomRightLonLat = [-76.4, 40.6]; // Replace with actual coordinates
+
+  // Convert corner coordinates to State Plane coordinates
+  const topLeftSP = toStatePlane(...topLeftLonLat);
+  const bottomRightSP = toStatePlane(...bottomRightLonLat);
+
+  // Calculate the size and position based on converted coordinates
+  const width = Math.abs(topLeftSP[0] - bottomRightSP[0]);
+  const height = Math.abs(topLeftSP[1] - bottomRightSP[1]);
+  const positionX = (topLeftSP[0] + bottomRightSP[0]) / 2;
+  const positionY = (topLeftSP[1] + bottomRightSP[1]) / 2;
+
+  textureLoader.load('path/to/Merged_Viewshed_NYS_Resample.jpg', function(texture) {
+    const geometry = new THREE.PlaneGeometry(width, height);
+    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const rasterMesh = new THREE.Mesh(geometry, material);
+
+    // Set position based on converted State Plane coordinates
+    rasterMesh.position.set(positionX, positionY, 0);
+
+    scene.add(rasterMesh);
+  });
 }
 
 
@@ -1417,6 +1448,11 @@ function handleGeoJSONData(url, data) {
       visualizeBoundingBoxGeoJSON(data);
       break;
 
+    case 'data/NYS_cellTower_viewshed_20231130.jpg':
+      viewshedJPG = data;
+      loadAndPositionRaster(data);
+      break;
+  
     default:
       console.warn('Unrecognized URL:', url);
       break;
@@ -1437,7 +1473,7 @@ function postLoadOperations() {
     const center = getCenterOfBoundingBox(boundingBox);
     const size = getSizeOfBoundingBox(boundingBox);
     const maxDim = Math.max(size.x, size.y);
-    const fov = camera.fov * (Math.PI / 180);
+    const fov = camera.fov * (Math.PI / 100);
     let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
     cameraZ *= 0.7; // adjust Z magic number
     const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
@@ -1452,3 +1488,4 @@ function postLoadOperations() {
     // After data is loaded, reveal the start button
     document.getElementById('start-container').style.display = 'block';
   }
+

@@ -16,10 +16,15 @@
     "vite": "^4.5.0"
   },
   "dependencies": {
+    "@tweenjs/tween.js": "^18.6.4",
     "ascii-progress": "^2.0.0",
+    "chroma": "^0.0.1",
+    "chroma-js": "^2.4.2",
     "convex-hull": "^1.0.3",
     "graphology": "^0.25.4",
     "proj4": "^2.9.2",
-    "three": "^0.158.0"
+    "three": "^0.158.0",
+    "tween": "^0.9.0",
+    "tween.js": "^16.6.0"
   }
 }

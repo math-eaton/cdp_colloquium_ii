@@ -74,14 +74,14 @@ h1 {
 }
 
 #progress-bar {
-  font-size: x-large;
+  font-size: xx-large;
   position: absolute;
   left: 50%;
   display: block;
-  height: 20px;
+  height: 200px;
   width: 0;
   /* background-color: #33cc33; */
-  line-height: 20px;
+  line-height: 200px;
   text-align: center;
   color: rgb(255, 255, 255);
   transition: width 0.5s ease; /* Add a transition for smooth width change */
@@ -284,7 +284,7 @@ button:focus-visible {
 
 #progress-bar::after {
   display: inline-block;
-  animation: spin 500ms steps(8, end) infinite;
+  animation: spin 700ms steps(8, end) infinite;
   content: '←'; /* Initial character */
-  transform: translateZ(0); /* Trigger hardware acceleration */
+  transform: translateZ(0);
 }
