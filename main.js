@@ -266,7 +266,7 @@ function animate() {
   }
   
   renderer.render(scene, camera);
-  
+
 }
 
 // Function to initialize the scene and other components
@@ -592,7 +592,7 @@ function onDocumentKeyDown(event) {
           
   }
 
-  if (event.key === 'r' || event.key === 'R') {
+  if (event.key === 'y' || event.key === 'Y') {
     isCameraRotating = !isCameraRotating; // Toggle rotation
     event.preventDefault();
     return; // Exit to avoid interfering with other keys
@@ -968,40 +968,44 @@ function addPolygons(geojson, stride = 10) {
 function addFMTowerPts(geojson) {
   return new Promise((resolve, reject) => {
     try {
+      // Define the base size and height for the pyramids
+      const baseSize = 0.003; // Size of one side of the pyramid's base
+      const pyramidHeight = .015; // Height of the pyramid from the base to the tip
 
-  // Define the base size and height for the pyramids
-  const baseSize = 0.003; // Size of one side of the pyramid's base
-  const pyramidHeight = .015; // Height of the pyramid from the base to the tip
+      // Material for the wireframe pyramids
+      let pyramidMaterialFM = new THREE.MeshBasicMaterial({
+        color: colorScheme.pyramidColorFM,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
+      });
 
-  // Material for the wireframe pyramids
-  let pyramidMaterialFM = new THREE.MeshBasicMaterial({
-    color: colorScheme.pyramidColorFM,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.5
-  });
+      const points = []; // Array to store points for the convex hull
 
-  const points = []; // Array to store points for the convex hull
+      // Parse the POINT data from the GeoJSON
+      geojson.features.forEach(feature => {
+        if (feature.geometry.type === 'Point') {
+          const [lon, lat] = feature.geometry.coordinates;
+          const elevation = feature.properties.Z;
 
-  // Parse the POINT data from the GeoJSON
-  geojson.features.forEach(feature => {
-    if (feature.geometry.type === 'Point') {
-      const [lon, lat] = feature.geometry.coordinates;
-      const elevation = feature.properties.Elevation;
+          try {
+            // Convert the lon/lat to State Plane coordinates
+            const [x, y] = toStatePlane(lon, lat);
+            const z = elevation * zScale; // Apply the scaling factor to the elevation
 
-      try {
-        // Convert the lon/lat to State Plane coordinates
-        const [x, y] = toStatePlane(lon, lat);
-        const z = elevation * zScale; // Apply the scaling factor to the elevation
+            // Check for valid coordinates before proceeding
+            if (x === null || y === null || isNaN(z)) {
+              console.error('Invalid point coordinates:', x, y, z);
+              return; // Skip this iteration
+            }
 
-        // Create a cone geometry for the pyramid
-        const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
-        pyramidGeometry.rotateX(Math.PI / 2); // Rotate the pyramid to point up along the Z-axis
+            // Create a cone geometry for the pyramid
+            const pyramidGeometry = new THREE.ConeGeometry(baseSize, pyramidHeight, 5);
+            pyramidGeometry.rotateX(Math.PI / 2); // Rotate the pyramid to point up along the Z-axis
 
-        const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialFM);
-        pyramid.position.set(x, y, z);
-        fmTransmitterPoints.add(pyramid);
-
+            const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterialFM);
+            pyramid.position.set(x, y, z);
+            fmTransmitterPoints.add(pyramid);
     
         // Check for coincident points and get a z-offset
         const label = `fm`;
@@ -1033,40 +1037,40 @@ function addFMTowerPts(geojson) {
         fmTransmitterPoints.add(textSprite);
         // console.log(`creating label for ${label}`);
 
-        // Add the position to the points array for convex hull calculation
+      // Add the position to the points array for convex hull calculation
         points.push(new THREE.Vector3(x, y, z));
 
-      } catch (error) {
-        console.error(`Error projecting point:`, error.message);
+          } catch (error) {
+            console.error(`Error projecting point: ${error.message}`);
+          }
+        } else {
+          console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
+        }
+      });
+
+      // Add the FM points to the scene
+      scene.add(fmTransmitterPoints);
+
+      // Create and add the convex hull to the scene
+      if (points.length > 0) {
+        // Additional checks and functionality as needed...
+
+        // Construct the MST
+        const fmMstEdges = primsAlgorithm(points);
+
+        // Draw the MST
+        drawMSTEdges(fmMstEdges, '#FFFFFF', colorScheme.mstFmColor, 0.00025, 0.00075, fmMSTLines);
       }
-    } else {
-      console.error(`Unsupported geometry type for points: ${feature.geometry.type}`);
-    }
-  });
 
-  scene.add(fmTransmitterPoints);
-
-  // Create and add the convex hull to the scene
-  if (points.length > 0) {
-    // createConvexHullLines(points);
-    // console.log("creating convex hull with " + points)
-
-    // Construct the MST
-    const fmMstEdges = primsAlgorithm(points);
-
-    // Draw the MST
-    drawMSTEdges(fmMstEdges, '#FFFFFF', colorScheme.mstFmColor, 0.00025, 0.00075, fmMSTLines);
-
-  }
-
+      // Add the MST lines to the scene
       scene.add(fmMSTLines);
       resolve(); // Resolve the promise when done
     } catch (error) {
+      console.error('Error in addFMTowerPts:', error);
       reject(`Error in addFMTowerPts: ${error.message}`);
     }
   });
 }
-
 
 // Function to add wireframe pyramids and text labels for POINT data from GeoJSON
 function addCellTowerPts(geojson, audioListener, buffer) {
@@ -1092,7 +1096,7 @@ geojson.features.forEach((feature, index) => {
   if (feature.geometry.type === 'Point') {
     // Directly use the coordinates array
     const [lon, lat] = feature.geometry.coordinates;
-    const elevation = feature.properties.Elevation;
+    const elevation = feature.properties.Z;
 
       try {
         // Convert the lon/lat to State Plane coordinates
@@ -1496,35 +1500,19 @@ function makeTextSprite(message, parameters) {
 async function loadGeoJSONData() {
   const urls = [
     'data/stanford_contours_simplified1000m_20231124.geojson',
-    'data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson',
+    'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson',
     'data/FM_contours_NYS_clip_20231101.geojson',
-    'data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson',
+    'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson',
     'data/NYS_fullElevDEM_boundingBox.geojson'
-  ]
+  ];
 
-  // Create a promise for each worker task
-  const workerPromises = urls.map(url => {
-    return new Promise((resolve, reject) => {
-      const worker = new Worker('geojsonWorker.js');
-
-      worker.postMessage(url);
-      worker.onmessage = function(e) {
-        if (e.data.status === 'success') {
-          resolve({ url: e.data.url, data: e.data.data });
-        } else {
-          reject(new Error(e.data.error));
-        }
-        worker.terminate(); // Terminate worker after it sends a message
-      };
-    });
-  });
-
-  // Await all promises
-  const results = await Promise.all(workerPromises);
-  results.forEach(result => handleGeoJSONData(result.url, result.data));
-
-  // Continue with the rest of your initialization logic
-  postLoadOperations();
+  try {
+    const results = await Promise.all(urls.map(url => fetch(url).then(response => response.json())));
+    results.forEach((data, index) => handleGeoJSONData(urls[index], data));
+    postLoadOperations();
+  } catch (error) {
+    console.error('Error loading GeoJSON data:', error);
+  }
 }
 
 let contourGeojsonData, cellTowerGeojsonData, fmContoursGeojsonData, fmTransmitterGeojsonData, boundingBoxGeojsonData;
@@ -1536,7 +1524,7 @@ function handleGeoJSONData(url, data) {
       addContourLines(data);
       break;
 
-    case 'data/Cellular_Tower_HIFLD_NYSclip_20231101_simplified.geojson':
+    case 'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson':
       cellTowerGeojsonData = data;
       addCellTowerPts(data, audioListener, audioBuffer);
       break;
@@ -1546,7 +1534,7 @@ function handleGeoJSONData(url, data) {
       addPolygons(data);
       break;
 
-    case 'data/FM_TransTowers_PairwiseClip_NYS_20231101_simplified.geojson':
+    case 'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson':
       fmTransmitterGeojsonData = data;
       addFMTowerPts(data);
       break;
