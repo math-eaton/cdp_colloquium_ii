@@ -74,6 +74,8 @@ let globalBoundingBox
 let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let polygons = [];
+let isCameraRotating = false; // Flag to track camera rotation
+const rotationSpeed = 0.01; // Define the speed of rotation
 
 // Create a material for the ray line
 const rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for visibility
@@ -118,6 +120,7 @@ function initThreeJS() {
     const audioListener = new THREE.AudioListener();
     camera.add(audioListener);
 
+    const distanceToTarget = camera.position.distanceTo(controls.target);
     
     let ambientLight = new THREE.AmbientLight(colorScheme.ambientLightColor);
     scene.add(ambientLight);
@@ -147,6 +150,28 @@ function onWindowResize() {
     adjustCameraZoom();
   }
 }
+
+let cursorHidden = false;
+
+
+// hide cursor for screen recordings etc
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'h' || event.key === 'H') {
+        const mainContainer = document.getElementById('three-container');
+
+        if (cursorHidden) {
+            // Switch to 15% transparent cursor
+            mainContainer.classList.remove('cursor-transparent');
+            mainContainer.classList.add('cursor-default');
+        } else {
+            // Make cursor fully transparent
+            mainContainer.classList.remove('cursor-default');
+            mainContainer.classList.add('cursor-transparent');
+        }
+
+        cursorHidden = !cursorHidden;
+    }
+});
 
 
 function adjustCameraZoom() {
@@ -218,7 +243,30 @@ function animate() {
     requestAnimationFrame(animate);
     checkIntersection(); // Check for mouse-polygon intersection
     controls.update();
-    renderer.render(scene, camera);
+    // Rotate the camera if isCameraRotating is true
+    // Check if camera and controls are initialized
+    if (camera && controls) {
+      if (isCameraRotating) {
+          // Calculate the distance to the target
+          const distanceToTarget = camera.position.distanceTo(controls.target);
+          const angle = rotationSpeed; // Define the angle for rotation
+
+          // Calculate the new position
+          const relativePosition = new THREE.Vector3().subVectors(camera.position, controls.target);
+          const axis = new THREE.Vector3(0, 0, 1); // Z-axis for rotation
+          const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+          relativePosition.applyQuaternion(quaternion);
+
+          // Apply the new position while maintaining the distance
+          camera.position.copy(controls.target).add(relativePosition.setLength(distanceToTarget));
+
+          // Ensure the camera keeps looking at the target
+          camera.lookAt(controls.target);
+      }
+  }
+  
+  renderer.render(scene, camera);
+  
 }
 
 // Function to initialize the scene and other components
@@ -412,10 +460,16 @@ const layerObjects = {
 function toggleLayerVisibility(layerName, isVisible) {
   // Check if the layer object exists
   if (layerObjects[layerName]) {
-    // Set the visibility of the layer
-    layerObjects[layerName].visible = isVisible;
+      // Set the visibility of the layer
+      layerObjects[layerName].visible = isVisible;
+
+      // Find the checkbox element associated with the layer
+      const checkbox = document.getElementById(layerName);
+      if (checkbox) {
+          checkbox.checked = isVisible; // Update the checkbox state
+      }
   } else {
-    console.warn(`Layer "${layerName}" not found in the scene.`);
+      console.warn(`Layer "${layerName}" not found in the scene.`);
   }
 
   // Update the renderer if needed
@@ -476,31 +530,35 @@ const panSpeed = .05;
 
 // Function to handle keyboard events for panning
 function onDocumentKeyDown(event) {
+  // Handle layer visibility toggling
+  switch (event.key) {
+      case '1':
+          toggleLayerVisibility('fm transmitter points', !layerObjects['fm transmitter points'].visible);
+          break;
+      case '2':
+          toggleLayerVisibility('fm minimum spanning tree lines', !layerObjects['fm minimum spanning tree lines'].visible);
+          break;
+      case '3':
+          toggleLayerVisibility('cell transmitter points', !layerObjects['cell transmitter points'].visible);
+          break;
+      case '4':
+          toggleLayerVisibility('cell MST lines', !layerObjects['cell MST lines'].visible);
+          break;
+      case '5':
+          toggleLayerVisibility('contour lines', !layerObjects['contour lines'].visible);
+          break;
+      case '6':
+          toggleLayerVisibility('propagation polygons', !layerObjects['propagation polygons'].visible);
+          break;
+      // Add other cases for different layers as needed
+  }
 
-  // Toggle camera lock on 'L' key press
-  if (event.key === 'l' || event.key === 'L') {
-    lockCameraTopDown(!isCameraLocked);
-    event.preventDefault(); // Prevent default action for 'L' key
-    return; // Exit the function after toggling the lock
-}
-  
-  if (isCameraLocked) {
-    // Ignore R and F keys when camera is locked
-    if (event.key === 'r' || event.key === 'f') {
-      return;
-    }
-  event.preventDefault();
-
+  // Handle camera movement and rotation
   const rotationSpeed = 0.025; // Speed of rotation
-  const vector = new THREE.Vector3(); // Create once and reuse it to avoid garbage collection
+  const vector = new THREE.Vector3();
   const axis = new THREE.Vector3(1, 0, 0); // X axis for world space rotation
-  
-
-  console.log(`Key pressed: ${event.key}`); // Log which key was pressed
-
 
   switch (event.key) {
-      // WASD keys for panning
       case 'w':
           camera.position.y += panSpeed;
           controls.target.y += panSpeed;
@@ -517,28 +575,36 @@ function onDocumentKeyDown(event) {
           camera.position.x += panSpeed;
           controls.target.x += panSpeed;
           break;
-      case 'f': // Rotate counter-clockwise
-      case 'r': // Rotate clockwise
-          const angle = (event.key === 'f' ? 1 : -1) * rotationSpeed;
+      case 'g': // Rotate counter-clockwise
+      case 't': // Rotate clockwise
+          const angle = (event.key === 'g' ? 1 : -1) * rotationSpeed;
           vector.copy(camera.position).sub(controls.target);
           const currentPolarAngle = vector.angleTo(new THREE.Vector3(0, 0, 1));
           const newPolarAngle = currentPolarAngle + angle;
-      
-          // Check if the new angle is within the bounds
+
           if (newPolarAngle >= 0 && newPolarAngle <= Math.PI / 2) {
               const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
               vector.applyQuaternion(quaternion);
               camera.position.copy(controls.target).add(vector);
-              camera.lookAt(controls.target); // Keep the camera looking at the target
+              camera.lookAt(controls.target);
           }
           break;
-      }
-  
-      controls.update();
-  }}
-  
-  document.addEventListener('keydown', onDocumentKeyDown, false);
-  
+          
+  }
+
+  if (event.key === 'r' || event.key === 'R') {
+    isCameraRotating = !isCameraRotating; // Toggle rotation
+    event.preventDefault();
+    return; // Exit to avoid interfering with other keys
+}
+
+
+  controls.update();
+  event.preventDefault(); // Optionally prevent default action for all key presses
+}
+
+document.addEventListener('keydown', onDocumentKeyDown, false);
+
 
 // Define pan speed
 const minPanSpeed = 0.05; // Minimum panning speed (when zoomed out)
@@ -605,16 +671,16 @@ function getBoundingBoxOfGeoJSON(geojson) {
 
 function constrainCamera(controls, boundingBox) {
   controls.addEventListener('change', () => {
-    // Clamp the camera position within the bounding box
-    camera.position.x = Math.max(boundingBox.min.x, Math.min(boundingBox.max.x, camera.position.x));
-    camera.position.y = Math.max(boundingBox.min.y + 0.25, Math.min(boundingBox.max.y, camera.position.y));
-    camera.position.z = Math.max(boundingBox.min.z, Math.min(boundingBox.max.z, camera.position.z));
-    
-    // Clamp the controls target within the bounding box
-    controls.target.x = Math.max(boundingBox.min.x, Math.min(boundingBox.max.x, controls.target.x));
-    controls.target.y = Math.max(boundingBox.min.y, Math.min(boundingBox.max.y, controls.target.y));
-    controls.target.z = Math.max(boundingBox.min.z, Math.min(boundingBox.max.z, controls.target.z));
+      // Recalculate the distance to the target
+      const distance = camera.position.distanceTo(controls.target);
 
+      // Apply bounding box constraints
+      camera.position.clamp(boundingBox.min, boundingBox.max);
+      controls.target.clamp(boundingBox.min, boundingBox.max);
+
+      // Reapply the distance to maintain zoom level
+      const direction = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+      camera.position.copy(controls.target).add(direction.multiplyScalar(distance));
   });
 }
 

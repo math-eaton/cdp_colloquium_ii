@@ -330,3 +330,15 @@ button:focus-visible {
 .custom-checkbox:hover {
   background-color: rgba(255, 255, 255, 0.2); /* Light white background on hover */
 }
+
+/* cursor styling */
+
+/* CSS for different cursor transparencies */
+.cursor-transparent {
+  cursor: none; /* Fully transparent cursor */
+}
+
+.cursor-default {
+  cursor: url('whiteCrosshair.cur'), auto; /* 15% transparent cursor */
+  opacity: 85%;
+}
