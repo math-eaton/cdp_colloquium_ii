@@ -75,7 +75,8 @@ let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let polygons = [];
 let isCameraRotating = false; // Flag to track camera rotation
-const rotationSpeed = 0.01; // Define the speed of rotation
+const rotationSpeed = 0.005; // Define the speed of rotation
+
 
 // Create a material for the ray line
 const rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for visibility
@@ -121,12 +122,25 @@ function initThreeJS() {
     camera.add(audioListener);
 
     const distanceToTarget = camera.position.distanceTo(controls.target);
+
     
     let ambientLight = new THREE.AmbientLight(colorScheme.ambientLightColor);
     scene.add(ambientLight);
     let directionalLight = new THREE.DirectionalLight(colorScheme.directionalLightColor, 0.5);
     directionalLight.position.set(0, 1, 0);
     scene.add(directionalLight);
+
+    const fogNear = 4.5; // The starting distance of the fog (where it begins to appear)
+    const fogFar = 8; // The ending distance of the fog (where it becomes fully opaque)
+    
+    // Adding fog to the scene
+    scene.fog = new THREE.Fog(colorScheme.backgroundColor, fogNear, fogFar);
+    
+    // Adjust the camera's far plane
+    camera.far = fogFar;
+    camera.updateProjectionMatrix();
+
+
     renderer.setClearColor(colorScheme.backgroundColor);
     window.addEventListener('resize', onWindowResize, false);
     addLayerVisibilityControls();
