@@ -4,6 +4,7 @@ import { MapControls } from 'three/addons/controls/MapControls.js';
 import proj4 from 'proj4';
 import '/style.css'; 
 import hull from 'convex-hull';
+import Delaunator from 'delaunator';
 import Graph from 'graphology';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
@@ -31,7 +32,8 @@ const colorScheme = {
   mstFmColor: "#FFFF00", // yellow
   mstCellColor: "#FF5F1F", // neon orange
   boundingBoxColor: "#0000FF",
-  contoursLabelColor: "#00ff00"
+  contoursLabelColor: "#00ff00",
+  cellColor: "#FF1493"
 };
 
 // Alternate color scheme
@@ -131,7 +133,7 @@ function initThreeJS() {
     scene.add(directionalLight);
 
     const fogNear = 4.5; // The starting distance of the fog (where it begins to appear)
-    const fogFar = 8; // The ending distance of the fog (where it becomes fully opaque)
+    const fogFar = 9; // The ending distance of the fog (where it becomes fully opaque)
     
     // Adding fog to the scene
     scene.fog = new THREE.Fog(colorScheme.backgroundColor, fogNear, fogFar);
@@ -909,6 +911,71 @@ function addContourLines(geojson) {
   });
 }
 
+function addCellServiceMesh(geojson) {
+  return new Promise((resolve, reject) => {
+    try {
+      console.log("Processing GeoJSON features for mesh generation by groups.");
+
+      // Group points by 'group_ID'
+      const groups = {};
+      geojson.features.forEach(feature => {
+        const groupId = feature.properties.group_ID;
+        const [lon, lat] = feature.geometry.coordinates;
+        const [x, y] = toStatePlane(lon, lat); // Project to State Plane
+        const z = feature.properties.Z * zScale; // Apply Z scaling
+
+        if (!groups[groupId]) {
+          groups[groupId] = [];
+        }
+        groups[groupId].push([x, y, z]);
+      });
+
+      // Initialize an array to store geometries for each group
+      let combinedGeometry = new THREE.BufferGeometry();
+
+      // Process each group separately
+      Object.keys(groups).forEach(groupId => {
+        const pointsForDelaunay = groups[groupId];
+        var delaunay = Delaunator.from(pointsForDelaunay.map(p => [p[0], p[1]]));
+        var meshIndex = [];
+        for (let i = 0; i < delaunay.triangles.length; i++) {
+          meshIndex.push(delaunay.triangles[i]);
+        }
+
+        var geom = new THREE.BufferGeometry().setFromPoints(pointsForDelaunay.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+        geom.setIndex(meshIndex);
+        geom.computeVertexNormals();
+
+        // Merge geometry of the current group with the combined geometry
+        combinedGeometry.merge(geom);
+      });
+
+      // Create a material similar to the polygon material
+      const material = new THREE.MeshBasicMaterial({
+        color: colorScheme.cellColor,
+        transparent: true,
+        wireframe: true,
+        dithering: true,
+        opacity: 0.8,
+        side: THREE.FrontSide
+      });
+
+      // Create a mesh with the combined geometry and material
+      var mesh = new THREE.Mesh(combinedGeometry, material);
+      mesh.name = 'cellServiceMesh';
+
+      // Add mesh to the scene
+      scene.add(mesh);
+      resolve();
+    } catch (error) {
+      console.error('Error in addCellServiceMesh:', error);
+      reject(error);
+    }
+  });
+}
+
+
+
 
 function addPolygons(geojson, stride = 10) {
   return new Promise((resolve, reject) => {
@@ -1517,7 +1584,8 @@ async function loadGeoJSONData() {
     'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson',
     'data/FM_contours_NYS_clip_20231101.geojson',
     'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson',
-    'data/NYS_fullElevDEM_boundingBox.geojson'
+    'data/NYS_fullElevDEM_boundingBox.geojson',
+    'data/cellServiceCentroids_1000m_20231205.geojson'
   ];
 
   try {
@@ -1529,7 +1597,7 @@ async function loadGeoJSONData() {
   }
 }
 
-let contourGeojsonData, cellTowerGeojsonData, fmContoursGeojsonData, fmTransmitterGeojsonData, boundingBoxGeojsonData;
+let contourGeojsonData, cellTowerGeojsonData, fmContoursGeojsonData, fmTransmitterGeojsonData, boundingBoxGeojsonData, cellServiceGeojsonData
 
 function handleGeoJSONData(url, data) {
   switch (url) {
@@ -1561,6 +1629,11 @@ function handleGeoJSONData(url, data) {
     case 'data/NYS_cellTower_viewshed_20231130.jpg':
       viewshedJPG = data;
       loadAndPositionRaster(data);
+      break;
+
+    case 'data/cellServiceCentroids_1000m_20231205.geojson':
+      cellServiceGeojsonData = data;
+      addCellServiceMesh(data);
       break;
   
     default:
