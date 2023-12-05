@@ -978,6 +978,104 @@ function addPolygons(geojson, stride = 10) {
   });
 }
 
+function cellServiceMesh(imageUrl, width, height, resolutionX, resolutionY, extent) {
+  return new Promise((resolve, reject) => {
+    const loader = new THREE.TextureLoader();
+
+    loader.load(imageUrl, (texture) => {
+      console.log("Texture loaded");
+
+      const processTexture = () => {
+        try {
+          // Calculate the size of the extent
+          const extentWidth = extent.maxX - extent.minX;
+          const extentHeight = extent.maxY - extent.minY;
+
+          // Create a plane geometry aligned with XY plane, Z for elevation
+          const geometry = new THREE.PlaneGeometry(extentWidth, extentHeight, resolutionX - 1, resolutionY - 1);
+
+          // Use the texture to create a material
+          const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            wireframe: true
+          });
+
+          // Displacement of vertices based on heightmap
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = texture.image.width;
+          canvas.height = texture.image.height;
+          context.drawImage(texture.image, 0, 0);
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+          const noDataValue = 65535; // Define the NoData value
+          const defaultElevation = 1 * zScale; // Define a default elevation if needed
+          const baseElevation = 1 * zScale;
+
+          console.log("Processing texture data");
+
+          for (let i = 0; i < geometry.attributes.position.count; i++) {
+            
+            const x = (i % resolutionX) / resolutionX;
+            const y = Math.floor(i / resolutionX) / resolutionY;
+            const pixelIndex = (Math.floor(y * imageData.height) * imageData.width + Math.floor(x * imageData.width)) * 4;
+        
+            // Read the 16-bit value from two 8-bit values in the imageData        
+            // Correctly reading the 16-bit value from two 8-bit values in the imageData
+            const highByte = imageData.data[pixelIndex + 1];
+            const lowByte = imageData.data[pixelIndex];
+            const pixelIntensity = (highByte << 8) | lowByte; // Combining the two bytes
+
+            if (pixelIntensity !== noDataValue) {
+              // Denormalizing the pixel intensity back to elevation
+              const elevation = ((pixelIntensity / 65535) * (1378 - (-69))) + (-69);
+              // Adjusting for base elevation and applying Z-scale
+              const adjustedElevation = (elevation - baseElevation) * zScale;
+              geometry.attributes.position.setZ(i, adjustedElevation);
+
+              // Debugging statement
+              // console.log("Vertex", i, "elevation (adjusted):", adjustedElevation);
+
+              geometry.attributes.position.setZ(i, elevation);
+            } else {
+              geometry.attributes.position.setZ(i, defaultElevation);
+            }
+
+        
+        }
+        
+        geometry.computeVertexNormals(); // Recompute normals
+
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Position the mesh center
+        mesh.position.set(extent.minX + extentWidth / 2, extent.minY + extentHeight / 2, 0);
+
+        console.log("Mesh position:", mesh.position);
+
+        // Add mesh to the scene
+        scene.add(mesh);
+        resolve();
+      } catch (innerError) {
+        console.error('Error processing texture data:', innerError);
+        reject(innerError);
+      }
+    };
+
+    if (texture.image.complete) {
+      console.log("Image already loaded, processing directly");
+      processTexture();
+    } else {
+      texture.image.onload = processTexture;
+    }
+  }, undefined, (error) => {
+    console.error('Error loading texture:', error);
+    reject(error);
+  });
+});
+}
+
+
 
 function addFMTowerPts(geojson) {
   return new Promise((resolve, reject) => {
@@ -1217,6 +1315,9 @@ function loadAndPositionRaster() {
 
   textureLoader.load('path/to/Merged_Viewshed_NYS_Resample.jpg', function(texture) {
     const geometry = new THREE.PlaneGeometry(width, height);
+    console.log("Geometry size:", geometry.parameters.width, geometry.parameters.height);
+    console.log("Geometry segments:", geometry.parameters.widthSegments, geometry.parameters.heightSegments);
+
     const material = new THREE.MeshBasicMaterial({ map: texture });
     const rasterMesh = new THREE.Mesh(geometry, material);
 
@@ -1517,19 +1618,38 @@ async function loadGeoJSONData() {
     'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson',
     'data/FM_contours_NYS_clip_20231101.geojson',
     'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson',
-    'data/NYS_fullElevDEM_boundingBox.geojson'
+    'data/NYS_fullElevDEM_boundingBox.geojson',
+    // 'data/noServiceCentroids_20231204.geojson',
+    'data/noServiceHeightmap.png'
   ];
 
   try {
-    const results = await Promise.all(urls.map(url => fetch(url).then(response => response.json())));
-    results.forEach((data, index) => handleGeoJSONData(urls[index], data));
+    const promises = urls.map(url => {
+      if (url.endsWith('.geojson')) {
+        return fetch(url).then(response => response.json());
+      } else if (url.endsWith('.png')) {
+        return loadImage(url); // This function will handle PNG loading
+      }
+      return Promise.reject(new Error('Unrecognized file format'));
+    });
+
+    const results = await Promise.all(promises);
+    results.forEach((data, index) => handleData(urls[index], data));
     postLoadOperations();
   } catch (error) {
-    console.error('Error loading GeoJSON data:', error);
+    console.error('Error loading data:', error);
   }
 }
 
-let contourGeojsonData, cellTowerGeojsonData, fmContoursGeojsonData, fmTransmitterGeojsonData, boundingBoxGeojsonData;
+function handleData(url, data) {
+  if (url.endsWith('.geojson')) {
+    handleGeoJSONData(url, data);
+  } else if (url.endsWith('.png')) {
+    handleRasterData(url, data); // This function will handle raster data
+  }
+}
+
+let contourGeojsonData, cellTowerGeojsonData, fmContoursGeojsonData, fmTransmitterGeojsonData, boundingBoxGeojsonData, noServiceCentroidsGeojsonData;
 
 function handleGeoJSONData(url, data) {
   switch (url) {
@@ -1562,12 +1682,60 @@ function handleGeoJSONData(url, data) {
       viewshedJPG = data;
       loadAndPositionRaster(data);
       break;
+
+    case 'data/noServiceCentroids_20231204.geojson':
+      noServiceCentroidsGeojsonData = data;
+      createTerrainMesh(data);  // You'll define this function to create the 3D mesh
+      break;
   
     default:
       console.warn('Unrecognized URL:', url);
       break;
   }
 }
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image at ${url}`));
+    img.src = url;
+  });
+}
+
+function handleRasterData(url, img) {
+  if (url === 'data/noServiceHeightmap.png') {
+    console.log("processing raster");
+
+    // Define the extents in latitude and longitude (WGS84 - EPSG:4326)
+    const extentWGS84 = {
+      minX: -81.800232,
+      minY: 40.214660,
+      maxX: -71.374328,
+      maxY: 45.203841
+    };
+
+    // Convert extent from WGS84 (EPSG:4326) to State Plane (EPSG:2261)
+    const lowerLeft2261 = proj4("EPSG:4326", "EPSG:2261").forward([extentWGS84.minX, extentWGS84.minY]);
+    const upperRight2261 = proj4("EPSG:4326", "EPSG:2261").forward([extentWGS84.maxX, extentWGS84.maxY]);
+
+    // Calculate the size of the extent in State Plane coordinates
+    const extentWidth = upperRight2261[0] - lowerLeft2261[0];
+    const extentHeight = upperRight2261[1] - lowerLeft2261[1];
+
+    // Define other parameters like width, height, resolutionX, resolutionY
+    const width = extentWidth; // Width in Three.js units (assuming same as State Plane)
+    const height = extentHeight; // Height in Three.js units
+    const resolutionX = img.width;
+    const resolutionY = img.height;
+
+    // Call cellServiceMesh with the URL and these parameters
+    cellServiceMesh(url, width, height, resolutionX, resolutionY, { minX: lowerLeft2261[0], minY: lowerLeft2261[1], maxX: upperRight2261[0], maxY: upperRight2261[1] })
+      .then(() => console.log("Mesh added successfully"))
+      .catch(error => console.error("Error adding mesh:", error));
+  }
+}
+
 
 function postLoadOperations() {
     const boundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
