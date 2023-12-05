@@ -914,54 +914,40 @@ function addContourLines(geojson) {
 function addCellServiceMesh(geojson) {
   return new Promise((resolve, reject) => {
     try {
-      console.log("Processing GeoJSON features for mesh generation by groups.");
+      console.log("Starting to process GeoJSON features for mesh generation.");
 
-      // Group points by 'group_ID'
-      const groups = {};
-      geojson.features.forEach(feature => {
-        const groupId = feature.properties.group_ID;
+      // Prepare points for Delaunay triangulation
+      var pointsForDelaunay = geojson.features.map(feature => {
         const [lon, lat] = feature.geometry.coordinates;
-        const [x, y] = toStatePlane(lon, lat); // Project to State Plane
-        const z = feature.properties.Z * zScale; // Apply Z scaling
-
-        if (!groups[groupId]) {
-          groups[groupId] = [];
-        }
-        groups[groupId].push([x, y, z]);
+        const [x, y] = toStatePlane(lon, lat); // Project lon/lat to State Plane
+        const z = feature.properties.Z * zScale; // Apply scaling to Z value
+        return [x, y, z]; // Return a 3D point
       });
 
-      // Initialize an array to store geometries for each group
-      let combinedGeometry = new THREE.BufferGeometry();
+      // Perform Delaunay triangulation on the XY plane
+      var delaunay = Delaunator.from(pointsForDelaunay.map(p => [p[0], p[1]]));
+      var meshIndex = [];
+      for (let i = 0; i < delaunay.triangles.length; i++) {
+        meshIndex.push(delaunay.triangles[i]);
+      }
 
-      // Process each group separately
-      Object.keys(groups).forEach(groupId => {
-        const pointsForDelaunay = groups[groupId];
-        var delaunay = Delaunator.from(pointsForDelaunay.map(p => [p[0], p[1]]));
-        var meshIndex = [];
-        for (let i = 0; i < delaunay.triangles.length; i++) {
-          meshIndex.push(delaunay.triangles[i]);
-        }
-
-        var geom = new THREE.BufferGeometry().setFromPoints(pointsForDelaunay.map(p => new THREE.Vector3(p[0], p[1], p[2])));
-        geom.setIndex(meshIndex);
-        geom.computeVertexNormals();
-
-        // Merge geometry of the current group with the combined geometry
-        combinedGeometry.merge(geom);
-      });
+      // Create a Three.js geometry from the points and indices
+      var geom = new THREE.BufferGeometry().setFromPoints(pointsForDelaunay.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+      geom.setIndex(meshIndex);
+      geom.computeVertexNormals();
 
       // Create a material similar to the polygon material
       const material = new THREE.MeshBasicMaterial({
-        color: colorScheme.cellColor,
+        color: colorScheme.cellColor, // Use the color scheme for cell mesh
         transparent: true,
         wireframe: true,
         dithering: true,
-        opacity: 0.8,
+        opacity: 0.8, // Adjust opacity as needed
         side: THREE.FrontSide
       });
 
-      // Create a mesh with the combined geometry and material
-      var mesh = new THREE.Mesh(combinedGeometry, material);
+      // Create a mesh with the geometry and material
+      var mesh = new THREE.Mesh(geom, material);
       mesh.name = 'cellServiceMesh';
 
       // Add mesh to the scene
