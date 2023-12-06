@@ -284,7 +284,10 @@ function animate() {
           camera.lookAt(controls.target);
       }
   }
-  
+  // Log camera distance from xyz
+  // logCameraDistance();
+
+  adjustMeshVisibilityBasedOnCameraDistance();
   renderer.render(scene, camera);
 
 }
@@ -418,7 +421,6 @@ document.getElementById('info-button').addEventListener('click', function () {
 function toggleCellWireframe() {
   cellWireframe = !cellWireframe;
 
-  // Assuming cellServiceMesh is a THREE.Group containing all cell meshes
   cellServiceMesh.children.forEach(mesh => {
     if (mesh.material) {
       mesh.material.wireframe = cellWireframe;
@@ -426,6 +428,17 @@ function toggleCellWireframe() {
     }
   });
 }
+
+
+function logCameraDistance() {
+  if (camera && controls && controls.target) {
+    const distance = camera.position.distanceTo(controls.target);
+    console.log("Camera distance to target:", distance);
+  } else {
+    console.log("Camera or controls not defined.");
+  }
+}
+
 
 
 // Function to add checkboxes for layer visibility control
@@ -655,6 +668,18 @@ function onDocumentKeyDown(event) {
 document.addEventListener('keydown', onDocumentKeyDown, false);
 
 
+// Function to adjust the mesh visibility based on the camera distance aka SCALE DEPENDENCY!
+function adjustMeshVisibilityBasedOnCameraDistance() {
+  if (camera && controls && controls.target) {
+    const distanceToTarget = camera.position.distanceTo(controls.target);
+    const threshold = 1.7;
+
+    cellServiceMesh.visible = distanceToTarget <= threshold;
+  } else {
+    console.log("Camera or controls not defined.");
+  }
+}
+
 // Define pan speed
 const minPanSpeed = 0.05; // Minimum panning speed (when zoomed out)
 const maxPanSpeed = 0.2;  // Maximum panning speed (when zoomed in)
@@ -842,7 +867,7 @@ lockCameraTopDown(false);
 // GEOGRAPHIC DATA VIS /////////////////////////////
 
 // Define a scaling factor for the Z values (elevation)
-const zScale = 0.0004; // Change this value to scale the elevation up or down
+const zScale = 0.00035; // Change this value to scale the elevation up or down
 
 // Function to get color based on elevation
 function getColorForElevation(elevation, minElevation, maxElevation) {
@@ -982,9 +1007,9 @@ function addCellServiceMesh(geojson) {
         const material = new THREE.MeshBasicMaterial({
           color: colorScheme.cellColor,
           transparent: true,
-          wireframe: false,
+          wireframe: true,
           dithering: true,
-          opacity: 0.5,
+          opacity: 0.333,
           side: THREE.FrontSide
         });
 
