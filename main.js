@@ -672,7 +672,7 @@ document.addEventListener('keydown', onDocumentKeyDown, false);
 function adjustMeshVisibilityBasedOnCameraDistance() {
   if (camera && controls && controls.target) {
     const distanceToTarget = camera.position.distanceTo(controls.target);
-    const threshold = 1.7;
+    const threshold = 3;
 
     cellServiceMesh.visible = distanceToTarget <= threshold;
   } else {
@@ -1009,7 +1009,7 @@ function addCellServiceMesh(geojson) {
           transparent: true,
           wireframe: true,
           dithering: true,
-          opacity: 0.333,
+          opacity: 0.5,
           side: THREE.FrontSide
         });
 
