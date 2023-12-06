@@ -1,6 +1,7 @@
 // Import modules
 import * as THREE from 'three';
 import { MapControls } from 'three/addons/controls/MapControls.js';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import proj4 from 'proj4';
 import '/style.css'; 
 import hull from 'convex-hull';
@@ -16,6 +17,7 @@ let cellTransmitterPoints = new THREE.Group();
 let cellMSTLines = new THREE.Group();
 let contourLines = new THREE.Group();
 let propagationPolygons = new THREE.Group();
+let cellServiceMesh = new THREE.Group();
 
 // Define color scheme variables
 const colorScheme = {
@@ -85,6 +87,8 @@ const rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red col
 // Create a geometry for the ray line
 const rayGeometry = new THREE.BufferGeometry();
 const rayLine = new THREE.Line(rayGeometry, rayMaterial);
+
+let cellWireframe = false;
 
 function initThreeJS() {
     scene = new THREE.Scene();
@@ -410,6 +414,19 @@ document.getElementById('info-button').addEventListener('click', function () {
     showInfoBox();
 });
 
+// Function to toggle the wireframe mode of the cellServiceMesh
+function toggleCellWireframe() {
+  cellWireframe = !cellWireframe;
+
+  // Assuming cellServiceMesh is a THREE.Group containing all cell meshes
+  cellServiceMesh.children.forEach(mesh => {
+    if (mesh.material) {
+      mesh.material.wireframe = cellWireframe;
+      mesh.material.needsUpdate = true;
+    }
+  });
+}
+
 
 // Function to add checkboxes for layer visibility control
 function addLayerVisibilityControls() {
@@ -575,6 +592,9 @@ function onDocumentKeyDown(event) {
   const axis = new THREE.Vector3(1, 0, 0); // X axis for world space rotation
 
   switch (event.key) {
+      case 'q': // Change this key as needed
+      toggleCellWireframe();
+      break;
       case 'w':
           camera.position.y += panSpeed;
           controls.target.y += panSpeed;
@@ -613,6 +633,7 @@ function onDocumentKeyDown(event) {
     event.preventDefault();
     return; // Exit to avoid interfering with other keys
 }
+
 
 
   controls.update();
@@ -914,52 +935,63 @@ function addContourLines(geojson) {
 function addCellServiceMesh(geojson) {
   return new Promise((resolve, reject) => {
     try {
-      console.log("Starting to process GeoJSON features for mesh generation.");
+      // Reset/clear the group to avoid adding duplicate meshes
+      cellServiceMesh.clear();
+      console.log("Processing GeoJSON features for mesh generation by groups.");
 
-      // Prepare points for Delaunay triangulation
-      var pointsForDelaunay = geojson.features.map(feature => {
+      // Group points by 'group_ID'
+      const groups = {};
+      geojson.features.forEach(feature => {
+        const groupId = feature.properties.group_ID;
         const [lon, lat] = feature.geometry.coordinates;
-        const [x, y] = toStatePlane(lon, lat); // Project lon/lat to State Plane
-        const z = feature.properties.Z * zScale; // Apply scaling to Z value
-        return [x, y, z]; // Return a 3D point
+        const [x, y] = toStatePlane(lon, lat); // Project to State Plane
+        const z = feature.properties.Z * zScale; // Apply Z scaling
+
+        if (!groups[groupId]) {
+          groups[groupId] = [];
+        }
+        groups[groupId].push(new THREE.Vector3(x, y, z));
       });
 
-      // Perform Delaunay triangulation on the XY plane
-      var delaunay = Delaunator.from(pointsForDelaunay.map(p => [p[0], p[1]]));
-      var meshIndex = [];
-      for (let i = 0; i < delaunay.triangles.length; i++) {
-        meshIndex.push(delaunay.triangles[i]);
-      }
+      // Process each group separately and create meshes
+      Object.keys(groups).forEach(groupId => {
+        const pointsForDelaunay = groups[groupId];
+        var delaunay = Delaunator.from(pointsForDelaunay.map(p => [p.x, p.y]));
+        var meshIndex = [];
+        for (let i = 0; i < delaunay.triangles.length; i++) {
+          meshIndex.push(delaunay.triangles[i]);
+        }
 
-      // Create a Three.js geometry from the points and indices
-      var geom = new THREE.BufferGeometry().setFromPoints(pointsForDelaunay.map(p => new THREE.Vector3(p[0], p[1], p[2])));
-      geom.setIndex(meshIndex);
-      geom.computeVertexNormals();
+        var geom = new THREE.BufferGeometry().setFromPoints(pointsForDelaunay);
+        geom.setIndex(meshIndex);
+        geom.computeVertexNormals();
 
-      // Create a material similar to the polygon material
-      const material = new THREE.MeshBasicMaterial({
-        color: colorScheme.cellColor, // Use the color scheme for cell mesh
-        transparent: true,
-        wireframe: true,
-        dithering: true,
-        opacity: 0.8, // Adjust opacity as needed
-        side: THREE.FrontSide
+        // Create a material similar to the polygon material
+        const material = new THREE.MeshBasicMaterial({
+          color: colorScheme.cellColor,
+          transparent: true,
+          wireframe: false,
+          dithering: true,
+          opacity: 0.5,
+          side: THREE.FrontSide
+        });
+
+        // Create a mesh with the geometry and material
+        var mesh = new THREE.Mesh(geom, material);
+        mesh.name = 'cellServiceMesh-' + groupId;
+
+        // Add mesh to the cellServiceMesh group
+        cellServiceMesh.add(mesh);
       });
 
-      // Create a mesh with the geometry and material
-      var mesh = new THREE.Mesh(geom, material);
-      mesh.name = 'cellServiceMesh';
-
-      // Add mesh to the scene
-      scene.add(mesh);
-      resolve();
+      // Add the cellServiceMesh group to the scene
+      scene.add(cellServiceMesh);
+      resolve(cellServiceMesh); // Optionally return the group for further manipulation
     } catch (error) {
-      console.error('Error in addCellServiceMesh:', error);
-      reject(error);
+      reject(`Error in cellServiceMesh: ${error.message}`);
     }
   });
 }
-
 
 
 
