@@ -25,17 +25,17 @@ const colorScheme = {
   ambientLightColor: "#404040", // Dark gray
   directionalLightColor: "#ffffff", // White
   backgroundColor: "#000000", // Black
-  polygonColor: "#FF1493", // Pink
-  pyramidColorFM: "#FFFF00", // Yellow
-  pyramidColorCellular: "#FF5F1F", // neon orange
+  polygonColor: "#FF1493", // magenta
+  pyramidColorFM: "#FF5F1F", // Yellow
+  pyramidColorCellular: "#FFFF00", // neon orange
   // lowestElevationColor: "#0000ff", // Blue
   // middleElevationColor: "#00ff00", // Green
   // highestElevationColor: "#ff0000", // Red
-  mstFmColor: "#FFFF00", // yellow
-  mstCellColor: "#FF5F1F", // neon orange
+  mstFmColor: "#FF5F1F", // yellow
+  mstCellColor: "#FFFF00", // neon orange
   boundingBoxColor: "#0000FF",
   contoursLabelColor: "#00ff00",
-  cellColor: "#FF1493"
+  cellColor: "#FF1493" // magenta
 };
 
 // Alternate color scheme
@@ -437,7 +437,9 @@ function addLayerVisibilityControls() {
     { name: 'cell transmitter points', color: colorScheme.pyramidColorCellular },
     { name: 'cell MST lines', color: colorScheme.mstCellColor },
     { name: 'contour lines', color: colorScheme.contoursLabelColor },
-    { name: 'propagation polygons', color: colorScheme.polygonColor }
+    { name: 'fm propagation curves', color: colorScheme.polygonColor },
+    { name: 'cell dead zones', color: colorScheme.cellColor }
+
   ];
 
   layers.forEach(layer => {
@@ -474,6 +476,11 @@ function addLayerVisibilityControls() {
       toggleLayerVisibility(layer.name, this.checked);
     });
 
+    // Adjust initial checkbox state for fm propagation curves
+    if (layer.name === 'fm propagation curves') {
+      checkbox.checked = false; // Set checkbox to unchecked for this layer
+    }    
+
   });
 }
 
@@ -486,7 +493,8 @@ const layerObjects = {
   'cell transmitter points': cellTransmitterPoints,
   'cell MST lines': cellMSTLines,
   'contour lines': contourLines,
-  'propagation polygons': propagationPolygons
+  'fm propagation curves': propagationPolygons,
+  'cell dead zones': cellServiceMesh
 };
 
 // Function to toggle layer visibility
@@ -581,8 +589,12 @@ function onDocumentKeyDown(event) {
           toggleLayerVisibility('contour lines', !layerObjects['contour lines'].visible);
           break;
       case '6':
-          toggleLayerVisibility('propagation polygons', !layerObjects['propagation polygons'].visible);
+          toggleLayerVisibility('fm propagation curves', !layerObjects['fm propagation curves'].visible);
           break;
+      case '7':
+        toggleLayerVisibility('cell dead zones', !layerObjects['cell dead zones'].visible);
+        break;
+  
       // Add other cases for different layers as needed
   }
 
@@ -942,7 +954,7 @@ function addCellServiceMesh(geojson) {
       // Group points by 'group_ID'
       const groups = {};
       geojson.features.forEach(feature => {
-        const groupId = feature.properties.group_ID;
+        const groupId = feature.properties.Group_ID;
         const [lon, lat] = feature.geometry.coordinates;
         const [x, y] = toStatePlane(lon, lat); // Project to State Plane
         const z = feature.properties.Z * zScale; // Apply Z scaling
@@ -1056,6 +1068,10 @@ function addPolygons(geojson, stride = 10) {
   }
       // Add the propagationPolygons group to the scene
       scene.add(propagationPolygons);
+
+      // Set the initial visibility of the fm propagation curves layer to false
+      propagationPolygons.visible = false;
+
       resolve(); // Resolve the promise when done
     } catch (error) {
       reject(`Error in addPolygons: ${error.message}`);
