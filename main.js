@@ -95,14 +95,16 @@ function initThreeJS() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.up.set(0, 0, 1); // Set Z as up-direction 
 
+    // Create the renderer first
+    renderer = new THREE.WebGLRenderer({ antialias: false });
 
-    var pixelRatio = 0.5; // Lower this value for more pixelation
-    var width = window.innerWidth * pixelRatio;
-    var height = window.innerHeight * pixelRatio;
+    var lowResScale = 0.4; // Adjust this for more or less resolution (lower value = lower resolution)
+    var lowResWidth = window.innerWidth * lowResScale;
+    var lowResHeight = window.innerHeight * lowResScale;
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio * pixelRatio);
+    renderer.setSize(lowResWidth, lowResHeight, false);
+    renderer.setPixelRatio(window.devicePixelRatio * lowResScale);
+
     document.getElementById('three-container').appendChild(renderer.domElement);
 
 
@@ -176,13 +178,15 @@ function onWindowResize() {
     adjustCameraZoom();
   }
 
-  var pixelRatio = 0.5; // Keep this consistent with the initial setting
-  var width = window.innerWidth * pixelRatio;
-  var height = window.innerHeight * pixelRatio;
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-  renderer.setPixelRatio(window.devicePixelRatio * pixelRatio);
+
+  var lowResScale = 0.4; // Adjust this for more or less resolution (lower value = lower resolution)
+
+  var lowResWidth = window.innerWidth * lowResScale;
+  var lowResHeight = window.innerHeight * lowResScale;
+
+  renderer.setSize(lowResWidth, lowResHeight, false);
 
 }
 
