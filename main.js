@@ -98,7 +98,7 @@ function initThreeJS() {
     // Create the renderer first
     renderer = new THREE.WebGLRenderer({ antialias: false });
 
-    var lowResScale = 0.4; // Adjust this for more or less resolution (lower value = lower resolution)
+    var lowResScale = 1.0; // Adjust this for more or less resolution (lower value = lower resolution)
     var lowResWidth = window.innerWidth * lowResScale;
     var lowResHeight = window.innerHeight * lowResScale;
 
@@ -161,34 +161,43 @@ function initThreeJS() {
     adjustCameraZoom();
 }
 
+// Set up the slider event listener
+document.getElementById('resolution-slider').addEventListener('input', function(event) {
+  var newScale = parseFloat(event.target.value);
+  onWindowResize(); // Call onWindowResize to handle resolution update
+});
+
+// Set the initial resolution
+onWindowResize();
+
 ///////////////////////////////////////////////////// 
 // DOM MODS AND EVENT LISTENERS ////////////////////
 
 // Resize function
 function onWindowResize() {
-  if (camera && renderer) {
-    // Update camera aspect
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+  var currentScale = parseFloat(document.getElementById('resolution-slider').value);
 
-    // Update renderer size
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  // Update the renderer and camera for the new resolution
+  var newWidth = window.innerWidth * currentScale;
+  var newHeight = window.innerHeight * currentScale;
 
-    // Adjust zoom based on window size
-    adjustCameraZoom();
+  if (renderer && camera) {
+      renderer.setSize(newWidth, newHeight, false);
+      renderer.setPixelRatio(window.devicePixelRatio * currentScale);
+
+      // Update camera aspect ratio and projection matrix
+      camera.aspect = newWidth / newHeight;
+      camera.updateProjectionMatrix();
   }
 
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  // Update resolution display
+  document.getElementById('resolution-display').textContent = `resolution: ${Math.round(newWidth)} x ${Math.round(newHeight)} px`;
 
-  var lowResScale = 0.4; // Adjust this for more or less resolution (lower value = lower resolution)
-
-  var lowResWidth = window.innerWidth * lowResScale;
-  var lowResHeight = window.innerHeight * lowResScale;
-
-  renderer.setSize(lowResWidth, lowResHeight, false);
-
+  // Continue with your existing resize adjustments
+  adjustCameraZoom();
+  // Other functions you need to call during resize, if any
 }
+
 
 let cursorHidden = false;
 
@@ -547,6 +556,24 @@ function toggleLayerVisibility(layerName, isVisible) {
 
   // Update the renderer if needed
   renderer.render(scene, camera);
+}
+
+function updateResolution(newScale) {
+  var newWidth = window.innerWidth * newScale;
+  var newHeight = window.innerHeight * newScale;
+
+  renderer.setSize(newWidth, newHeight, false);
+  renderer.setPixelRatio(window.devicePixelRatio * newScale);
+
+  // Update camera aspect ratio
+  camera.aspect = newWidth / newHeight;
+  camera.updateProjectionMatrix();
+
+  // Update resolution display
+  document.getElementById('resolution-display').textContent = `resolution: ${Math.round(newWidth)} x ${Math.round(newHeight)} px`;
+
+  // Render the scene again if needed
+  render();
 }
 
 
@@ -1027,7 +1054,7 @@ function addCellServiceMesh(geojson) {
           color: 0x000000, // Black color for the fill
           transparent: false,
           opacity: 1, // Adjust opacity as needed
-          side: THREE.DoubleSide // Render both sides
+          side: THREE.FrontSide // Render both sides
         });
 
         // Wireframe material
