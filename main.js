@@ -1003,22 +1003,37 @@ function addCellServiceMesh(geojson) {
         geom.setIndex(meshIndex);
         geom.computeVertexNormals();
 
-        // Create a material similar to the polygon material
-        const material = new THREE.MeshBasicMaterial({
-          color: colorScheme.cellColor,
+        // Solid fill material (black fill)
+        const fillMaterial = new THREE.MeshStandardMaterial({
+          color: 0x000000, // Black color for the fill
           transparent: true,
-          wireframe: true,
-          dithering: true,
-          opacity: 0.5,
-          side: THREE.FrontSide
+          opacity: 1, // Adjust opacity as needed
+          side: THREE.DoubleSide // Render both sides
         });
 
-        // Create a mesh with the geometry and material
-        var mesh = new THREE.Mesh(geom, material);
-        mesh.name = 'cellServiceMesh-' + groupId;
+        // Wireframe material
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: colorScheme.cellColor, // Use your existing color scheme
+          transparent: false,
+          wireframe: true,
+          side: THREE.DoubleSide // Render both sides
+        });
+        
+        // Create mesh with the fill material
+        var fillMesh = new THREE.Mesh(geom, fillMaterial);
+        fillMesh.name = 'fillMesh-' + groupId;
 
-        // Add mesh to the cellServiceMesh group
-        cellServiceMesh.add(mesh);
+        // Create mesh with the wireframe material
+        var wireframeMesh = new THREE.Mesh(geom, wireframeMaterial);
+        wireframeMesh.name = 'wireframeMesh-' + groupId;
+
+        // Group to hold both meshes
+        var group = new THREE.Group();
+        group.add(fillMesh);
+        group.add(wireframeMesh);
+
+        // Add the group to the cellServiceMesh group
+        cellServiceMesh.add(group);
       });
 
       // Add the cellServiceMesh group to the scene
@@ -1644,7 +1659,7 @@ async function loadGeoJSONData() {
     'data/FM_contours_NYS_clip_20231101.geojson',
     'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson',
     'data/NYS_fullElevDEM_boundingBox.geojson',
-    'data/cellServiceCentroids_1000m_20231205.geojson'
+    'data/cellServiceCentroids_2000m_20231205.geojson'
   ];
 
   try {
@@ -1690,7 +1705,7 @@ function handleGeoJSONData(url, data) {
       loadAndPositionRaster(data);
       break;
 
-    case 'data/cellServiceCentroids_1000m_20231205.geojson':
+    case 'data/cellServiceCentroids_2000m_20231205.geojson':
       cellServiceGeojsonData = data;
       addCellServiceMesh(data);
       break;
