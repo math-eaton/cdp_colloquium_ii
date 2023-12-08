@@ -5,8 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/3D_mapping/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>iso 3D</title>
-    <script type="module" crossorigin src="/3D_mapping/assets/index-bf35d3f4.js"></script>
-    <link rel="stylesheet" href="/3D_mapping/assets/index-a68f8774.css">
+    <script type="module" crossorigin src="/3D_mapping/assets/index-c784a931.js"></script>
+    <link rel="stylesheet" href="/3D_mapping/assets/index-94a84335.css">
   </head>
   <body>
 
@@ -19,7 +19,7 @@
     <div id="progress-bar"></div>
   
 
-    <div id="three-container"></div>
+    <div id="three-container" class="pixelated"></div>
         
     <button id="info-button" style="opacity: 0;">?</button>
     <div id="info-container" class="hidden">
@@ -27,16 +27,15 @@
         <div id="legend-controls">
         </div>
       </ul>
-      <!-- <div id="camera-controls" class="custom-checkbox-container">
-        <input type="checkbox" id="camera-lock" name="camera-lock" class="hidden-checkbox">
-        <label for="camera-lock" class="custom-checkbox-label">
-            <span class="custom-checkbox"></span>
-            lock top-down view
-        </label>
-      </div> -->
-              <p class="small-text">uncheck or use num keys to toggle layers<br>
-              'y' key to auto-rotate</p>
-              
+<div class="small-text">
+        <p>uncheck or use num keys to toggle layers<br>
+        'y' key to auto-rotate</p>
+        <div id="resolution-controls">
+          <label for="resolution-slider">scale resolution:</label>
+          <input type="range" id="resolution-slider" min="2" max="10" step="1" value="8.0">
+          <p id="resolution-display">resolution: </p> <!-- Adjust initial text as needed -->
+      </div>
+      </div>
       <span id="hide-legend" class="small-text" style="cursor: pointer; text-decoration: underline;">click anywhere to hide</span>
     </div>
     
