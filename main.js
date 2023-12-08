@@ -18,6 +18,7 @@ let cellMSTLines = new THREE.Group();
 let contourLines = new THREE.Group();
 let propagationPolygons = new THREE.Group();
 let cellServiceMesh = new THREE.Group();
+cellServiceMesh.visible = false; // Set the mesh to be invisible initially
 
 // Define color scheme variables
 const colorScheme = {
@@ -80,6 +81,8 @@ let mouse = new THREE.Vector2();
 let polygons = [];
 let isCameraRotating = false; // Flag to track camera rotation
 const rotationSpeed = 0.005; // Define the speed of rotation
+let sliderValue = 8;  //  default value
+const sliderLength = 10;  // Assuming 10 is the maximum value of the slider
 
 
 // Create a material for the ray line
@@ -90,81 +93,93 @@ const rayLine = new THREE.Line(rayGeometry, rayMaterial);
 
 let cellWireframe = false;
 
+
 function initThreeJS() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.up.set(0, 0, 1); // Set Z as up-direction 
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.up.set(0, 0, 1); // Set Z as up-direction 
 
-    // Create the renderer first
-    renderer = new THREE.WebGLRenderer({ antialias: false });
+  // Create the renderer first
+  renderer = new THREE.WebGLRenderer({ antialias: false });
 
-    var lowResScale = 1.0; // Adjust this for more or less resolution (lower value = lower resolution)
-    var lowResWidth = window.innerWidth * lowResScale;
-    var lowResHeight = window.innerHeight * lowResScale;
+  var lowResScale = 1.0; // Adjust this for more or less resolution (lower value = lower resolution)
+  var lowResWidth = window.innerWidth * lowResScale;
+  var lowResHeight = window.innerHeight * lowResScale;
 
-    renderer.setSize(lowResWidth, lowResHeight, false);
-    renderer.setPixelRatio(window.devicePixelRatio * lowResScale);
+  renderer.setSize(lowResWidth, lowResHeight, false);
+  renderer.setPixelRatio(window.devicePixelRatio * lowResScale);
 
-    document.getElementById('three-container').appendChild(renderer.domElement);
-
-
-    // Set initial positions - We'll update these later
-    rayGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
-
-    // Create the line and add it to the scene
-    scene.add(rayLine);
-    rayLine.scale.set(1, 1, 1); // Make sure the scale is appropriate
-    rayLine.material.linewidth = 2; // Increase the line width for visibility
-
-    // Initialize MapControls
-    controls = new MapControls(camera, renderer.domElement);
-
-    // Set up the control parameters as needed for a mapping interface
-    controls.screenSpacePanning = false;
-    controls.enableRotate = false; // typically map interfaces don't use rotation
-    controls.enableDamping = true; // an optional setting to give a smoother control feeling
-    controls.dampingFactor = 0.05; // amount of damping (drag)
-
-    // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
-    controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
-    controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
-    // Set the maximum distance the camera can dolly out
-    controls.maxDistance = 5.5; // max camera zoom
-    controls.minDistance = 0.2; // min camera zoom
-
-    const audioListener = new THREE.AudioListener();
-    camera.add(audioListener);
-
-    const distanceToTarget = camera.position.distanceTo(controls.target);
-
-    
-    let ambientLight = new THREE.AmbientLight(colorScheme.ambientLightColor);
-    scene.add(ambientLight);
-    let directionalLight = new THREE.DirectionalLight(colorScheme.directionalLightColor, 0.5);
-    directionalLight.position.set(0, 1, 0);
-    scene.add(directionalLight);
-
-    const fogNear = 4.5; // The starting distance of the fog (where it begins to appear)
-    const fogFar = 9; // The ending distance of the fog (where it becomes fully opaque)
-    
-    // Adding fog to the scene
-    scene.fog = new THREE.Fog(colorScheme.backgroundColor, fogNear, fogFar);
-    
-    // Adjust the camera's far plane
-    camera.far = fogFar;
-    camera.updateProjectionMatrix();
+  document.getElementById('three-container').appendChild(renderer.domElement);
 
 
-    renderer.setClearColor(colorScheme.backgroundColor);
-    window.addEventListener('resize', onWindowResize, false);
-    addLayerVisibilityControls();
-    adjustCameraZoom();
+  // Set initial positions - We'll update these later
+  rayGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+
+  // Create the line and add it to the scene
+  scene.add(rayLine);
+  rayLine.scale.set(1, 1, 1); // Make sure the scale is appropriate
+  rayLine.material.linewidth = 2; // Increase the line width for visibility
+
+  // Initialize MapControls
+  controls = new MapControls(camera, renderer.domElement);
+
+  // Set up the control parameters as needed for a mapping interface
+  controls.screenSpacePanning = false;
+  controls.enableRotate = false; // typically map interfaces don't use rotation
+  controls.enableDamping = true; // an optional setting to give a smoother control feeling
+  controls.dampingFactor = 0.05; // amount of damping (drag)
+
+  // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
+  controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
+  controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
+  // Set the maximum distance the camera can dolly out
+  controls.maxDistance = 5.5; // max camera zoom
+  controls.minDistance = 0.2; // min camera zoom
+
+  const audioListener = new THREE.AudioListener();
+  camera.add(audioListener);
+
+  const distanceToTarget = camera.position.distanceTo(controls.target);
+
+  
+  let ambientLight = new THREE.AmbientLight(colorScheme.ambientLightColor);
+  scene.add(ambientLight);
+  let directionalLight = new THREE.DirectionalLight(colorScheme.directionalLightColor, 0.5);
+  directionalLight.position.set(0, 1, 0);
+  scene.add(directionalLight);
+
+  const fogNear = 4.5; // The starting distance of the fog (where it begins to appear)
+  const fogFar = 9; // The ending distance of the fog (where it becomes fully opaque)
+  
+  // Adding fog to the scene
+  scene.fog = new THREE.Fog(colorScheme.backgroundColor, fogNear, fogFar);
+  
+  // Adjust the camera's far plane
+  camera.far = fogFar;
+  camera.updateProjectionMatrix();
+
+  // ASCII Slider initialization inside initThreeJS
+  const resolutionSlider = document.getElementById('resolution-slider');
+  updateSliderDisplay(sliderValue, resolutionSlider);
+
+  renderer.setClearColor(colorScheme.backgroundColor);
+  window.addEventListener('resize', onWindowResize, false);
+  addLayerVisibilityControls();
+  adjustCameraZoom();
+}
+
+function updateResolutionDisplay() {
+  var newWidth = Math.round(window.innerWidth * (sliderValue / sliderLength));
+  var newHeight = Math.round(window.innerHeight * (sliderValue / sliderLength));
+  document.getElementById('resolution-display').textContent = `resolution: ${newWidth * 10} x ${newHeight * 10}px`;
 }
 
 // Set up the slider event listener
 document.getElementById('resolution-slider').addEventListener('input', function(event) {
-  var newScale = parseFloat(event.target.value);
-  onWindowResize(); // Call onWindowResize to handle resolution update
+  // Convert the slider value (0 to 10) to a scale between 0.2 and 1.0
+  sliderValue = 0.2 + (parseFloat(event.target.value) / sliderLength) * 0.8;
+  onWindowResize(); // Update the resolution
+  updateResolutionDisplay(); // Update the display
 });
 
 // Set the initial resolution
@@ -173,31 +188,41 @@ onWindowResize();
 ///////////////////////////////////////////////////// 
 // DOM MODS AND EVENT LISTENERS ////////////////////
 
+// Function to update slider display
+function updateSliderDisplay(value, resolutionSlider) {
+let sliderDisplay = '[';
+for (let i = 0; i < sliderLength; i++) {
+    sliderDisplay += i < value ? '#' : '-';
+}
+sliderDisplay += ']';
+resolutionSlider.textContent = sliderDisplay;
+}
+
+// Resize function
 // Resize function
 function onWindowResize() {
-  var currentScale = parseFloat(document.getElementById('resolution-slider').value);
+  // Ensure the sliderValue is up-to-date
+  sliderValue = 0.2 + (parseFloat(document.getElementById('resolution-slider').value) / sliderLength) * 0.8;
 
-  // Update the renderer and camera for the new resolution
-  var newWidth = window.innerWidth * currentScale;
-  var newHeight = window.innerHeight * currentScale;
+  // Calculate new dimensions based on the slider value
+  var newWidth = Math.max(1, window.innerWidth * sliderValue);
+  var newHeight = Math.max(1, window.innerHeight * sliderValue);
 
   if (renderer && camera) {
       renderer.setSize(newWidth, newHeight, false);
-      renderer.setPixelRatio(window.devicePixelRatio * currentScale);
+      renderer.setPixelRatio(window.devicePixelRatio * sliderValue);
 
       // Update camera aspect ratio and projection matrix
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
   }
 
-  // Update resolution display
-  document.getElementById('resolution-display').textContent = `resolution: ${Math.round(newWidth)} x ${Math.round(newHeight)} px`;
+  // Update the resolution display
+  updateResolutionDisplay();
 
   // Continue with your existing resize adjustments
   adjustCameraZoom();
-  // Other functions you need to call during resize, if any
 }
-
 
 let cursorHidden = false;
 
@@ -335,6 +360,11 @@ async function initialize() {
   } catch (error) {
     console.error('Error during initialization:', error);
   }
+
+  // Initialize sliderValue based on the current slider position
+  sliderValue = 0.2 + (parseFloat(document.getElementById('resolution-slider').value) / sliderLength) * 0.8;
+  onWindowResize(); // Update the resolution
+  updateResolutionDisplay(); // Update the display
 
   // Hide the spinner and show the start button
   document.getElementById('progress-bar').style.display = 'none';
@@ -538,44 +568,41 @@ const layerObjects = {
   'cell dead zones': cellServiceMesh
 };
 
+function toggleCellServiceMeshVisibility(isVisible) {
+  cellServiceMesh.visible = isVisible;
+  cellServiceMesh.children.forEach(group => {
+      group.children.forEach(mesh => {
+          mesh.visible = isVisible;
+      });
+  });
+}
+
 // Function to toggle layer visibility
 function toggleLayerVisibility(layerName, isVisible) {
-  // Check if the layer object exists
   if (layerObjects[layerName]) {
-      // Set the visibility of the layer
-      layerObjects[layerName].visible = isVisible;
+    layerObjects[layerName].visible = isVisible;
 
-      // Find the checkbox element associated with the layer
-      const checkbox = document.getElementById(layerName);
-      if (checkbox) {
-          checkbox.checked = isVisible; // Update the checkbox state
-      }
+    // Special handling for cellServiceMesh
+    if (layerName === 'cell dead zones') {
+      cellServiceMesh.children.forEach(group => {
+        group.visible = isVisible; // Set visibility for each group
+        group.children.forEach(mesh => {
+          mesh.visible = isVisible; // Set visibility for each mesh within the group
+        });
+      });
+    }
+
+    // Update the checkbox state
+    const checkbox = document.getElementById(layerName);
+    if (checkbox) {
+      checkbox.checked = isVisible;
+    }
   } else {
-      console.warn(`Layer "${layerName}" not found in the scene.`);
+    console.warn(`Layer "${layerName}" not found in the scene.`);
   }
 
-  // Update the renderer if needed
   renderer.render(scene, camera);
 }
-
-function updateResolution(newScale) {
-  var newWidth = window.innerWidth * newScale;
-  var newHeight = window.innerHeight * newScale;
-
-  renderer.setSize(newWidth, newHeight, false);
-  renderer.setPixelRatio(window.devicePixelRatio * newScale);
-
-  // Update camera aspect ratio
-  camera.aspect = newWidth / newHeight;
-  camera.updateProjectionMatrix();
-
-  // Update resolution display
-  document.getElementById('resolution-display').textContent = `resolution: ${Math.round(newWidth)} x ${Math.round(newHeight)} px`;
-
-  // Render the scene again if needed
-  render();
-}
-
 
 ///////////////////////////////////////////////////////
 // AUDIO LISTENERS ///////////////////////////////////
@@ -651,11 +678,30 @@ function onDocumentKeyDown(event) {
           toggleLayerVisibility('fm propagation curves', !layerObjects['fm propagation curves'].visible);
           break;
       case '7':
-        toggleLayerVisibility('cell dead zones', !layerObjects['cell dead zones'].visible);
+        // Toggle visibility directly
+        cellServiceMesh.visible = !cellServiceMesh.visible;
+        cellServiceMesh.children.forEach(group => {
+            group.visible = cellServiceMesh.visible; // Apply the same visibility to each group
+            group.children.forEach(mesh => mesh.visible = cellServiceMesh.visible); // Apply to each mesh
+        });
+
+        console.log(`Cell Service Mesh visibility: ${cellServiceMesh.visible}`);
+
+        // Optionally, update the checkbox state to reflect this change
+        const checkbox = document.getElementById('cell dead zones');
+        if (checkbox) checkbox.checked = cellServiceMesh.visible;
+
         break;
-  
+                        
       // Add other cases for different layers as needed
   }
+
+  console.log(`Toggling Cell Service Mesh to ${!isCellMeshVisible}`);
+  console.log(`Before toggle: `, cellServiceMesh.children.map(group => group.children.map(mesh => mesh.visible)));
+  toggleCellServiceMeshVisibility(!isCellMeshVisible);
+  console.log(`After toggle: `, cellServiceMesh.children.map(group => group.children.map(mesh => mesh.visible)));
+
+
 
   // Handle camera movement and rotation
   const rotationSpeed = 0.025; // Speed of rotation
@@ -1052,8 +1098,9 @@ function addCellServiceMesh(geojson) {
         // Solid fill material (black fill)
         const fillMaterial = new THREE.MeshBasicMaterial({
           color: 0x000000, // Black color for the fill
-          transparent: false,
-          opacity: 1, // Adjust opacity as needed
+          transparent: true,
+          opacity: .5, // Adjust opacity as needed
+          alphaHash: false,
           side: THREE.FrontSide // Render both sides
         });
 
@@ -1086,12 +1133,13 @@ function addCellServiceMesh(geojson) {
       // Add the cellServiceMesh group to the scene
       scene.add(cellServiceMesh);
       resolve(cellServiceMesh); // Optionally return the group for further manipulation
+
+
     } catch (error) {
       reject(`Error in cellServiceMesh: ${error.message}`);
     }
   });
 }
-
 
 
 function addPolygons(geojson, stride = 10) {
@@ -1792,4 +1840,3 @@ function postLoadOperations() {
     // After data is loaded, reveal the start button
     document.getElementById('start-container').style.display = 'block';
   }
-
