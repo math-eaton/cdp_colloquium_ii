@@ -95,8 +95,14 @@ function initThreeJS() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.up.set(0, 0, 1); // Set Z as up-direction 
 
+
+    var pixelRatio = 0.5; // Lower this value for more pixelation
+    var width = window.innerWidth * pixelRatio;
+    var height = window.innerHeight * pixelRatio;
+
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio * pixelRatio);
     document.getElementById('three-container').appendChild(renderer.domElement);
 
 
@@ -169,6 +175,15 @@ function onWindowResize() {
     // Adjust zoom based on window size
     adjustCameraZoom();
   }
+
+  var pixelRatio = 0.5; // Keep this consistent with the initial setting
+  var width = window.innerWidth * pixelRatio;
+  var height = window.innerHeight * pixelRatio;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(window.devicePixelRatio * pixelRatio);
+
 }
 
 let cursorHidden = false;
@@ -1004,9 +1019,9 @@ function addCellServiceMesh(geojson) {
         geom.computeVertexNormals();
 
         // Solid fill material (black fill)
-        const fillMaterial = new THREE.MeshStandardMaterial({
+        const fillMaterial = new THREE.MeshBasicMaterial({
           color: 0x000000, // Black color for the fill
-          transparent: true,
+          transparent: false,
           opacity: 1, // Adjust opacity as needed
           side: THREE.DoubleSide // Render both sides
         });
@@ -1016,7 +1031,8 @@ function addCellServiceMesh(geojson) {
           color: colorScheme.cellColor, // Use your existing color scheme
           transparent: false,
           wireframe: true,
-          side: THREE.DoubleSide // Render both sides
+          // alphaHash: true,
+          side: THREE.FrontSide // Render both sides
         });
         
         // Create mesh with the fill material
