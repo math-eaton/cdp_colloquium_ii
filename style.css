@@ -202,8 +202,9 @@ h1 {
   z-index: 10;
   background: rgba(0, 0, 0, 0.0);
   color: cyan;
-  border: none;
+  border: 2px;
   border-radius: 100%;
+  border-color: cyan;
   padding: 5px 10px;
   cursor: pointer;
   display: block; /* Ensure the button is visible from the start */

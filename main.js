@@ -66,6 +66,12 @@ function toStatePlane(lon, lat) {
   return proj4("EPSG:2261").forward([lon, lat]);
 }
 
+// Function to calculate distance between two points in State Plane coordinates
+function distanceBetweenPoints(point1, point2) {
+  const dx = point1.x - point2.x;
+  const dy = point1.y - point2.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 
 //////////////////////////////////////
@@ -134,7 +140,7 @@ function initThreeJS() {
   controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
   // Set the maximum distance the camera can dolly out
   controls.maxDistance = 5.5; // max camera zoom
-  controls.minDistance = 0.2; // min camera zoom
+  controls.minDistance = 0.5; // min camera zoom
 
   const audioListener = new THREE.AudioListener();
   camera.add(audioListener);
@@ -1061,16 +1067,17 @@ function addContourLines(geojson) {
   });
 }
 
-function addCellServiceMesh(geojson) {
+function addCellServiceMesh(geojson, stride = 3) {
   return new Promise((resolve, reject) => {
     try {
       // Reset/clear the group to avoid adding duplicate meshes
       cellServiceMesh.clear();
-      console.log("Processing GeoJSON features for mesh generation by groups.");
+      console.log("Processing GeoJSON features for mesh generation.");
 
-      // Group points by 'group_ID'
+      // Downsample and group points by 'group_ID'
       const groups = {};
-      geojson.features.forEach(feature => {
+      for (let i = 0; i < geojson.features.length; i += stride) {
+        const feature = geojson.features[i];
         const groupId = feature.properties.Group_ID;
         const [lon, lat] = feature.geometry.coordinates;
         const [x, y] = toStatePlane(lon, lat); // Project to State Plane
@@ -1080,15 +1087,27 @@ function addCellServiceMesh(geojson) {
           groups[groupId] = [];
         }
         groups[groupId].push(new THREE.Vector3(x, y, z));
-      });
+      }
 
       // Process each group separately and create meshes
       Object.keys(groups).forEach(groupId => {
         const pointsForDelaunay = groups[groupId];
+
         var delaunay = Delaunator.from(pointsForDelaunay.map(p => [p.x, p.y]));
         var meshIndex = [];
-        for (let i = 0; i < delaunay.triangles.length; i++) {
-          meshIndex.push(delaunay.triangles[i]);
+        const thresholdDistance = 0.125; // Set your distance threshold here
+
+        for (let i = 0; i < delaunay.triangles.length; i += 3) {
+          const p1 = pointsForDelaunay[delaunay.triangles[i]];
+          const p2 = pointsForDelaunay[delaunay.triangles[i + 1]];
+          const p3 = pointsForDelaunay[delaunay.triangles[i + 2]];
+
+          // Check distances between each pair of points in a triangle
+          if (distanceBetweenPoints(p1, p2) <= thresholdDistance &&
+              distanceBetweenPoints(p2, p3) <= thresholdDistance &&
+              distanceBetweenPoints(p3, p1) <= thresholdDistance) {
+            meshIndex.push(delaunay.triangles[i], delaunay.triangles[i + 1], delaunay.triangles[i + 2]);
+          }
         }
 
         var geom = new THREE.BufferGeometry().setFromPoints(pointsForDelaunay);
@@ -1099,8 +1118,8 @@ function addCellServiceMesh(geojson) {
         const fillMaterial = new THREE.MeshBasicMaterial({
           color: 0x000000, // Black color for the fill
           transparent: true,
-          opacity: .5, // Adjust opacity as needed
-          alphaHash: false,
+          opacity: 0.75, // Adjust opacity as needed
+          alphaHash: true,
           side: THREE.FrontSide // Render both sides
         });
 
@@ -1109,7 +1128,6 @@ function addCellServiceMesh(geojson) {
           color: colorScheme.cellColor, // Use your existing color scheme
           transparent: false,
           wireframe: true,
-          // alphaHash: true,
           side: THREE.FrontSide // Render both sides
         });
         
@@ -1132,11 +1150,13 @@ function addCellServiceMesh(geojson) {
 
       // Add the cellServiceMesh group to the scene
       scene.add(cellServiceMesh);
+
+      // Set the initial visibility of the cell service mesh layer to false
+      cellServiceMesh.visible = false;
+
       resolve(cellServiceMesh); // Optionally return the group for further manipulation
-
-
     } catch (error) {
-      reject(`Error in cellServiceMesh: ${error.message}`);
+      reject(`Error in addCellServiceMesh: ${error.message}`);
     }
   });
 }
@@ -1300,6 +1320,8 @@ function addFMTowerPts(geojson) {
 
       // Add the FM points to the scene
       scene.add(fmTransmitterPoints);
+      fmTransmitterPoints.visible = false;
+
 
       // Create and add the convex hull to the scene
       if (points.length > 0) {
@@ -1314,6 +1336,7 @@ function addFMTowerPts(geojson) {
 
       // Add the MST lines to the scene
       scene.add(fmMSTLines);
+      fmMSTLines.visible = false;
       resolve(); // Resolve the promise when done
     } catch (error) {
       console.error('Error in addFMTowerPts:', error);
