@@ -10,6 +10,7 @@ import Graph from 'graphology';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
+
 // Define global geographic layer groups
 let fmTransmitterPoints = new THREE.Group();
 let fmMSTLines = new THREE.Group();
@@ -18,6 +19,7 @@ let cellMSTLines = new THREE.Group();
 let contourLines = new THREE.Group();
 let propagationPolygons = new THREE.Group();
 let cellServiceMesh = new THREE.Group();
+let analysisArea = new THREE.Group();
 cellServiceMesh.visible = false; // Set the mesh to be invisible initially
 
 // Define color scheme variables
@@ -34,7 +36,7 @@ const colorScheme = {
   // highestElevationColor: "#ff0000", // Red
   mstFmColor: "#FF5F1F", // yellow
   mstCellColor: "#FFFF00", // neon orange
-  boundingBoxColor: "#0000FF",
+  boundingBoxColor: "#303030",
   contoursLabelColor: "#00ff00",
   cellColor: "#FF1493" // magenta
 };
@@ -515,7 +517,8 @@ function addLayerVisibilityControls() {
     { name: 'cell MST lines', color: colorScheme.mstCellColor },
     { name: 'contour lines', color: colorScheme.contoursLabelColor },
     { name: 'fm propagation curves', color: colorScheme.polygonColor },
-    { name: 'cell dead zones', color: colorScheme.cellColor }
+    { name: 'cell dead zones', color: colorScheme.cellColor },
+    { name: 'analysis area', color: colorScheme.boundingBoxColor }
 
   ];
 
@@ -571,7 +574,9 @@ const layerObjects = {
   'cell MST lines': cellMSTLines,
   'contour lines': contourLines,
   'fm propagation curves': propagationPolygons,
-  'cell dead zones': cellServiceMesh
+  'cell dead zones': cellServiceMesh,
+  'analysis area': analysisArea
+
 };
 
 function toggleCellServiceMeshVisibility(isVisible) {
@@ -698,13 +703,17 @@ function onDocumentKeyDown(event) {
         if (checkbox) checkbox.checked = cellServiceMesh.visible;
 
         break;
+        case '8':
+          toggleLayerVisibility('analysis area', !layerObjects['analysis area'].visible);
+          break;
+
                         
       // Add other cases for different layers as needed
   }
 
+  toggleCellServiceMeshVisibility(!isCellMeshVisible);
   console.log(`Toggling Cell Service Mesh to ${!isCellMeshVisible}`);
   console.log(`Before toggle: `, cellServiceMesh.children.map(group => group.children.map(mesh => mesh.visible)));
-  toggleCellServiceMeshVisibility(!isCellMeshVisible);
   console.log(`After toggle: `, cellServiceMesh.children.map(group => group.children.map(mesh => mesh.visible)));
 
 
@@ -1067,7 +1076,7 @@ function addContourLines(geojson) {
   });
 }
 
-function addCellServiceMesh(geojson, stride = 3) {
+function addCellServiceMesh(geojson, stride = 2) {
   return new Promise((resolve, reject) => {
     try {
       // Reset/clear the group to avoid adding duplicate meshes
@@ -1117,18 +1126,19 @@ function addCellServiceMesh(geojson, stride = 3) {
         // Solid fill material (black fill)
         const fillMaterial = new THREE.MeshBasicMaterial({
           color: 0x000000, // Black color for the fill
-          transparent: true,
-          opacity: 0.75, // Adjust opacity as needed
-          alphaHash: true,
-          side: THREE.FrontSide // Render both sides
+          transparent: false,
+          // opacity: 0.75, // Adjust opacity as needed
+          // alphaHash: true,
+          side: THREE.DoubleSide // 
         });
 
         // Wireframe material
         const wireframeMaterial = new THREE.MeshBasicMaterial({
           color: colorScheme.cellColor, // Use your existing color scheme
-          transparent: false,
+          transparent: true,
+          opacity: 0.6,
           wireframe: true,
-          side: THREE.FrontSide // Render both sides
+          side: THREE.FrontSide
         });
         
         // Create mesh with the fill material
@@ -1141,7 +1151,7 @@ function addCellServiceMesh(geojson, stride = 3) {
 
         // Group to hold both meshes
         var group = new THREE.Group();
-        group.add(fillMesh);
+        // group.add(fillMesh);
         group.add(wireframeMesh);
 
         // Add the group to the cellServiceMesh group
@@ -1218,7 +1228,7 @@ function addPolygons(geojson, stride = 10) {
       scene.add(mesh);
       propagationPolygons.add(mesh);
     } catch (error) {
-      console.error(`Error processing feature at index ${i}:`, error);
+      // console.error(`Error processing feature at index ${i}:`, error);
     }
   }
       // Add the propagationPolygons group to the scene
@@ -1457,34 +1467,34 @@ geojson.features.forEach((feature, index) => {
 
 
 // Function to load and position the raster image
-function loadAndPositionRaster() {
-  const textureLoader = new THREE.TextureLoader();
+// function loadAndPositionRaster() {
+//   const textureLoader = new THREE.TextureLoader();
 
-  // Define the corner coordinates of your raster image in lon/lat
-  const topLeftLonLat = [-76.6, 40.8]; // Replace with actual coordinates
-  const bottomRightLonLat = [-76.4, 40.6]; // Replace with actual coordinates
+//   // Define the corner coordinates of your raster image in lon/lat
+//   const topLeftLonLat = [-76.6, 40.8]; // Replace with actual coordinates
+//   const bottomRightLonLat = [-76.4, 40.6]; // Replace with actual coordinates
 
-  // Convert corner coordinates to State Plane coordinates
-  const topLeftSP = toStatePlane(...topLeftLonLat);
-  const bottomRightSP = toStatePlane(...bottomRightLonLat);
+//   // Convert corner coordinates to State Plane coordinates
+//   const topLeftSP = toStatePlane(...topLeftLonLat);
+//   const bottomRightSP = toStatePlane(...bottomRightLonLat);
 
-  // Calculate the size and position based on converted coordinates
-  const width = Math.abs(topLeftSP[0] - bottomRightSP[0]);
-  const height = Math.abs(topLeftSP[1] - bottomRightSP[1]);
-  const positionX = (topLeftSP[0] + bottomRightSP[0]) / 2;
-  const positionY = (topLeftSP[1] + bottomRightSP[1]) / 2;
+//   // Calculate the size and position based on converted coordinates
+//   const width = Math.abs(topLeftSP[0] - bottomRightSP[0]);
+//   const height = Math.abs(topLeftSP[1] - bottomRightSP[1]);
+//   const positionX = (topLeftSP[0] + bottomRightSP[0]) / 2;
+//   const positionY = (topLeftSP[1] + bottomRightSP[1]) / 2;
 
-  textureLoader.load('path/to/Merged_Viewshed_NYS_Resample.jpg', function(texture) {
-    const geometry = new THREE.PlaneGeometry(width, height);
-    const material = new THREE.MeshBasicMaterial({ map: texture });
-    const rasterMesh = new THREE.Mesh(geometry, material);
+//   textureLoader.load('/Merged_Viewshed_NYS_Resample.jpg', function(texture) {
+//     const geometry = new THREE.PlaneGeometry(width, height);
+//     const material = new THREE.MeshBasicMaterial({ map: texture });
+//     const rasterMesh = new THREE.Mesh(geometry, material);
 
-    // Set position based on converted State Plane coordinates
-    rasterMesh.position.set(positionX, positionY, 0);
+//     // Set position based on converted State Plane coordinates
+//     rasterMesh.position.set(positionX, positionY, 0);
 
-    scene.add(rasterMesh);
-  });
-}
+//     scene.add(rasterMesh);
+//   });
+// }
 
 
 function addGraticule(scene, boundingBox, gridSize, crossSize, scaleFactor = 2) {
@@ -1626,28 +1636,58 @@ function visualizeBoundingBoxGeoJSON(geojson) {
       const material = new THREE.LineBasicMaterial({ color: colorScheme.boundingBoxColor }); // bounding box color
 
       geojson.features.forEach(feature => {
-        const geometry = new THREE.BufferGeometry();
-        const vertices = [];
+        // Handle MultiLineString
+        if (feature.geometry.type === "MultiLineString") {
+          feature.geometry.coordinates.forEach(lineString => {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            lineString.forEach(coord => {
+              const [lon, lat] = coord;
+              const [x, y] = toStatePlane(lon, lat);
+              const z = zScale * 20;
+              vertices.push(new THREE.Vector3(x, y, z));
+            });
 
-        feature.geometry.coordinates[0].forEach(coord => {
-          const [lon, lat] = coord; // Assuming each coordinate is [longitude, latitude]
-          const [x, y] = toStatePlane(lon, lat); // Convert to your coordinate system
-          const z = zScale * 20; // Adjust Z based on your requirements
-          vertices.push(new THREE.Vector3(x, y, z));
-        });
-
-        // Close the loop by adding the first point at the end
-        if (feature.geometry.coordinates[0].length > 2) {
-          const [lon, lat] = feature.geometry.coordinates[0][0];
-          const [x, y] = toStatePlane(lon, lat);
-          const z = zScale * 20; // Adjust Z based on your requirements
-          vertices.push(new THREE.Vector3(x, y, z));
+            geometry.setFromPoints(vertices);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            analysisArea.add(line);
+          });
         }
+        // Handle MultiPolygon
+        else if (feature.geometry.type === "MultiPolygon") {
+          feature.geometry.coordinates.forEach(polygon => {
+            polygon.forEach(linearRing => {
+              const geometry = new THREE.BufferGeometry();
+              const vertices = [];
 
-        geometry.setFromPoints(vertices);
-        const line = new THREE.Line(geometry, material);
-        scene.add(line);
+              linearRing.forEach(coord => {
+                const [lon, lat] = coord;
+                const [x, y] = toStatePlane(lon, lat);
+                const z = zScale * 20;
+                vertices.push(new THREE.Vector3(x, y, z));
+              });
+
+              // Close the loop for each linear ring
+              if (linearRing.length > 2) {
+                const [lon, lat] = linearRing[0];
+                const [x, y] = toStatePlane(lon, lat);
+                const z = zScale * 20;
+                vertices.push(new THREE.Vector3(x, y, z));
+              }
+
+              geometry.setFromPoints(vertices);
+              const line = new THREE.Line(geometry, material);
+              scene.add(line);
+              analysisArea.add(line);
+            });
+          });
+        }
+        // Add handling for other geometry types if necessary
       });
+
+      scene.add(analysisArea);
 
       resolve(); // Resolve the promise when done
     } catch (error) {
@@ -1655,6 +1695,7 @@ function visualizeBoundingBoxGeoJSON(geojson) {
     }
   });
 }
+
 
 
 ///////////////////////////////////////////////////// 
@@ -1776,8 +1817,8 @@ async function loadGeoJSONData() {
     'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson',
     'data/FM_contours_NYS_clip_20231101.geojson',
     'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson',
-    'data/NYS_fullElevDEM_boundingBox.geojson',
-    'data/cellServiceCentroids_2000m_20231205.geojson'
+    'data/study_area_admin0clip.geojson',
+    'data/cellServiceCentroids_2000m_20231210.geojson'
   ];
 
   try {
@@ -1813,7 +1854,7 @@ function handleGeoJSONData(url, data) {
       addFMTowerPts(data);
       break;
 
-    case 'data/NYS_fullElevDEM_boundingBox.geojson':
+    case 'data/study_area_admin0clip.geojson':
       boundingBoxGeojsonData = data;
       visualizeBoundingBoxGeoJSON(data);
       break;
@@ -1823,7 +1864,7 @@ function handleGeoJSONData(url, data) {
       loadAndPositionRaster(data);
       break;
 
-    case 'data/cellServiceCentroids_2000m_20231205.geojson':
+    case 'data/cellServiceCentroids_2000m_20231210.geojson':
       cellServiceGeojsonData = data;
       addCellServiceMesh(data);
       break;
