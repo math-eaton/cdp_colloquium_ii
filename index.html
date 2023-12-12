@@ -1,44 +1,58 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iso 3D</title>
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/icon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iso 3D</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+    <!-- Main content container with dual-column layout -->
+    <div class="container">
+      <div class="column images" id="imageColumn">
+        <!-- Images or other content here -->
+        <h1>image</h1>
+        <!-- More images/content -->
+      </div>
+      <div class="column text" id="textColumn">
+        <!-- Text content here -->
+        <p>Some text content...</p>
+        <!-- More text/content -->
+      </div>
+    </div>
 
 
+  <div id="three-container" class="pixelated background"></div> <!-- Three.js background -->
+
+  <div id="app">
     <div id="start-container">
       <button id="start-button">START</button>
     </div>
-    
 
     <div id="progress-bar"></div>
-  
 
-    <div id="three-container" class="pixelated"></div>
-        
+    <!-- Additional interactive elements -->
     <button id="info-button" style="opacity: 0;">???</button>
     <div id="info-container" class="hidden">
       <ul>
         <div id="legend-controls">
+          <!-- legend items added here in js -->
         </div>
       </ul>
-<div class="small-text">
-        <p>uncheck or use num keys to toggle layers<br>
-        'y' key to auto-rotate</p>
+      <div class="small-text">
+        <p>uncheck or use num keys to toggle layers<br>'y' key to auto-rotate</p>
         <div id="resolution-controls">
           <label for="resolution-slider">scale resolution:</label>
-          <input type="range" id="resolution-slider" min="2" max="10" step="1" value="8.0">
-          <p id="resolution-display">resolution: </p> <!-- Adjust initial text as needed -->
-      </div>
+          <input type="range" id="resolution-slider" min="2" max="10" step="1" value="4">
+          <p id="resolution-display">resolution: </p>
+        </div>
       </div>
       <span id="hide-legend" class="small-text" style="cursor: pointer; text-decoration: underline;">click anywhere to hide</span>
     </div>
-    
-    
+  </div>
 
-    <script type="module" src="./main.js" defer></script>
-  </body>
+  <script type="module" src="./main.js" defer></script>
+</body>
 </html>

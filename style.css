@@ -23,14 +23,13 @@ a:hover {
 
 body {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  /* font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
-  margin: 0;
-  display: flex;
-  place-items: center;
+  margin: 2%;
+  display: block; /* Changed from flex to block */
+  place-items: unset; /* Remove centering */
   min-width: 320px;
-  min-height: 100vh;
-  cursor: url('whiteCrosshair.cur'), auto;
+  min-height: 100%; /* Changed from 100vh to 100% for proper scrolling */
 }
+
 
 h1 {
   font-size: 3.2em;
@@ -38,10 +37,13 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: 100vw;
+  min-height: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  /* padding: 2%; */
   text-align: center;
+  overflow: hidden;
+  cursor: url('whiteCrosshair.cur'), auto;
 }
 
 .logo {
@@ -76,11 +78,11 @@ h1 {
 #progress-bar {
   font-size: xx-large;
   position: absolute;
-  left: 50%;
+  top:50%;
+  left:50%;
   display: block;
-  height: 200px;
+  /* height: 200px; */
   width: 0;
-  /* background-color: #33cc33; */
   line-height: 200px;
   text-align: center;
   color: rgb(255, 255, 255);
@@ -89,7 +91,7 @@ h1 {
 
 /* Slider container */
 #resolution-controls {
-  width: 250px; /* Adjust as necessary */
+  width: 200px; /* Adjust as necessary */
 }
 
 /* The slider itself */
@@ -97,7 +99,7 @@ h1 {
   -webkit-appearance: none;  /* Override default CSS styles */
   appearance: none;
   width: 100%;
-  height: 20px; /* Slider height */
+  height: 8px; /* Slider height */
   background: #ddd; /* Slider background */
   outline: none; 
   opacity: 0.7;
@@ -124,86 +126,38 @@ h1 {
 
 
 #three-container {
-  visibility: hidden;
-  width: 100%;
+  width: 100%; /* Full width of its parent container */
   height: 100%;
-  position: absolute; /* If you want it to overlay over other elements */
-  top: 0;
-  left: 0;
+  position: relative;
+  overflow: hidden; /* Add this to prevent any overflow */
 }
 
+
 #three-container canvas {
-  width: 100vw !important;
-  height: 100vh !important;
+  width: 100% !important;
+  height: 100% !important;
   image-rendering: pixelated !important;
 }
 
-#pan-controls {
-  position: absolute;
-  bottom: 2%;
-  left: 2%;
-  z-index: 10;
-  display: flex; /* Set to flex to use flexbox layout */
-  align-items: center; /* Align children vertically in the middle */
-  visibility: hidden; /* Hide pan-controls initially */
-}
-
-.pan-button {
-  font-size: 20px;
-  line-height: 20px;
-  margin: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: white;
-  border: none;
-  outline: none;
-}
-
-.pan-vertical-container {
-  display: inline-flex; /* Set to inline-flex to keep the flex container inline */
-  flex-direction: column; /* Stack children vertically */
-  align-items: center; /* Center children horizontally */
-  margin: 0 5px; /* Adjust margin to your liking */
-}
-
-#pan-controls {
-  position: absolute;
-  bottom: 2%;
-  left: 2%;
-  z-index: 10;
-  display: flex; /* Set to flex to use flexbox layout */
-  align-items: center; /* Align children vertically in the middle */
-}
-
-.pan-button {
-  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-  font-size: 20px;
-  line-height: 20px;
-  margin: 5px;
-  cursor: pointer;
-  background: transparent;
-  color: white;
-  border: none;
-  outline: none;
-}
-
-.pan-vertical-container {
-  display: inline-flex; /* Set to inline-flex to keep the flex container inline */
-  flex-direction: column; /* Stack children vertically */
-  align-items: center; /* Center children horizontally */
-  margin: 0 5px; /* Adjust margin to your liking */
+.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* Puts the background behind your content */
 }
 
 #info-button {
   position: absolute;
   font-size: larger;
-  bottom: 5%;
-  right: 2%; /* Adjust as needed */
+  bottom: 2%;
+  right: 5%; 
   z-index: 10;
   background: rgba(0, 0, 0, 0.0);
   color: cyan;
   border: 2px;
-  border-radius: 100%;
+  border-radius: 50%;
   border-color: cyan;
   padding: 5px 10px;
   cursor: pointer;
@@ -216,12 +170,12 @@ h1 {
   visibility: visible;
   transition: opacity 0.15s ease; /* Smooth transition for fade effect */
   position: absolute;
-  bottom: 2%;
-  left: 15%; /* Adjust this to position the box to the right of the pan controls */
+  bottom: 0%;
+  left: 10%; /* Adjust this to position the box to the right of the pan controls */
   z-index: 10;
   color: white;
   background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  padding: 10px;
+  /* padding: 10px; */
   border-radius: 5px;
   font-size: 14px; /* Adjust the font size as needed */
   max-width: 250px; /* Set a max-width for the container */
@@ -247,15 +201,15 @@ h1 {
 }
 
 #start-container {
-  position: absolute;
+  position: relative;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  /* transform: translate(-50%, -50%); */
   z-index: 100; /* Make sure it's above other elements */
 }
 
 button#start-button {
-  padding: 10px 20px;
+  /* padding: 10px 20px; */
   font-size: 1.5em;
   background-color: #000000;
   color: white;
@@ -390,3 +344,4 @@ button:focus-visible {
   cursor: url('whiteCrosshair.cur'), auto; /* 15% transparent cursor */
   opacity: 85%;
 }
+
