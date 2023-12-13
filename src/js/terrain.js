@@ -1,6 +1,6 @@
 import p5 from 'p5';
 
-export function terrain() {
+export function terrain(containerId) {
 
   new p5((p) => {
     let cols, rows;
@@ -13,14 +13,16 @@ export function terrain() {
     let noiseChangeSpeed = 0.003; // Speed at which the terrain changes
     let thresh = 25;
     let useCA = false; // false for Perlin noise, true for CA
-    let xRotation = 0; // Rotation around the X-axis
-    let zRotation = 0; // Rotation around the Y-axis
+    // Initialize with random rotations
+    let xRotation = p.random(-0.05, 0.05); // Random rotation around the X-axis
+    let zRotation = p.random(-0.05, 0.05); // Random rotation around the Y-axis
     let rotateXAxis = true;
     let rotateZAxis = true; // Flag to control rotation
   
   
     function generateTerrain() {
-      scl = 50; // Adjust scale 
+      // scl = p.random(45, 55); // Random scale within 10% range
+      scl = 50;
       buffer = 0.25; // N% buffer
       w = p.windowWidth * (1 - 2 * buffer); // Adjust for buffer
       h = p.windowHeight * (1 - 2 * buffer); // Adjust for buffer
@@ -101,7 +103,7 @@ export function terrain() {
     }  
   
     p.setup = () => {
-      let containerDiv = document.getElementById('p5Container');
+      let containerDiv = document.getElementById(containerId);
       // console.log(containerDiv)
       if (containerDiv) {
         let rect = containerDiv.getBoundingClientRect();
@@ -109,14 +111,13 @@ export function terrain() {
         h = 200;
         console.log(h)
       } else {
-        // Fallback size if the div isn't found
+        console.warn(`Div with id ${containerId} not found. Using fallback size.`);
         w = window.innerWidth;
         h = window.innerHeight;
-        console.warn('Div not found. Using fallback size.');
       }
-    
+
       let canvas = p.createCanvas(w, h, p.WEBGL);
-      canvas.parent('p5Container');
+      canvas.parent(containerId);
 
       generateTerrain();
           console.log("generate")

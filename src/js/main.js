@@ -5,8 +5,11 @@ import { terrain } from './terrain.js';
 // init external js
 iso3D();
 document.addEventListener('DOMContentLoaded', (event) => {
-    terrain();
+    terrain('p5Container1');
+    terrain('p5Container2');
 });
+
+
 
 // now regular site js
 

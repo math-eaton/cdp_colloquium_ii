@@ -342,7 +342,7 @@ function checkIntersection() {
 // Function to animate your scene
 function animate() {
     requestAnimationFrame(animate);
-    checkIntersection(); // Check for mouse-polygon intersection
+    // checkIntersection(); // Check for mouse-polygon intersection
     controls.update();
     // Rotate the camera if isCameraRotating is true
     // Check if camera and controls are initialized
@@ -377,13 +377,14 @@ function animate() {
 async function initialize() {
   initThreeJS(); // Initialize Three.js
 
+
   // Hide unnecessary elements on page load
   document.getElementById('start-button').style.display = 'none';
   document.getElementById('info-container').style.display = 'none';
   // document.getElementById('info-button').style.display = 'none';
 
   // Show the progress bar
-  document.getElementById('progress-bar').style.display = 'block';
+  // document.getElementById('progress-bar').style.display = 'block';
 
   // Initialize sliderValue
   sliderValue = 0.2 + (parseFloat(document.getElementById('resolution-slider').value) / sliderLength) * 0.8;
@@ -395,7 +396,7 @@ async function initialize() {
   loadGeoJSONData(() => {
     postLoadOperations(); // Setup the scene after critical datasets are loaded
     enableInteraction(); // Directly enable interaction without waiting for a button click
-    document.getElementById('progress-bar').style.display = 'none'; // Hide the progress bar
+    // document.getElementById('progress-bar').style.display = 'none'; // Hide the progress bar
   });
 }
 
@@ -419,14 +420,21 @@ function enableInteraction() {
     animate();
     lockCameraTopDown(false); // Ensure this is called after controls are initialized
     document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
+
+        // Call the callback once everything is set up
+        if (typeof onVisualizationReady === 'function') {
+          onVisualizationReady(); // Call the callback function
+      }
+  
   });
+  
 }
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  initialize();
 
   const infoButton = document.getElementById('info-button');
-  
+  initialize();
+
 });
 
 
@@ -1818,6 +1826,8 @@ function makeTextSprite(message, parameters) {
 
 // Fetching the contour lines GeoJSON and adding to the scene
 async function loadGeoJSONData(onCriticalDataLoaded) {
+
+
   // console.log("loading...")
   const urls = [
     'data/stanford_contours_simplified1000m_20231124.geojson',
@@ -1835,14 +1845,10 @@ async function loadGeoJSONData(onCriticalDataLoaded) {
     fetch(url)
       .then(response => response.json())
       .then(data => {
-        // console.log(`Loaded: ${url}`); 
         handleGeoJSONData(url, data);
         if (isCriticalDataset(url)) {
           criticalDatasetsLoaded++;
-          console.log(criticalDatasetsLoaded)
-          // console.log(`Critical Dataset Loaded: ${url}`); 
           if (criticalDatasetsLoaded === criticalDatasetsCount) {
-            // console.log("Calling onCriticalDataLoaded"); 
             onCriticalDataLoaded(); 
           }
         }
@@ -1852,7 +1858,6 @@ async function loadGeoJSONData(onCriticalDataLoaded) {
       });
   });
 }
-
 
 
 function isCriticalDataset(url) {
