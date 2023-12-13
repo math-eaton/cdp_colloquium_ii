@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { MapControls } from 'three/addons/controls/MapControls.js';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import proj4 from 'proj4';
-import '/style.css'; 
 import hull from 'convex-hull';
 import Delaunator from 'delaunator';
 import Graph from 'graphology';
@@ -88,8 +87,8 @@ let globalBoundingBox
 let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let polygons = [];
-let isCameraRotating = false; // Flag to track camera rotation
-const rotationSpeed = 0.005; // Define the speed of rotation
+let isCameraRotating = true; // Flag to track camera rotation
+const rotationSpeed = 0.007; // Define the speed of rotation
 let sliderValue = 8;  //  default value
 const sliderLength = 10;  // Assuming 10 is the maximum value of the slider
 
@@ -775,7 +774,7 @@ document.addEventListener('keydown', onDocumentKeyDown, false);
 function adjustMeshVisibilityBasedOnCameraDistance() {
   if (camera && controls && controls.target) {
     const distanceToTarget = camera.position.distanceTo(controls.target);
-    const threshold = 3;
+    const threshold = 5;
 
     cellServiceMesh.visible = distanceToTarget <= threshold;
   } else {
@@ -1072,7 +1071,7 @@ function addContourLines(geojson) {
   });
 }
 
-function addCellServiceMesh(geojson, stride = 2) {
+function addCellServiceMesh(geojson, stride = 3) {
   return new Promise((resolve, reject) => {
     try {
       // Reset/clear the group to avoid adding duplicate meshes
@@ -1845,6 +1844,7 @@ async function loadGeoJSONData(onCriticalDataLoaded) {
 
 function isCriticalDataset(url) {
   // Define logic to determine if a dataset is critical for initial rendering
+  // todo: this breaks if the contours aren't required up front but they take longest to load
   return url.includes('stanford_contours') || url.includes('study');
 }
 
@@ -1893,33 +1893,38 @@ function handleGeoJSONData(url, data) {
   }
 }
 
-function postLoadOperations() {
+  function postLoadOperations() {
     const boundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
-    const gridSize = 0.5; // This represents your grid cell size
-    const crossSize = gridSize * 0.05; // X% of the grid size, adjust as needed
 
-    // addGraticule(scene, boundingBox, gridSize, crossSize);
-
-    globalBoundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
-    
-        
-    // Move the camera and set controls target
+    // Calculate center and size of bounding box
     const center = getCenterOfBoundingBox(boundingBox);
     const size = getSizeOfBoundingBox(boundingBox);
     const maxDim = Math.max(size.x, size.y);
+
+    // Adjust camera Z to be closer
     const fov = camera.fov * (Math.PI / 100);
     let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-    cameraZ *= 0.7; // adjust Z magic number
-    const initialCameraZ = calculateCameraZToFitBoundingBox(globalBoundingBox);
-    camera.position.set(center.x, center.y, initialCameraZ);
-    controls.target.set(center.x, center.y, 0);
+    cameraZ *= 0.15; // Decrease this factor to move the camera closer
 
-    // Now, add the constraints to the camera and controls
+    // Adjust tilt angle
+    const tiltAngle = THREE.MathUtils.degToRad(40); // Example: 30 degree tilt
+    const distance = cameraZ; // Use the calculated camera distance
+    camera.position.set(
+        center.x + distance * Math.sin(tiltAngle), // x position
+        center.y,                                 // y position
+        center.z + distance * Math.cos(tiltAngle)  // z position (height)
+    );
+
+    // Set controls target to the center of bounding box
+    controls.target.set(center.x - 0.05, center.y - 0.02, 0);
+    let target = controls.target.set(center.x, center.y, 0);
+    console.log(target)
+
+    // Apply constraints to camera and update controls
     constrainCamera(controls, boundingBox);
-
-    // Call this after setting the position and target
     controls.update();
-    // After data is loaded, reveal the start button
+
+    // Reveal the start button after setting up the camera
     document.getElementById('start-container').style.display = 'block';
   }
 }

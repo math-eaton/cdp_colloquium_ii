@@ -23,11 +23,31 @@ a:hover {
 
 body {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  margin: 2%;
+  /* margin: 2%; */
   display: block; /* Changed from flex to block */
   place-items: unset; /* Remove centering */
   min-width: 320px;
   min-height: 100%; /* Changed from 100vh to 100% for proper scrolling */
+}
+
+
+.container {
+  margin: 5%;
+  display: flex;
+  height: 100%;
+}
+
+.column {
+  overflow-y: auto;
+  height: 100%;
+}
+
+.image {
+  width: 66.6%; /* 2/3 of the container */
+}
+
+.text {
+  width: 33.3%; /* 1/3 of the container */
 }
 
 
@@ -43,7 +63,7 @@ h1 {
   /* padding: 2%; */
   text-align: center;
   overflow: hidden;
-  cursor: url('whiteCrosshair.cur'), auto;
+  cursor: url('/src/cursor/whiteCrosshair.cur'), auto;
 }
 
 .logo {
@@ -150,9 +170,9 @@ h1 {
 
 #info-button {
   position: absolute;
-  font-size: larger;
-  bottom: 2%;
-  right: 5%; 
+  font-size: large;
+  bottom: 1%;
+  right: 1%; 
   z-index: 10;
   background: rgba(0, 0, 0, 0.0);
   color: cyan;
@@ -341,7 +361,22 @@ button:focus-visible {
 }
 
 .cursor-default {
-  cursor: url('whiteCrosshair.cur'), auto; /* 15% transparent cursor */
+  cursor: url('/src/cursor/whiteCrosshair.cur'), auto; /* 15% transparent cursor */
   opacity: 85%;
 }
 
+
+#scrollUpButton {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: rgba(0, 0, 0, 0.0);
+  color: cyan;
+  padding: 10px;
+  margin: 20px;
+  border-radius: 50%;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 20px;
+  z-index: 1000; /* Ensure it's above other elements */
+}
