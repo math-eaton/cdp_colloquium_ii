@@ -78,27 +78,12 @@ document.getElementById('scrollUpButton').addEventListener('click', function() {
 
     // Toggle visibility, button text, and background class
     if (button.textContent === 'show text') {
-        // Show 'text-content' div and change button text
-        textContentDiv.style.display = 'flex'; // Reset to flex to maintain the flexbox layout
-
-        // Reset display for children, if they were explicitly set to none earlier
-        Array.from(textContentDiv.children).forEach(child => {
-            child.style.display = ''; // Reset to default, letting flexbox take over
-        });
-
-        button.textContent = 'hide text';
-
-        // Add the 'background' class back to the 'app'
-        if (!threeContainer.classList.contains('background')) {
-            threeContainer.classList.add('background');
-        }
+        textContentDiv.classList.remove('hidden'); // Show 'text-content' div
+        button.textContent = 'fullscreen map';
+        threeContainer.classList.add('background'); // Add 'background' class to 'app'
     } else {
-        // Hide 'text-content' div and change button text
-        textContentDiv.style.display = 'none'; // Hide the entire flex container
-
+        textContentDiv.classList.add('hidden'); // Hide 'text-content' div
         button.textContent = 'show text';
-
-        // Remove the 'background' class from the 'app'
-        threeContainer.classList.remove('background');
+        threeContainer.classList.remove('background'); // Remove 'background' class from 'app'
     }
 });

@@ -37,6 +37,15 @@ body {
   z-index: 50000;
   margin: 5%;
   overflow: hidden;
+  transition: opacity 2s linear, visibility 0s linear 2s; /* Delay visibility transition */
+  opacity: 1; /* Fully visible initially */
+  visibility: visible; /* Fully visible initially */
+}
+
+.hidden {
+  opacity: 0; /* Fully transparent */
+  visibility: hidden;
+  transition: opacity 2s linear, visibility 0s linear 0s; /* No delay when hiding */
 }
 
 #text-content .column {
@@ -63,10 +72,6 @@ h1 {
   line-height: 1.1;
 }
 
-#p5Container{
-
-
-}
 
 
 #app {
@@ -200,8 +205,9 @@ h1 {
   /* border-radius: 50%; */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   font-size: large;
-  z-index: 10001; 
+  z-index: 60001; 
   cursor: pointer;
+  filter: none;
 }
 
 
@@ -222,6 +228,21 @@ h1 {
   display: block;
   background-color: rgba(0, 0, 0, 0.666);
 }
+
+/* Hide the info-button when the background class is active on the parent */
+#app.background #info-button {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.5s linear;
+}
+
+/* Show the info-button when the background class is not active */
+#app:not(.background) #info-button {
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0s, opacity 0.5s linear;
+}
+
 
 #info-container {
   opacity: 1; /* Start fully visible */
@@ -403,3 +424,6 @@ button:focus-visible {
   opacity: 85%;
 }
 
+#p5Container{
+  height: 10%;
+}
