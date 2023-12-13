@@ -108,7 +108,9 @@ function initThreeJS() {
   camera.up.set(0, 0, 1); // Set Z as up-direction 
 
   // Create the renderer first
-  renderer = new THREE.WebGLRenderer({ antialias: false });
+  // renderer = new THREE.WebGLRenderer({ antialias: false });
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+
 
   var lowResScale = 1.0; // Adjust this for more or less resolution (lower value = lower resolution)
   var lowResWidth = window.innerWidth * lowResScale;
@@ -366,7 +368,7 @@ async function initialize() {
   // Hide unnecessary elements on page load
   document.getElementById('start-button').style.display = 'none';
   document.getElementById('info-container').style.display = 'none';
-  document.getElementById('info-button').style.display = 'none';
+  // document.getElementById('info-button').style.display = 'none';
 
   // Show the progress bar
   document.getElementById('progress-bar').style.display = 'block';
@@ -552,12 +554,12 @@ function addLayerVisibilityControls() {
 
     // Add event listener to toggle layer visibility
     checkbox.addEventListener('change', function() {
-      console.log(`Toggling visibility for ${layer.name}`);
+      // console.log(`Toggling visibility for ${layer.name}`);
       toggleLayerVisibility(layer.name, this.checked);
     });
 
-    // Adjust initial checkbox state for fm propagation curves
-    if (layer.name === 'fm propagation curves') {
+    // Adjust initial checkbox state for a few
+    if (layer.name === 'fm propagation curves' || layer.name === 'fm transmitter points' || layer.name === 'fm minimum spanning tree lines') {
       checkbox.checked = false; // Set checkbox to unchecked for this layer
     }    
 
@@ -696,7 +698,7 @@ function onDocumentKeyDown(event) {
             group.children.forEach(mesh => mesh.visible = cellServiceMesh.visible); // Apply to each mesh
         });
 
-        console.log(`Cell Service Mesh visibility: ${cellServiceMesh.visible}`);
+        // console.log(`Cell Service Mesh visibility: ${cellServiceMesh.visible}`);
 
         // Optionally, update the checkbox state to reflect this change
         const checkbox = document.getElementById('cell dead zones');
@@ -1076,7 +1078,6 @@ function addCellServiceMesh(geojson, stride = 3) {
     try {
       // Reset/clear the group to avoid adding duplicate meshes
       cellServiceMesh.clear();
-      console.log("Processing GeoJSON features for mesh generation.");
 
       // Downsample and group points by 'group_ID'
       const groups = {};
@@ -1805,7 +1806,7 @@ function makeTextSprite(message, parameters) {
 
 // Fetching the contour lines GeoJSON and adding to the scene
 async function loadGeoJSONData(onCriticalDataLoaded) {
-  console.log("loading...")
+  // console.log("loading...")
   const urls = [
     'data/stanford_contours_simplified1000m_20231124.geojson',
     'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson',
@@ -1822,14 +1823,14 @@ async function loadGeoJSONData(onCriticalDataLoaded) {
     fetch(url)
       .then(response => response.json())
       .then(data => {
-        console.log(`Loaded: ${url}`);  // Debugging aid
+        // console.log(`Loaded: ${url}`); 
         handleGeoJSONData(url, data);
         if (isCriticalDataset(url)) {
           criticalDatasetsLoaded++;
           console.log(criticalDatasetsLoaded)
-          console.log(`Critical Dataset Loaded: ${url}`);  // Debugging aid
+          // console.log(`Critical Dataset Loaded: ${url}`); 
           if (criticalDatasetsLoaded === criticalDatasetsCount) {
-            console.log("Calling onCriticalDataLoaded");  // Debugging aid
+            // console.log("Calling onCriticalDataLoaded"); 
             onCriticalDataLoaded(); 
           }
         }
@@ -1917,8 +1918,6 @@ function handleGeoJSONData(url, data) {
 
     // Set controls target to the center of bounding box
     controls.target.set(center.x - 0.05, center.y - 0.02, 0);
-    let target = controls.target.set(center.x, center.y, 0);
-    console.log(target)
 
     // Apply constraints to camera and update controls
     constrainCamera(controls, boundingBox);

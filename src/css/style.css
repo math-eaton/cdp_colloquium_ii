@@ -1,7 +1,7 @@
 :root {
   line-height: 1.5;
   font-weight: 400;
-
+  background-color: #000000;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   font-synthesis: none;
@@ -29,42 +29,43 @@ body {
   min-height: 100%; /* Changed from 100vh to 100% for proper scrolling */
 }
 
-
-.container {
+#text-content {
+  display: flex; /* Enable flexbox */
+  flex-direction: row; /* Items are laid out in a row */
+  align-items: start; /* Align items to the start of the container */
+  justify-content: space-between; /* Distribute extra space between items */
+  z-index: 50000;
   margin: 5%;
-  display: flex;
-  max-height: 100vh;
-  /* background-color: #00000050; */
-  z-index: 100000;
-  /* overflow: hidden; */
+  overflow: hidden;
 }
 
-/* 
-#p5Container {
-  max-width: 25%;
-  max-height: 25%;
-}
- */
-
-.column {
-  overflow-y:none;
+#text-content .column {
   height: 100%;
 }
 
-.image {
-  min-width: 66.6%; /* 2/3 of the container */
-  align-items: center;
+#text-content .text {
+  flex-basis: 33.3%; /* 1/3 of the container */
+  max-width: 33.3%; /* Ensure it does not grow beyond 1/3 */
+  padding-right: 2%; /* Optional spacing between text and image */
+  box-sizing: border-box; /* Include padding in the width calculation */
 }
 
-.text {
-  min-width: 33.3%; /* 1/3 of the container */
-  align-items: center;
+#text-content .image {
+  flex-basis: 66.6%; /* 2/3 of the container */
+  max-width: 66.6%; /* Ensure it does not grow beyond 2/3 */
+  max-height: 50vh;
+  box-sizing: border-box; /* Include any border or padding in the width calculation */
 }
 
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+#p5Container{
+
+
 }
 
 
@@ -78,6 +79,7 @@ h1 {
   text-align: center;
   overflow: hidden;
   cursor: url('/src/cursor/whiteCrosshair.cur'), auto;
+  transition: filter 0.25s linear; /* Transition applies to the filter property */
 }
 
 .logo {
@@ -120,7 +122,7 @@ h1 {
   line-height: 200px;
   text-align: center;
   color: rgb(255, 255, 255);
-  transition: width 0.5s ease; /* Add a transition for smooth width change */
+  transition: width 0.25s ease; /* Add a transition for smooth width change */
 }
 
 /* Slider container */
@@ -180,24 +182,45 @@ h1 {
   width: 100%;
   height: 100%;
   z-index: -1; /* Puts the background behind your content */
-  /* opacity: 50%; */
+  opacity: 50%;
+  filter: grayscale(100%);
+  transition: filter 0.5s linear; /* Transition for the filter effect over 2 seconds */
+  /* margin: 20%; */
 }
+
+
+#scrollUpButton {
+  position: fixed;
+  bottom: 1%;
+  right: 1%; 
+  background-color: rgb(0, 0, 0); 
+  color: cyan;
+  padding: 10px;
+  margin: 20px;
+  /* border-radius: 50%; */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: large;
+  z-index: 10001; 
+  cursor: pointer;
+}
+
 
 #info-button {
   position: absolute;
   font-size: large;
-  bottom: 1%;
+  bottom: 5%;
   right: 1%; 
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.0);
+  z-index: 10001;
+  background-color: rgb(0, 0, 0); 
   color: cyan;
   border: 2px;
-  border-radius: 50%;
+  /* border-radius: 50%; */
   border-color: cyan;
-  padding: 5px 10px;
+  padding: 10px;
+  margin: 20px;
   cursor: pointer;
-  display: block; /* Ensure the button is visible from the start */
-  background-color: rgba(0, 0, 0, 0.666); /* Semi-transparent background */
+  display: block;
+  background-color: rgba(0, 0, 0, 0.666);
 }
 
 #info-container {
@@ -205,14 +228,14 @@ h1 {
   visibility: visible;
   transition: opacity 0.15s ease; /* Smooth transition for fade effect */
   position: absolute;
-  bottom: 0%;
-  left: 10%; /* Adjust this to position the box to the right of the pan controls */
+  bottom: 1%;
+  left: 5%; /* Adjust this to position the box to the right of the pan controls */
   z-index: 10;
   color: white;
   background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
   /* padding: 10px; */
   border-radius: 5px;
-  font-size: 14px; /* Adjust the font size as needed */
+  font-size: medium; /* Adjust the font size as needed */
   max-width: 250px; /* Set a max-width for the container */
   cursor: pointer;
 }
@@ -380,18 +403,3 @@ button:focus-visible {
   opacity: 85%;
 }
 
-
-#scrollUpButton {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  background: rgba(0, 0, 0, 0.0);
-  color: cyan;
-  padding: 10px;
-  margin: 20px;
-  border-radius: 50%;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  font-size: 20px;
-  z-index: 1000; /* Ensure it's above other elements */
-}

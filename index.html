@@ -10,10 +10,14 @@
 <body>
 
     <!-- Main content container with dual-column layout -->
-    <div class="container">
+    <div class="container" id="text-content">
+
       <div class="column text" id="textColumn">
         <!-- Images or other content here -->
         <h1>text</h1>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
+        <br>sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        </p>
         <!-- More images/content -->
       </div>
       <div class="column image" id="p5Container">
@@ -30,7 +34,7 @@
     <div id="progress-bar"></div>
 
     <!-- Additional interactive elements -->
-    <button id="info-button" style="opacity: 0;">???</button>
+    <button id="info-button" style="opacity: 0;">map legend</button>
     <div id="info-container" class="hidden">
       <ul>
         <div id="legend-controls">
@@ -41,17 +45,15 @@
         <p>uncheck or use num keys to toggle layers<br>'y' key to toggle auto-rotate</p>
         <div id="resolution-controls">
           <label for="resolution-slider">scale resolution:</label>
-          <input type="range" id="resolution-slider" min="2" max="10" step="1" value="3">
+          <input type="range" id="resolution-slider" min="2" max="10" step="1" value="6">
           <p id="resolution-display">resolution: </p>
         </div>
       </div>
       <span id="hide-legend" class="small-text" style="cursor: pointer; text-decoration: underline;">click anywhere to hide</span>
     </div>
     <!-- Scroll Up Button -->
-    <div id="scrollUpButton" style="cursor: pointer;">↑</div>
+    <div id="scrollUpButton" style="cursor: pointer;">hide text</div>
   </div>
-
-
 
 
   <script type="module" src="/src/js/main.js" defer></script>
