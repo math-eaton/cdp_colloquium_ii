@@ -1,9 +1,12 @@
-// main.js
 import '/src/css/style.css'; 
 import { iso3D } from './iso3D.js';
+import { terrain } from './terrain.js';
 
-// Initialize the Three.js background
+// init external js
 iso3D();
+document.addEventListener('DOMContentLoaded', (event) => {
+    terrain();
+});
 
 // now regular site js
 
