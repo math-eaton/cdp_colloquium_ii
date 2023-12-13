@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         const threeContainer = document.getElementById('three-container');
 
-        if (scrollPercentage > 50) {
+        if (scrollPercentage > 20) {
             // Remove .background class to enable interaction
             threeContainer.classList.remove('background');
         } else {

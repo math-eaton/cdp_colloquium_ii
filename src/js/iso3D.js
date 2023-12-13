@@ -88,7 +88,7 @@ let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 let polygons = [];
 let isCameraRotating = true; // Flag to track camera rotation
-const rotationSpeed = 0.007; // Define the speed of rotation
+const rotationSpeed = 0.003; // Define the speed of rotation
 let sliderValue = 8;  //  default value
 const sliderLength = 10;  // Assuming 10 is the maximum value of the slider
 
@@ -714,7 +714,7 @@ function onDocumentKeyDown(event) {
 
 
   // Handle camera movement and rotation
-  const rotationSpeed = 0.025; // Speed of rotation
+  const rotationSpeed = 0.002; // Speed of rotation
   const vector = new THREE.Vector3();
   const axis = new THREE.Vector3(1, 0, 0); // X axis for world space rotation
 
