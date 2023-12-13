@@ -73,17 +73,22 @@ let isScrolling = false;
 
 document.getElementById('scrollUpButton').addEventListener('click', function() {
     const button = this;
-    const textContentDiv = document.getElementById('text-content'); // Select the element with the ID 'text-content'
-    const threeContainer = document.getElementById('app'); // Select the 'app' element
+    const textContentDiv = document.getElementById('text-content');
+    const threeContainer = document.getElementById('app');
+    const resolutionSlider = document.getElementById('resolution-slider');
 
-    // Toggle visibility, button text, and background class
     if (button.textContent === 'show text') {
         textContentDiv.classList.remove('hidden'); // Show 'text-content' div
         button.textContent = 'fullscreen map';
         threeContainer.classList.add('background'); // Add 'background' class to 'app'
+        resolutionSlider.value = '2';
+        resolutionSlider.dispatchEvent(new Event('input'));
     } else {
         textContentDiv.classList.add('hidden'); // Hide 'text-content' div
         button.textContent = 'show text';
         threeContainer.classList.remove('background'); // Remove 'background' class from 'app'
+        // Update slider and manually trigger 'input' event
+        resolutionSlider.value = '6';
+        resolutionSlider.dispatchEvent(new Event('input'));
     }
 });

@@ -184,11 +184,25 @@ function updateResolutionDisplay() {
 
 // Set up the slider event listener
 document.getElementById('resolution-slider').addEventListener('input', function(event) {
-  // Convert the slider value (0 to 10) to a scale between 0.2 and 1.0
+  // Read the new value from the slider and convert it
   sliderValue = 0.2 + (parseFloat(event.target.value) / sliderLength) * 0.8;
+
+  // Update the resolution and the display
   onWindowResize(); // Update the resolution
   updateResolutionDisplay(); // Update the display
 });
+
+
+document.addEventListener('updateResolutionSlider', function(event) {
+  const newSliderValue = event.detail.sliderValue;
+  // Convert the slider value to the scale needed for your Three.js visualization
+  sliderValue = 0.2 + (parseFloat(newSliderValue) / sliderLength) * 0.8;
+
+  // Then update your Three.js visualization accordingly
+  onWindowResize(); // Call the function that updates the resolution
+  updateResolutionDisplay(); // Update the resolution display
+});
+
 
 ///////////////////////////////////////////////////// 
 // DOM MODS AND EVENT LISTENERS ////////////////////
