@@ -91,6 +91,11 @@ let isCameraRotating = true; // Flag to track camera rotation
 const rotationSpeed = 0.001; // Define the speed of rotation
 let sliderValue = 8;  //  default value
 const sliderLength = 10;  // Assuming 10 is the maximum value of the slider
+let initialFov
+let initialRendererSize;
+let initialCameraFOV;
+let initialDistanceToTarget;
+
 
 
 // Create a material for the ray line
@@ -168,6 +173,11 @@ function initThreeJS() {
   camera.far = fogFar;
   camera.updateProjectionMatrix();
 
+  initialRendererSize = new THREE.Vector2(window.innerWidth, window.innerHeight);
+  initialCameraFOV = camera.fov;
+  initialDistanceToTarget = camera.position.distanceTo(controls.target);
+
+
   // ASCII Slider initialization inside initThreeJS
   const resolutionSlider = document.getElementById('resolution-slider');
   updateSliderDisplay(sliderValue, resolutionSlider);
@@ -176,6 +186,10 @@ function initThreeJS() {
   window.addEventListener('resize', onWindowResize, false);
   addLayerVisibilityControls();
   adjustCameraZoom();
+
+  // Debugging call after initialization
+  debugLogCameraAndControls();
+
 }
 
 function updateResolutionDisplay() {
@@ -184,13 +198,166 @@ function updateResolutionDisplay() {
   document.getElementById('resolution-display').textContent = `resolution: ${newWidth * 10} x ${newHeight * 10}px`;
 }
 
+function adjustCameraForResolutionChange() {
+  // Calculate new distance based on change in renderer size
+  const newWidth = window.innerWidth * sliderValue;
+  const newHeight = window.innerHeight * sliderValue;
+  const sizeRatio = Math.sqrt(newWidth * newHeight) / Math.sqrt(window.innerWidth * window.innerHeight);
+
+  // Adjust FOV and distance to target
+  camera.fov = initialFov * sizeRatio;
+  const newDistance = initialDistance * sizeRatio;
+  const direction = camera.position.clone().sub(controls.target).normalize();
+  camera.position.copy(controls.target).add(direction.multiplyScalar(newDistance));
+
+  camera.updateProjectionMatrix();
+}
+
+function adjustControlsForResolutionChange() {
+  const currentSize = new THREE.Vector2(window.innerWidth * sliderValue, window.innerHeight * sliderValue);
+  const scaleFactor = Math.sqrt(currentSize.length() / initialRendererSize.length()); // Non-linear scaling
+
+  // Adjust control sensitivity
+  controls.panSpeed = Math.max(0.1, controls.panSpeed * scaleFactor); // Ensure minimum sensitivity
+  controls.zoomSpeed = Math.max(0.01, controls.zoomSpeed * Math.pow(scaleFactor, 0.05)); // Different scaling for zoom
+  controls.rotateSpeed = Math.max(0.01, controls.rotateSpeed * Math.pow(scaleFactor, 0.075)); // Different scaling for rotation
+
+  // Optionally adjust camera FOV
+  camera.fov = Math.max(10, Math.min(100, initialCameraFOV / scaleFactor)); // Clamp FOV to reasonable range
+  camera.updateProjectionMatrix();
+}
+
+
+
 // Set up the slider event listener
+// Update display in real-time as the slider is moved
 document.getElementById('resolution-slider').addEventListener('input', function(event) {
-  // Convert the slider value (0 to 10) to a scale between 0.2 and 1.0
   sliderValue = 0.2 + (parseFloat(event.target.value) / sliderLength) * 0.8;
-  onWindowResize(); // Update the resolution
-  updateResolutionDisplay(); // Update the display
+  updateResolutionDisplay(); // Update the resolution display only
 });
+
+document.getElementById('resolution-slider').addEventListener('change', function(event) {
+  const antialiasThreshold = 5; // Define the threshold value for antialiasing
+  const antialias = sliderValue > antialiasThreshold;
+  // Recalculate the bounding box based on the current GeoJSON state
+  const newBoundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
+
+  // Recreate the renderer with new settings
+  recreateRenderer(sliderValue > antialiasThreshold);
+
+  // Apply the new bounding box constraints
+  constrainCamera(controls, newBoundingBox);
+
+  adjustControlsForResolutionChange();
+
+  // Update the scene with the new settings
+  onWindowResize();
+});
+
+
+function storeRendererState() {
+  return {
+      cameraPosition: camera.position.clone(),
+      cameraRotation: camera.rotation.clone(),
+      controlsTarget: controls.target.clone(),
+      pixelRatio: renderer.getPixelRatio()
+  };
+}
+
+
+function recreateRenderer(antialias) {
+  // Store the current state
+  const state = storeRendererState();
+
+  // Dispose the current renderer
+  if (renderer) renderer.dispose();
+
+  // Create a new renderer with the specified antialias setting
+  renderer = new THREE.WebGLRenderer({ antialias: antialias });
+  renderer.setSize(window.innerWidth * sliderValue, window.innerHeight * sliderValue);
+  renderer.setClearColor(colorScheme.backgroundColor);
+
+  // Replace the canvas in the DOM
+  const container = document.getElementById('three-container');
+  container.innerHTML = '';
+  container.appendChild(renderer.domElement);
+
+  // Reinitialize controls
+  reinitializeControls();
+
+  // Adjust camera for resolution change
+  // adjustCameraForResolutionChange();
+
+  adjustControlsForResolutionChange();
+
+  // Restore the renderer's state
+  restoreRendererState(state);
+  
+}
+
+
+function restoreRendererState(state) {
+  renderer.setPixelRatio(state.pixelRatio);
+  camera.position.copy(state.cameraPosition);
+  camera.rotation.copy(state.cameraRotation);
+  controls.target.copy(state.controlsTarget);
+  controls.update();
+}
+
+
+function reinitializeControls() {
+  // Dispose the existing controls if they exist
+  if (controls) {
+    controls.dispose();
+  }
+
+  // Reinitialize MapControls with the new renderer's DOM element
+  controls = new MapControls(camera, renderer.domElement);
+
+  // Reset the control parameters to desired values
+  setupControls();
+
+  // Apply updated constraints (if needed, depending on your application logic)
+  const newBoundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
+  constrainCamera(controls, newBoundingBox);
+}
+
+function setupControls() {
+  // Initialize MapControls with the new renderer's DOM element
+  controls = new MapControls(camera, renderer.domElement);
+  
+  // Set the maximum and minimum distance the camera can dolly out/in
+  controls.maxDistance = 5.5; // max camera zoom
+  controls.minDistance = 0.5; // min camera zoom  
+
+  // Set up the control parameters as needed for a mapping interface
+  controls.screenSpacePanning = false;
+  controls.enableRotate = false; // typically map interfaces don't use rotation
+  controls.enableDamping = true; // an optional setting to give a smoother control feeling
+  controls.dampingFactor = 0.05; // amount of damping (drag)
+
+  // Set the minimum and maximum polar angles (in radians) to prevent the camera from going over the vertical
+  controls.minPolarAngle = 0; // 0 radians (0 degrees) - directly above the target
+  controls.maxPolarAngle = (Math.PI / 2) - 0.05; // π/2 radians (90 degrees) - on the horizon
+  controls.maxDistance = 5.5; // max camera zoom
+  controls.minDistance = 0.5; // min camera zoom
+
+  // Update controls with post-load operations if needed
+  if (typeof postLoadOperations === 'function') {
+      postLoadOperations();
+  }
+
+  // Update the controls target based on the current scene state
+  const boundingBox = getBoundingBoxOfGeoJSON(contourGeojsonData);
+  const center = getCenterOfBoundingBox(boundingBox);
+  controls.target.set(center.x - 0.05, center.y - 0.02, 0);
+
+  // Apply constraints to camera and update controls
+  constrainCamera(controls, boundingBox);
+  lockCameraTopDown(isCameraLocked);
+  controls.update();
+}
+
 
 ///////////////////////////////////////////////////// 
 // DOM MODS AND EVENT LISTENERS ////////////////////
@@ -204,6 +371,21 @@ for (let i = 0; i < sliderLength; i++) {
 sliderDisplay += ']';
 resolutionSlider.textContent = sliderDisplay;
 }
+
+function onWindowResize() {
+  const width = window.innerWidth * sliderValue;
+  const height = window.innerHeight * sliderValue;
+
+  if (renderer && camera) {
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+  }
+
+  adjustCameraZoom();
+  updateResolutionDisplay();
+}
+
 
 // Resize function
 function onWindowResize() {
@@ -1926,4 +2108,14 @@ function handleGeoJSONData(url, data) {
     // Reveal the start button after setting up the camera
     document.getElementById('start-container').style.display = 'block';
   }
+
+
+  function debugLogCameraAndControls() {
+    console.log('Camera Position:', camera.position);
+    console.log('Controls Target:', controls.target);
+    console.log('Renderer Size:', renderer.getSize(new THREE.Vector2()));
+    console.log('Renderer Pixel Ratio:', renderer.getPixelRatio());
+  }
+    
 }
+
