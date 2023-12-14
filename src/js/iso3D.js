@@ -9,6 +9,9 @@ import Graph from 'graphology';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
+
+let visualizationReady = false;
+
 export function iso3D() {
 
 // Define global geographic layer groups
@@ -400,6 +403,7 @@ async function initialize() {
   });
 }
 
+
 function enableInteraction() {
   const threeContainer = document.getElementById('three-container');
   const infoButton = document.getElementById('info-button');
@@ -420,15 +424,13 @@ function enableInteraction() {
     animate();
     lockCameraTopDown(false); // Ensure this is called after controls are initialized
     document.addEventListener('keydown', onDocumentKeyDown, false); // Attach the keydown event handler
-
-        // Call the callback once everything is set up
-        if (typeof onVisualizationReady === 'function') {
-          onVisualizationReady(); // Call the callback function
-      }
   
   });
   
+visualizationReady = true;
+
 }
+
 
 document.addEventListener('DOMContentLoaded', (event) => {
 
@@ -538,7 +540,7 @@ function addLayerVisibilityControls() {
     { name: 'cell transmitter points', color: colorScheme.pyramidColorCellular },
     { name: 'cell MST lines', color: colorScheme.mstCellColor },
     { name: 'contour lines', color: colorScheme.contoursLabelColor },
-    { name: 'fm propagation curves', color: colorScheme.polygonColor },
+    // { name: 'fm propagation curves', color: colorScheme.polygonColor },
     { name: 'cell dead zones', color: colorScheme.cellColor },
     { name: 'analysis area', color: "#888888" }
 
@@ -595,7 +597,7 @@ const layerObjects = {
   'cell transmitter points': cellTransmitterPoints,
   'cell MST lines': cellMSTLines,
   'contour lines': contourLines,
-  'fm propagation curves': propagationPolygons,
+  // 'fm propagation curves': propagationPolygons,
   'cell dead zones': cellServiceMesh,
   'analysis area': analysisArea
 
@@ -1832,7 +1834,7 @@ async function loadGeoJSONData(onCriticalDataLoaded) {
   const urls = [
     'data/stanford_contours_simplified1000m_20231124.geojson',
     'data/CellularTowers_FeaturesToJSON_HIFLD_AOI_20231204.geojson',
-    'data/FM_contours_NYS_clip_20231101.geojson',
+    // 'data/FM_contours_NYS_clip_20231101.geojson',
     'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson',
     'data/study_area_admin0clip.geojson',
     'data/cellServiceCentroids_2000m_20231210.geojson'
@@ -1880,10 +1882,10 @@ function handleGeoJSONData(url, data) {
       addCellTowerPts(data, audioListener, audioBuffer);
       break;
 
-    case 'data/FM_contours_NYS_clip_20231101.geojson':
-      fmContoursGeojsonData = data;
-      addPolygons(data);
-      break;
+    // case 'data/FM_contours_NYS_clip_20231101.geojson':
+    //   fmContoursGeojsonData = data;
+    //   addPolygons(data);
+    //   break;
 
     case 'data/FmTowers_FeaturesToJSON_AOI_20231204.geojson':
       fmTransmitterGeojsonData = data;
@@ -1944,3 +1946,6 @@ function handleGeoJSONData(url, data) {
     document.getElementById('start-container').style.display = 'block';
   }
 }
+
+// Export visualizationReady for access from main.js
+export { visualizationReady };

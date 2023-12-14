@@ -1,13 +1,24 @@
 import '/src/css/style.css'; 
 import { iso3D } from './iso3D.js';
 import { terrain } from './terrain.js';
+import { wavetable } from './wavetable.js'
+
+window.onload = () => {    
+    setTimeout(() => {
+    terrain('terrainContainer1');
+    wavetable('wavetableContainer1');
+}, 500);
+
+}
 
 // init external js
 iso3D();
-document.addEventListener('DOMContentLoaded', (event) => {
-    terrain('p5Container1');
-    terrain('p5Container2');
-});
+// document.addEventListener('DOMContentLoaded', (event) => {
+//     setTimeout(() => {
+//         terrain('terrainContainer1');
+//         wavetable('wavetableContainer1');
+//     }, 500);
+// });
 
 
 
@@ -74,7 +85,7 @@ let isScrolling = false;
 //         });
 // });
 
-document.getElementById('scrollUpButton').addEventListener('click', function() {
+document.getElementById('fullscreenButton').addEventListener('click', function() {
     const button = this;
     const textContentDiv = document.getElementById('text-content');
     const threeContainer = document.getElementById('app');

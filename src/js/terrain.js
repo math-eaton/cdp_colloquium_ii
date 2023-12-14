@@ -14,8 +14,8 @@ export function terrain(containerId) {
     let thresh = 25;
     let useCA = false; // false for Perlin noise, true for CA
     // Initialize with random rotations
-    let xRotation = p.random(-0.05, 0.05); // Random rotation around the X-axis
-    let zRotation = p.random(-0.05, 0.05); // Random rotation around the Y-axis
+    let xRotation = p.random(-1, 3); // Random rotation around the X-axis
+    let zRotation = p.random(-2, 2); // Random rotation around the Y-axis
     let rotateXAxis = true;
     let rotateZAxis = true; // Flag to control rotation
   
@@ -109,7 +109,6 @@ export function terrain(containerId) {
         let rect = containerDiv.getBoundingClientRect();
         w = 400;
         h = 200;
-        console.log(h)
       } else {
         console.warn(`Div with id ${containerId} not found. Using fallback size.`);
         w = window.innerWidth;
@@ -118,9 +117,8 @@ export function terrain(containerId) {
 
       let canvas = p.createCanvas(w, h, p.WEBGL);
       canvas.parent(containerId);
-
+    
       generateTerrain();
-          console.log("generate")
       p.colorMode(p.HSB);
       // Set up orthographic projection
       p.ortho(-p.width / 2, p.width / 2, -p.height / 2, p.height / 2, 0.1, 1000);
@@ -132,11 +130,11 @@ export function terrain(containerId) {
       p.clear();  // This makes the background transparent
       p.rotateX(xRotation);
       if (rotateXAxis) {
-        xRotation += 0.005; // Increment rotation
+        xRotation += 0.0002; // Increment rotation
       }
       p.rotateZ(zRotation);
       if (rotateZAxis) {
-        zRotation += 0.005; // Increment rotation
+        zRotation += 0.0002; // Increment rotation
       }
       
       // Update terrain with new noise offsets
