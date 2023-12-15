@@ -2,11 +2,13 @@ import '/src/css/style.css';
 import { iso3D } from './iso3D.js';
 import { terrain } from './terrain.js';
 import { wavetable } from './wavetable.js'
+import { isometricCube } from './isometricCube.js';
 
 window.onload = () => {    
     setTimeout(() => {
     terrain('terrainContainer1');
     wavetable('wavetableContainer1');
+    isometricCube('isoCubeContainer1')
 }, 500);
 
 }

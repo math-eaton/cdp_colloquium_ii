@@ -59,8 +59,8 @@ export function wavetable(containerId) {
           buffer.stroke(255, 255, 255, alpha);  // Apply stroke to buffer
 
           let distance = p.dist(p.mouseX - margin, p.mouseY - margin, x, y); // Distance from the cursor, adjusted for margin
-          let distortionFactorX = p.map(distance, 0, 200, 1, 0); // Distortion for X - third num = max
-          let distortionFactorY = p.map(distance, 0, 200, -8, 0); // Distortion for Y
+          let distortionFactorX = p.map(distance, 0, 200, 0.02, 0); // Distortion for X - third num = max
+          let distortionFactorY = p.map(distance, 0, 200, -2, 0); // Distortion for Y
     
           let noiseValue = p.noise(x * xoff, yoff);
           let noiseScaleX = p.map(noiseValue, 0, 1, -noiseIntensityX, noiseIntensityX) + distortionFactorX;

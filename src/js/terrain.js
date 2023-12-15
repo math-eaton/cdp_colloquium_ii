@@ -23,7 +23,7 @@ export function terrain(containerId) {
   
   
     function generateTerrain() {
-      scl = 50;
+      scl = 40;
       margin = 0.25; // N% margin
       w = p.windowWidth * (1 - 2 * margin); // Adjust for margin
       h = p.windowHeight * (1 - 2 * margin); // Adjust for margin
@@ -38,7 +38,7 @@ export function terrain(containerId) {
     
           // Calculate the distortion factor based on distance to the mouse cursor
           let distance = p.dist(p.mouseX - w / 2, p.mouseY - h / 2, x * scl - w / 2, y * scl - h / 2);
-          let distortionFactor = p.map(distance, 0, 75, 1, 0); // Adjust as needed - first pair is mouse distance, second is gravity
+          let distortionFactor = p.map(distance, 0, -30, 0.02, 0); // Adjust as needed - first pair is mouse distance, second is gravity
     
           terrain[x][y] = elevation + distortionFactor; // Apply distortion
         }
@@ -211,7 +211,7 @@ export function terrain(containerId) {
         p.beginShape(p.QUAD_STRIP);
         for (let x = 0; x < cols; x++) {
           let elevation = terrain[x][y];
-          let greyValue = p.map(elevation, -70, 250, 0, 255);
+          let greyValue = p.map(elevation, -70, 200, 0, 200);
           p.stroke(greyValue); // Set the stroke to a shade of grey
           p.strokeWeight(4);
           // p.stroke(p.map(elevation, 45, 90, 270, 360), 60, 65);
