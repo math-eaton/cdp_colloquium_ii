@@ -13,35 +13,99 @@ export function isometricCube(containerId) {
     let yellowPoints = [];
 
 
+    // custom orbit controls init
+    let targetAngleX = 0;
+    let targetAngleY = 0;
+    let targetZoom = 0;
+    let angleX = 0;
+    let angleY = 0;
+    let zoom = 0;
+    let minZoom = -500; // Maximum zoom out distance
+    let maxZoom = 0; // Maximum zoom in distance
+
+    // auto animation params
+    let rotationDirectionX = 0.005; // Initial rotation direction for X
+    let rotationDirectionY = 0.005 // rotation direction for Y
+    let zoomIncrement = 0.1; // Adjust this for the speed of zooming
+    let maxZoomIn = zoom - 20; // 20% zoom in
+    let maxZoomOut = zoom + 20; // 20% zoom out
+
+
     // Cube and grid parameters
-    const cubeSize = 300;
+    const cubeSize = 200;
     const gridSize = 8; // Number of grid divisions
-    const pointCloudDensity = 30; // Number of points in each cloud
+    const pointCloudDensity = 20; // Number of points in each cloud
+
 
     p.setup = () => {
       let rect = containerDiv.getBoundingClientRect();
       w = rect.width;
       h = rect.height;
       p.frameRate(12);
-      
+    
+      // Create canvas
+      p.createCanvas(w, h, p.WEBGL).parent(containerId);
+    
       // Assign custom colors
       cyanColor = p.color(120, 120, 120, 255); // Cyan
       magentaColor = p.color(255, 255, 255, 255); // Magenta
       yellowColor = p.color(200, 200, 200, 255); // Yellow
-
-      p.createCanvas(w, h, p.WEBGL).parent(containerId); // Switch to WEBGL for 3D rendering
+    
+      // Add a mouse wheel event listener
+      p.canvas.addEventListener('wheel', (event) => {
+        // Adjust target zoom based on wheel delta
+        targetZoom += event.deltaY * -0.1;
+      
+        // Constrain target zoom to set limits
+        targetZoom = p.constrain(targetZoom, minZoom, maxZoom);
+      
+        event.preventDefault();
+      });
+            
+      p.canvas.addEventListener('mousemove', (event) => {
+        if (p.mouseIsPressed && p.mouseButton === p.LEFT) {
+          // Adjust target rotation based on mouse movement
+          targetAngleY += event.movementX * -0.0005;
+          targetAngleX += event.movementY * -0.0005;
+        }
+      });
     };
-
+    
     p.draw = () => {
-      // p.background(0);
       p.clear();
 
-      // Enable orbit controls for mouse interaction
-      p.orbitControl();
-
-      // Adjust camera position (zoom out)
-      p.translate(0, 0, -300);
+      // Gradually interpolate towards target rotation
+      angleX += (targetAngleX - angleX) * 0.1;
+      angleY += (targetAngleY - angleY) * 0.1;
+      zoom += (targetZoom - zoom) * 0.1;
     
+      // Gradually interpolate towards target zoom
+      zoom += (targetZoom - zoom) * 0.1;
+
+
+      // Ping-pong zoom
+      targetZoom += zoomIncrement;
+      if (targetZoom > maxZoomOut || targetZoom < maxZoomIn) {
+        zoomIncrement *= -1; // Reverse direction
+      }
+
+      // Apply rotation and zoom
+      p.rotateX(angleX);
+      p.rotateY(angleY);
+      p.translate(0, 0, zoom);
+
+      // Update target angles based on rotation direction
+      targetAngleX += rotationDirectionX;
+      targetAngleY += rotationDirectionY;
+    
+      // Check if limits are reached and reverse the direction if so
+      if (targetAngleX > 0.75 || targetAngleX < -0.75) {
+        rotationDirectionX *= -1; // Reverse direction
+      }
+      if (targetAngleY > 1.25 || targetAngleY < -1.25) {
+        rotationDirectionY *= -1; // Reverse direction
+      }
+                
       // Set up isometric view
       p.rotateX(-p.QUARTER_PI);
       p.rotateY(p.QUARTER_PI);
@@ -65,6 +129,26 @@ export function isometricCube(containerId) {
       let hullPoints = flattenedIndices.map(index => points[index]);
       return hullPoints;
   }
+
+  function customOrbitControl() {
+    // Handle rotation
+    // You can use the mouse position or p5.js rotation functions based on your preference
+  
+    // Handle zoom
+    if (p.mouseIsPressed) {
+      if (p.mouseButton === p.RIGHT) {
+        // Adjust zoom based on mouse movement
+        zoom += p.mouseY - p.pmouseY;
+  
+        // Constrain zoom to set limits
+        zoom = p.constrain(zoom, minZoom, maxZoom);
+      }
+    }
+  
+    // Apply the zoom
+    p.translate(0, 0, zoom);
+  }
+  
       
     // Function to draw an open-faced cube with grids
     function drawOpenCube(size, grid) {
@@ -150,7 +234,7 @@ function drawPointCloud(x, y, z, density, pointColor) {
     hullPoints = calculateConvexHull(yellowPoints);
   }
 
-  p.strokeWeight(2);
+  p.strokeWeight(1);
   pointsArray.length = 0; // Clear the array for new frame
 
   for (let i = 0; i < density; i++) {
