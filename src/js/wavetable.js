@@ -20,10 +20,10 @@ export function wavetable(containerId) {
 
     p.setup = () => {
       let rect = containerDiv.getBoundingClientRect();
-      w = rect.width * (1 - 2 * margin); // Adjust width based on container width and margin
+      w = rect.width - (margin * 2); // Adjust width based on container width and margin
       console.log(rect.height)
       console.log(rect.width)
-      h = rect.height * (1 - 2 * margin); // Adjust height based on container height and margin
+      h = rect.height - (margin * 2); // Adjust height based on container height and margin
 
       p.createCanvas(rect.width, rect.height).parent(containerId);
       p.clear();
