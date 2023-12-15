@@ -57,12 +57,15 @@ export function wavetable(containerId) {
           let alpha = Math.min(alphaX, alphaY);
         
           buffer.stroke(255, 255, 255, alpha);  // Apply stroke to buffer
+
+          let distance = p.dist(p.mouseX - margin, p.mouseY - margin, x, y); // Distance from the cursor, adjusted for margin
+          let distortionFactorX = p.map(distance, 0, 200, 1, 0); // Distortion for X - third num = max
+          let distortionFactorY = p.map(distance, 0, 200, -8, 0); // Distortion for Y
     
-          // Map noise value to a range based on noise intensity parameters
           let noiseValue = p.noise(x * xoff, yoff);
-          let noiseScaleX = p.map(noiseValue, 0, 1, -noiseIntensityX, noiseIntensityX);
-          let noiseScaleY = p.map(noiseValue, 0, 1, -noiseIntensityY, noiseIntensityY);
-          
+          let noiseScaleX = p.map(noiseValue, 0, 1, -noiseIntensityX, noiseIntensityX) + distortionFactorX;
+          let noiseScaleY = p.map(noiseValue, 0, 1, -noiseIntensityY, noiseIntensityY) + distortionFactorY;
+                  
           buffer.curveVertex(x + margin + noiseScaleX, (y + margin) + noiseScaleY);
           xoff += xoffIncrement;
         }
@@ -87,15 +90,13 @@ export function wavetable(containerId) {
   buffer.clear(); // uncomment this to remove all feedback
 
   // Draw a vertical line at the cursor position that spans the height of the canvas
-  if (p.mouseX >= 0 && p.mouseX <= w && p.mouseY >= 0 && p.mouseY <= h) { // Check if the cursor is within the canvas
-    p.stroke(200, 200, 200, 230); // Set stroke color to white
-    p.strokeWeight(1); // Set stroke weight to 1pt
-    p.line(p.mouseX, 0, p.mouseX, h); // Draw the vertical line
-  }
+  // if (p.mouseX >= 0 && p.mouseX <= w && p.mouseY >= 0 && p.mouseY <= h) { // Check if the cursor is within the canvas
+  //   p.stroke(200, 200, 200, 255); // Set stroke color  
+  //   p.strokeWeight(1.5); // Set stroke weight to 1pt
+  //   p.line(p.mouseX, 0, p.mouseX, h); // Draw vertical line
+  // }
 
-
-};
-        
+};     
  
     p.windowResized = () => {
       if (containerDiv) {
