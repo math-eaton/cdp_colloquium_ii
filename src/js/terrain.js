@@ -6,7 +6,7 @@ export function terrain(containerId) {
     let cols, rows;
     let scl; // Scale of each cell in the grid
     let w, h; // Width and height of the terrain
-    let buffer; // Buffer percentage
+    let margin; // margin percentage
     let terrain = [];
     let noiseOffsetX = 180;
     let noiseOffsetY = 90;
@@ -23,9 +23,9 @@ export function terrain(containerId) {
     function generateTerrain() {
       // scl = p.random(45, 55); // Random scale within 10% range
       scl = 50;
-      buffer = 0.25; // N% buffer
-      w = p.windowWidth * (1 - 2 * buffer); // Adjust for buffer
-      h = p.windowHeight * (1 - 2 * buffer); // Adjust for buffer
+      margin = 0.25; // N% margin
+      w = p.windowWidth * (1 - 2 * margin); // Adjust for margin
+      h = p.windowHeight * (1 - 2 * margin); // Adjust for margin
       cols = Math.floor(w / scl);
       rows = Math.floor(h / scl);
       terrain = [];
