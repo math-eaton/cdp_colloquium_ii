@@ -428,3 +428,6 @@ button:focus-visible {
   opacity: 85%;
 }
 
+#terrainContainer1{
+  cursor: url('/src/cursor/point.cur'), auto;
+}

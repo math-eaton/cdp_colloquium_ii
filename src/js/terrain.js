@@ -11,17 +11,18 @@ export function terrain(containerId) {
     let noiseOffsetX = 180;
     let noiseOffsetY = 90;
     let noiseChangeSpeed = 0.003; // Speed at which the terrain changes
-    let thresh = 25;
+    let thresh = p.random(20, 25);
     let useCA = false; // false for Perlin noise, true for CA
     // Initialize with random rotations
-    let xRotation = p.random(-1, 3); // Random rotation around the X-axis
-    let zRotation = p.random(-2, 2); // Random rotation around the Y-axis
+    let xRotation = p.random(0.75, 1.25); // Random rotation around the X-axis
+    let zRotation = p.random(-47, -46); // Random rotation around the Z-axis
     let rotateXAxis = true;
-    let rotateZAxis = true; // Flag to control rotation
+    let rotateZAxis = true; // to control rotation
+    let divRect;
+    let isDragging = false;
   
   
     function generateTerrain() {
-      // scl = p.random(45, 55); // Random scale within 10% range
       scl = 50;
       margin = 0.25; // N% margin
       w = p.windowWidth * (1 - 2 * margin); // Adjust for margin
@@ -30,15 +31,19 @@ export function terrain(containerId) {
       rows = Math.floor(h / scl);
       terrain = [];
     
-      // Initialize the terrain array
       for (let x = 0; x < cols; x++) {
         terrain[x] = [];
         for (let y = 0; y < rows; y++) {
-          // Use Perlin noise or some other initial value
-          terrain[x][y] = p.map(p.noise(x * 0.1 + noiseOffsetX, y * 0.1 + noiseOffsetY), 0, 1, -100, 100);
+          let elevation = p.map(p.noise(x * 0.1 + noiseOffsetX, y * 0.1 + noiseOffsetY), 0, 1, -100, 100);
+    
+          // Calculate the distortion factor based on distance to the mouse cursor
+          let distance = p.dist(p.mouseX - w / 2, p.mouseY - h / 2, x * scl - w / 2, y * scl - h / 2);
+          let distortionFactor = p.map(distance, 0, 75, 1, 0); // Adjust as needed - first pair is mouse distance, second is gravity
+    
+          terrain[x][y] = elevation + distortionFactor; // Apply distortion
         }
       }
-    
+            
       // Apply CA rules only if useCA is true
       if (useCA) {
         for (let x = 1; x < cols - 1; x++) {
@@ -47,6 +52,45 @@ export function terrain(containerId) {
           }
         }
       }
+    }
+    
+
+    let previousMouseX, previousMouseY;
+
+    // Get the bounding rectangle of the container div
+    let containerDiv = document.getElementById(containerId);
+    divRect = containerDiv.getBoundingClientRect();
+
+    p.mousePressed = () => {
+      if (mouseIsOverDiv()) {
+        isDragging = true;
+        previousMouseX = p.mouseX;
+        previousMouseY = p.mouseY;
+      }
+    };
+    
+    p.mouseDragged = () => {
+      if (isDragging) {
+        let dx = p.mouseX - previousMouseX;
+        let dy = p.mouseY - previousMouseY;
+    
+        xRotation += dy * 0.002;
+        zRotation += dx * 0.002;
+    
+        previousMouseX = p.mouseX;
+        previousMouseY = p.mouseY;
+      }
+    };
+    
+    p.mouseReleased = () => {
+      isDragging = false; // Reset the dragging flag
+    };
+    
+    function mouseIsOverDiv() {
+      return (
+        p.mouseX >= 0 && p.mouseX <= divRect.width &&
+        p.mouseY >= 0 && p.mouseY <= divRect.height
+      );
     }
     
     p.keyPressed = () => {
