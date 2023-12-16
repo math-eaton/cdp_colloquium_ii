@@ -8,18 +8,14 @@
   <link rel="stylesheet" type="text/css" href="src/css/style.css">
 </head>
 <body>
+  <main class="" id="text-content">
 
-  
-  <div class="" id="text-content">
-    <div class="navbar text">
-      <p>      matthew heaton | columbia gsapp m.s. cdp | colloquium ii
-      </p>
-      </div>
-
-    <div class="navbar p5" id="wavetableContainer1">
+    <div class="navbar" id="intro">
+      matthew heaton | columbia gsapp m.s. cdp | colloquium ii
+        <div class="navbar p5" id="wavetableContainer1"></div>
     </div>
-  
 
+  
     <!-- Subsection 1 -->
       <div class="container">
         <div class="column text">
@@ -67,11 +63,10 @@
     </div>
     
     <div class="footer">
-      dec. 2023
-    </div>
-  
+      <p style="padding-left: 10px;">dec. 2023</p>
+    </div>  
     
-</div>
+  </main>
 
 
   <div id="app" class="background crosshair">
@@ -101,10 +96,14 @@
       </div>
       <span id="hide-legend" class="small-text" style="text-decoration: underline;">click anywhere to hide</span>
     </div>
+
+
   </div>
 
-  <!-- Scroll Up Button -->
-  <button id="fullscreenButton">fullscreen map</button>
+  <div style="position: relative;">
+    <!-- Scroll Up Button -->
+    <button id="fullscreenButton">fullscreen map</button>
+  </div>
 
 
   <script type="module" src="/src/js/iso3D.js" defer></script>
