@@ -24,8 +24,8 @@ export function isometricCube(containerId) {
     let maxZoom = 0; // Maximum zoom in distance
 
     // auto animation params
-    let rotationDirectionX = 0.005; // Initial rotation direction for X
-    let rotationDirectionY = 0.005 // rotation direction for Y
+    let rotationDirectionX = 0.007; // Initial rotation direction for X
+    let rotationDirectionY = 0.007 // rotation direction for Y
     let zoomIncrement = 0.1; // Adjust this for the speed of zooming
     let maxZoomIn = zoom - 20; // 20% zoom in
     let maxZoomOut = zoom + 20; // 20% zoom out
@@ -65,8 +65,8 @@ export function isometricCube(containerId) {
       p.canvas.addEventListener('mousemove', (event) => {
         if (p.mouseIsPressed && p.mouseButton === p.LEFT) {
           // Adjust target rotation based on mouse movement
-          targetAngleY += event.movementX * -0.0005;
-          targetAngleX += event.movementY * -0.0005;
+          targetAngleY += event.movementX * 0.0035;
+          targetAngleX += event.movementY * -0.0035;
         }
       });
     };
@@ -129,31 +129,12 @@ export function isometricCube(containerId) {
       let hullPoints = flattenedIndices.map(index => points[index]);
       return hullPoints;
   }
-
-  function customOrbitControl() {
-    // Handle rotation
-    // You can use the mouse position or p5.js rotation functions based on your preference
-  
-    // Handle zoom
-    if (p.mouseIsPressed) {
-      if (p.mouseButton === p.RIGHT) {
-        // Adjust zoom based on mouse movement
-        zoom += p.mouseY - p.pmouseY;
-  
-        // Constrain zoom to set limits
-        zoom = p.constrain(zoom, minZoom, maxZoom);
-      }
-    }
-  
-    // Apply the zoom
-    p.translate(0, 0, zoom);
-  }
   
       
     // Function to draw an open-faced cube with grids
     function drawOpenCube(size, grid) {
       p.push();
-      p.stroke(200);
+      p.stroke(255, 255, 255, 150);
       p.noFill();
       let hSize = size / 2;
 

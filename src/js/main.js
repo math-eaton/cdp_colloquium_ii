@@ -108,3 +108,48 @@ document.getElementById('fullscreenButton').addEventListener('click', function()
         resolutionSlider.dispatchEvent(new Event('input'));
     }
 });
+
+
+document.addEventListener('mousemove', function(e) {
+    // Function to check if the element or its parent has the specified class
+    function hasClass(element, className) {
+        while (element) {
+            if (element.classList && element.classList.contains(className)) {
+                return true;
+            }
+            element = element.parentElement;
+        }
+        return false;
+    }
+
+    // Get the element under the cursor
+    let elementUnderCursor = document.elementFromPoint(e.clientX, e.clientY);
+
+    // Check for the 'crosshair' class, and if found, do nothing (no trail)
+    if (hasClass(elementUnderCursor, 'crosshair')) {
+        // console.log('crosshair - no trail');
+        return; // Exit the function, no trail is created
+    }
+
+    let trail = document.createElement('div');
+    trail.className = 'cursor-trail';
+
+    // Check if the element under the cursor or its parent has class 'pointer'
+    if (hasClass(elementUnderCursor, 'pointer')) {
+        trail.classList.add('pointer-cursor-trail'); // Add specific trail class
+        // console.log("point")
+    } else {
+        trail.classList.add('default-cursor-trail'); // Default trail class
+        // console.log('arrow')
+    }
+
+    // Adjust positioning based on cursor size
+    trail.style.left = (e.pageX) + 'px'; // Adjust for half the width of the cursor
+    trail.style.top = (e.pageY) + 'px'; // Adjust for half the height of the cursor
+
+    document.body.appendChild(trail);
+
+    setTimeout(() => {
+        trail.remove();
+    }, 500); // Remove trail element after N ms
+});

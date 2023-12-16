@@ -3,7 +3,7 @@ import p5 from 'p5';
 export function wavetable(containerId) {
   new p5((p) => {
     let cols, rows;
-    let scl = 15; // scale of each cell
+    let scl = 10; // scale of each cell
     let w; // width of the wave field
     let h; // height of the wave field
     let margin = 0.01; // margin around the wave field
@@ -17,8 +17,10 @@ export function wavetable(containerId) {
     
     let xoffIncrement = 0.00006; // Higher = faster horizontal change
     let yoffIncrement = 0.00009;  // vertical change
+    
 
     p.setup = () => {
+      p.frameRate(12);
       let rect = containerDiv.getBoundingClientRect();
       w = rect.width - (margin * 2); // Adjust width based on container width and margin
       console.log(rect.height)
@@ -40,7 +42,7 @@ export function wavetable(containerId) {
     p.draw = () => {
 
       // Prepare buffer for drawing
-      buffer.strokeWeight(1);
+      buffer.strokeWeight(2);
     
       for (let y = margin; y <= h - margin; y += scl) { // Adjusted to account for margin top and bottom
         buffer.noFill();
@@ -48,7 +50,7 @@ export function wavetable(containerId) {
         let xoff = 0.0;
     
         for (let x = margin; x <= w - margin; x += scl) { // Adjusted to account for margin left and right
-          let alphaY = p.map(y, 0, h, 51, 255); // Alpha for Y
+          let alphaY = p.map(y, 0, h, 51, 150); // Alpha for Y
           let midX = w / 2;
           let distanceFromMidX = Math.abs(x - midX);
           let alphaX = p.map(distanceFromMidX, 0, midX, 255, 179); // Alpha for X (70% opacity at edges)

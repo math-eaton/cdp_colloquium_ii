@@ -147,6 +147,7 @@ export function terrain(containerId) {
     }  
   
     p.setup = () => {
+      p.frameRate(12);
       let containerDiv = document.getElementById(containerId);
       // console.log(containerDiv)
       if (containerDiv) {
@@ -211,9 +212,9 @@ export function terrain(containerId) {
         p.beginShape(p.QUAD_STRIP);
         for (let x = 0; x < cols; x++) {
           let elevation = terrain[x][y];
-          let greyValue = p.map(elevation, -70, 200, 0, 200);
+          let greyValue = p.map(elevation, -50, 50, 40, 100);
           p.stroke(greyValue); // Set the stroke to a shade of grey
-          p.strokeWeight(4);
+          p.strokeWeight(3);
           // p.stroke(p.map(elevation, 45, 90, 270, 360), 60, 65);
           p.noFill();
           p.vertex(x * scl, y * scl, elevation);
