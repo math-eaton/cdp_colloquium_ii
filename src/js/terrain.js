@@ -61,37 +61,58 @@ export function terrain(containerId) {
     let containerDiv = document.getElementById(containerId);
     divRect = containerDiv.getBoundingClientRect();
 
-    p.mousePressed = () => {
-      if (mouseIsOverDiv()) {
-        isDragging = true;
-        previousMouseX = p.mouseX;
-        previousMouseY = p.mouseY;
-      }
-    };
-    
-    p.mouseDragged = () => {
-      if (isDragging) {
-        let dx = p.mouseX - previousMouseX;
-        let dy = p.mouseY - previousMouseY;
-    
-        xRotation += dy * 0.002;
-        zRotation += dx * 0.002;
-    
-        previousMouseX = p.mouseX;
-        previousMouseY = p.mouseY;
-      }
-    };
-    
-    p.mouseReleased = () => {
-      isDragging = false; // Reset the dragging flag
-    };
-    
+    let parentDiv = document.getElementById(containerId);
+    let canvasDiv;
+
+    // Update the mouseIsOverDiv function
     function mouseIsOverDiv() {
+      let parentRect = parentDiv.getBoundingClientRect();
+      let mouseXRelativeToParent = p.mouseX + parentRect.left;
+      let mouseYRelativeToParent = p.mouseY + parentRect.top;
+
       return (
-        p.mouseX >= 0 && p.mouseX <= divRect.width &&
-        p.mouseY >= 0 && p.mouseY <= divRect.height
+        mouseXRelativeToParent >= parentRect.left && mouseXRelativeToParent <= parentRect.right &&
+        mouseYRelativeToParent >= parentRect.top && mouseYRelativeToParent <= parentRect.bottom
       );
     }
+
+    // Attach the event listeners to the parent div
+    parentDiv.addEventListener('mousedown', (event) => {
+      // Calculate mouse position relative to the canvas
+      let rect = canvasDiv.getBoundingClientRect();
+      let mouseX = event.clientX - rect.left;
+      let mouseY = event.clientY - rect.top;
+
+      if (mouseIsOverDiv()) {
+        isDragging = true;
+        previousMouseX = mouseX;
+        previousMouseY = mouseY;
+      }
+    });
+
+    parentDiv.addEventListener('mousemove', (event) => {
+      if (isDragging) {
+        // Calculate mouse position relative to the canvas
+        let rect = canvasDiv.getBoundingClientRect();
+        let mouseX = event.clientX - rect.left;
+        let mouseY = event.clientY - rect.top;
+
+        let dx = mouseX - previousMouseX;
+        let dy = mouseY - previousMouseY;
+
+        xRotation += dy * 0.002;
+        zRotation += dx * 0.002;
+
+        previousMouseX = mouseX;
+        previousMouseY = mouseY;
+      }
+    });
+
+    parentDiv.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+
     
     p.keyPressed = () => {
       if (p.key === 'c') {
@@ -149,7 +170,6 @@ export function terrain(containerId) {
     p.setup = () => {
       p.frameRate(12);
       let containerDiv = document.getElementById(containerId);
-      // console.log(containerDiv)
       if (containerDiv) {
         let rect = containerDiv.getBoundingClientRect();
         w = 400;
@@ -159,9 +179,11 @@ export function terrain(containerId) {
         w = window.innerWidth;
         h = window.innerHeight;
       }
-
+    
       let canvas = p.createCanvas(w, h, p.WEBGL);
       canvas.parent(containerId);
+    
+      canvasDiv = p.canvas.parentElement; // Initialize canvasDiv here
     
       generateTerrain();
       p.colorMode(p.HSB);
@@ -169,7 +191,7 @@ export function terrain(containerId) {
       p.ortho(-p.width / 2, p.width / 2, -p.height / 2, p.height / 2, 0.1, 1000);
       p.redraw(); // Force an immediate redraw after setup
     };
-
+    
   
     p.draw = () => {
       p.clear();  // This makes the background transparent

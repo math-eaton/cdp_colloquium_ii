@@ -32,7 +32,7 @@ export function isometricCube(containerId) {
 
 
     // Cube and grid parameters
-    const cubeSize = 200;
+    const cubeSize = 300;
     const gridSize = 8; // Number of grid divisions
     const pointCloudDensity = 20; // Number of points in each cloud
 
@@ -53,15 +53,25 @@ export function isometricCube(containerId) {
     
       // Add a mouse wheel event listener
       p.canvas.addEventListener('wheel', (event) => {
-        // Adjust target zoom based on wheel delta
-        targetZoom += event.deltaY * -0.1;
+        // Calculate the central region of the canvas
+        let centerX = w / 2;
+        let centerY = h / 2;
+        let regionSize = Math.min(w, h) / 4; // 25% of the smaller dimension
       
-        // Constrain target zoom to set limits
-        targetZoom = p.constrain(targetZoom, minZoom, maxZoom);
-      
-        event.preventDefault();
+        // Check if the mouse is within the central 25% of the canvas
+        if (p.mouseX > centerX - regionSize / 2 && p.mouseX < centerX + regionSize / 2 &&
+            p.mouseY > centerY - regionSize / 2 && p.mouseY < centerY + regionSize / 2) {
+          
+          // Adjust target zoom based on wheel delta
+          targetZoom += event.deltaY * -0.3;
+          
+          // Constrain target zoom to set limits
+          targetZoom = p.constrain(targetZoom, minZoom, maxZoom);
+          
+          event.preventDefault(); // Prevent default scroll behavior
+        }
       });
-            
+                  
       p.canvas.addEventListener('mousemove', (event) => {
         if (p.mouseIsPressed && p.mouseButton === p.LEFT) {
           // Adjust target rotation based on mouse movement
