@@ -8,6 +8,7 @@ window.onload = () => {
     setTimeout(() => {
     terrain('terrainContainer1');
     wavetable('wavetableContainer1');
+    wavetable('wavetableContainer2');
     isometricCube('isoCubeContainer1')
 }, 500);
 
@@ -127,20 +128,19 @@ document.addEventListener('mousemove', function(e) {
 
     // Check for the 'crosshair' class, and if found, do nothing (no trail)
     if (hasClass(elementUnderCursor, 'crosshair')) {
-        // console.log('crosshair - no trail');
         return; // Exit the function, no trail is created
     }
 
     let trail = document.createElement('div');
     trail.className = 'cursor-trail';
 
-    // Check if the element under the cursor or its parent has class 'pointer'
-    if (hasClass(elementUnderCursor, 'pointer')) {
-        trail.classList.add('pointer-cursor-trail'); // Add specific trail class
-        // console.log("point")
+    // Check for the 'text' class
+    if (hasClass(elementUnderCursor, 'text')) {
+        return; // Exit the function, no trail is created
+    } else if (hasClass(elementUnderCursor, 'pointer')) {
+        trail.classList.add('pointer-cursor-trail'); // Add specific trail class for pointer
     } else {
-        trail.classList.add('default-cursor-trail'); // Default trail class
-        // console.log('arrow')
+        trail.classList.add('default-cursor-trail'); // Default trail class for others
     }
 
     // Adjust positioning based on cursor size
@@ -151,5 +151,5 @@ document.addEventListener('mousemove', function(e) {
 
     setTimeout(() => {
         trail.remove();
-    }, 500); // Remove trail element after N ms
+    }, 30000); // Remove trail element after N ms
 });

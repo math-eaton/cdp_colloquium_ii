@@ -10,6 +10,7 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   cursor: url('/src/cursor/arrow.cur'), auto;
+  overflow-x: hidden;
 }
 
 a {
@@ -28,6 +29,7 @@ body {
   place-items: unset; /* Remove centering */
   min-width: 320px;
   min-height: 100%; /* Changed from 100vh to 100% for proper scrolling */
+  max-width: 100vw;
 }
 
 .container {
@@ -102,8 +104,13 @@ body {
 
 .navbar, .footer {
   /* background-color: #000000; */
-  padding: 10px;
+  /* padding: 10px; */
   text-align: left;
+  /* background-color: rgba(40, 40, 40, 0.85);
+  border-color: rgb(230, 230, 230);
+  border-style:ridge;
+  border-radius: 0.02px; */
+
 }
 
 
@@ -130,6 +137,8 @@ body {
   max-width: 33.3%; /* Ensure it does not grow beyond 1/3 */
   padding-right: 2%; /* Optional spacing between text and image */
   box-sizing: border-box; /* Include padding in the width calculation */
+  cursor: url('/src/cursor/iBeam.cur'), auto;
+  /* cursor: text; */
 }
 
 #text-content .image {
@@ -147,6 +156,8 @@ body {
   min-height: 50vh;
   max-height: 100vh;
   min-width: 100%;
+  padding: 0;
+  margin: 0;
 }
   
 
@@ -543,6 +554,13 @@ button:focus-visible {
   background-image: url('/src/cursor/point.png');
 }
 
+/* Style for text cursor trail */
+.text-cursor-trail {
+  /* ... common styles ... */
+  background-image: url('/src/cursor/ibeam.png');
+}
+
+
 /* Style for crosshair cursor trail */
 .crosshair-cursor-trail {
   /* ... common styles ... */
@@ -551,7 +569,7 @@ button:focus-visible {
 
 @keyframes fadeOut {
   to {
-      opacity: 0;
-      transform: scale(1.2);
+      opacity: 1;
+      transform: scale(1);
   }
 }
