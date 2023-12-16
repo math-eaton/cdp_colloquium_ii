@@ -163,3 +163,56 @@ function animateTextDivs() {
   // Start the animation
   animateTextDivs();
   
+
+  // add fullscreen button after intro
+  document.addEventListener('DOMContentLoaded', function() {
+    const introDiv = document.getElementById('intro');
+    const fullscreenButton = document.getElementById('fullscreenButton');
+  
+    window.addEventListener('scroll', function() {
+      const introDivHeight = introDiv.offsetHeight;
+      const introDivTop = introDiv.offsetTop;
+      const scrollPosition = window.pageYOffset;
+  
+      // Calculate scroll progress through the intro div
+      let scrollProgress = (scrollPosition - introDivTop) / introDivHeight;
+      
+      // Clamp values between 0 and 1
+      scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
+  
+      // Apply the scroll progress to the button's opacity
+      fullscreenButton.style.opacity = scrollProgress;
+      fullscreenButton.style.visibility = scrollProgress > 0 ? 'visible' : 'hidden';
+    });
+  });
+  
+
+  // rotate h1 characters a lil
+  function animateH1Rotations() {
+    const h1Elements = document.querySelectorAll('h1');
+  
+    h1Elements.forEach(h1 => {
+        let newContent = '';
+        const text = h1.textContent;
+    
+        for (let char of text) {
+          // Check if the character is not a space
+        if (char !== ' ') {
+        const initialRotation = Math.random() * 2.5 - 2.5; // random initial rotation
+        const translateY = Math.random() * 5 - 10; // random Y-axis translation between -N px and N px
+        const animationDuration = Math.random() * 60 + 10; // random duration
+        const animationDelay = Math.random() * 5; // random delay
+  
+        newContent += `<span class="rotate-animate" style="display: inline-block; transform: rotate(${initialRotation}deg) translateY(${translateY}px); animation-duration: ${animationDuration}s; animation-delay: ${animationDelay}s;">${char}</span>`;
+      } else {
+        // For spaces, just add them without any style or animation
+        newContent += char;
+      }
+    }
+
+    h1.innerHTML = newContent;
+  });
+}
+
+// Call the function
+document.addEventListener('DOMContentLoaded', animateH1Rotations);

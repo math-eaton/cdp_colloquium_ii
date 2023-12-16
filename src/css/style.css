@@ -354,14 +354,15 @@ h1 {
   /* margin: 20%; */
 }
 
-
 #fullscreenButton {
-  position: absolute;
+  position: fixed;
   bottom: 0%;
-  right: 1%; 
+  right: 1%;
   z-index: 1000000000;
+  opacity: 0; /* Start fully transparent */
+  visibility: hidden; /* Start invisible */
+  transition: opacity 0.25s, visibility 0.25s; /* Transition for both opacity and visibility */
 }
-
 
 #info-button {
   position: absolute;
@@ -641,4 +642,18 @@ button:focus-visible {
       opacity: 1.1;
       transform: scale(1);
   }
+}
+
+@keyframes rotate-oscillation {
+  0%, 100% {
+    transform: rotate(-5deg) translateY(-2px);
+  }
+  50% {
+    transform: rotate(5deg) translateY(2px);
+  }
+}
+
+.rotate-animate {
+  display: inline-block;
+  animation: rotate-oscillation ease-in-out infinite;
 }

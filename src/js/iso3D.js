@@ -788,7 +788,7 @@ function onDocumentKeyDown(event) {
 
 
   controls.update();
-  event.preventDefault(); // Optionally prevent default action for all key presses
+  // event.preventDefault(); // Optionally prevent default action for all key presses
 }
 
 document.addEventListener('keydown', onDocumentKeyDown, false);
