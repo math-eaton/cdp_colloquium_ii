@@ -95,16 +95,19 @@ document.getElementById('fullscreenButton').addEventListener('click', function()
     const resolutionSlider = document.getElementById('resolution-slider');
 
     if (button.textContent === 'show text') {
-        textContentDiv.classList.remove('hidden'); // Show 'text-content' div
+        textContentDiv.classList.remove('hidden');
         button.textContent = 'fullscreen map';
-        threeContainer.classList.add('background'); // Add 'background' class to 'app'
+        threeContainer.classList.add('background');
         resolutionSlider.value = '2';
         resolutionSlider.dispatchEvent(new Event('input'));
     } else {
-        textContentDiv.classList.add('hidden'); // Hide 'text-content' div
+        textContentDiv.classList.add('hidden');
         button.textContent = 'show text';
         threeContainer.classList.remove('background'); // Remove 'background' class from 'app'
-        // Update slider and manually trigger 'input' event
+
+        // Remove all cursor trails
+        removeAllCursorTrails();
+
         resolutionSlider.value = '6';
         resolutionSlider.dispatchEvent(new Event('input'));
     }
@@ -153,3 +156,9 @@ document.addEventListener('mousemove', function(e) {
         trail.remove();
     }, 30000); // Remove trail element after N ms
 });
+
+// Function to remove all cursor trails
+function removeAllCursorTrails() {
+    const trails = document.querySelectorAll('.cursor-trail');
+    trails.forEach(trail => trail.remove());
+}
