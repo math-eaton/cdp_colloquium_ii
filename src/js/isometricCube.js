@@ -32,7 +32,7 @@ export function isometricCube(containerId) {
 
 
     // Cube and grid parameters
-    const cubeSize = 300;
+    const cubeSize = 250;
     const gridSize = 8; // Number of grid divisions
     const pointCloudDensity = 20; // Number of points in each cloud
 

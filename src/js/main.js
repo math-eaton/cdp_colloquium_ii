@@ -58,6 +58,7 @@ document.getElementById('fullscreenButton').addEventListener('click', function()
     }
 });
 
+////////////////////////////////////////////////////////// cursors
 
 document.addEventListener('mousemove', function(e) {
     // Function to check if the element or its parent has the specified class
@@ -107,3 +108,58 @@ function removeAllCursorTrails() {
     const trails = document.querySelectorAll('.cursor-trail');
     trails.forEach(trail => trail.remove());
 }
+
+/////////////////////////////////////////////////////////// animate text containers
+function animateTextDivs() {
+    const textDivs = document.querySelectorAll('.text');
+    
+    textDivs.forEach(div => {
+      // Calculate the maximum displacement
+      const maxDisplacement = 0.1 * div.offsetWidth;
+  
+      // Random initial velocity
+      let vx = (Math.random() - 0.5) * 0.5;
+      let vy = (Math.random() - 0.5) * 0.3;
+  
+      moveDiv(div, vx, vy, maxDisplacement);
+    });
+  }
+  
+  function moveDiv(div, vx, vy, maxDisplacement) {
+    let dx = 0;
+    let dy = 0;
+  
+    function frame() {
+      // Update displacement
+      dx += vx;
+      dy += vy;
+  
+      // Get div dimensions and position
+      const rect = div.getBoundingClientRect();
+      const bodyWidth = document.body.clientWidth;
+      const bodyHeight = document.body.clientHeight;
+  
+      // Calculate 2% margin for both width and height
+      const marginWidth = 0.02 * bodyWidth;
+      const marginHeight = 0.02 * bodyHeight;
+  
+      // Check boundaries with margins and reverse direction if necessary
+      if (rect.left + dx < marginWidth || rect.right + dx > bodyWidth - marginWidth) {
+        vx = -vx;
+      }
+      if (rect.top + dy < marginHeight || rect.bottom + dy > bodyHeight - marginHeight) {
+        vy = -vy;
+      }
+  
+      // Apply the new position
+      div.style.transform = `translate(${dx}px, ${dy}px)`;
+  
+      requestAnimationFrame(frame);
+    }
+  
+    requestAnimationFrame(frame);
+  }
+  
+  // Start the animation
+  animateTextDivs();
+  
