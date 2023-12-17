@@ -110,10 +110,10 @@ function removeAllCursorTrails() {
 }
 
 /////////////////////////////////////////////////////////// animate text containers
-function animateTextDivs() {
-    const textDivs = document.querySelectorAll('.text');
+function animatefigDivs() {
+    const figDivs = document.querySelectorAll('.figure');
     
-    textDivs.forEach(div => {
+    figDivs.forEach(div => {
       // Calculate the maximum displacement
       const maxDisplacement = 0.1 * div.offsetWidth;
   
@@ -139,9 +139,9 @@ function animateTextDivs() {
       const bodyWidth = document.body.clientWidth;
       const bodyHeight = document.body.clientHeight;
   
-      // Calculate 2% margin for both width and height
-      const marginWidth = 0.02 * bodyWidth;
-      const marginHeight = 0.02 * bodyHeight;
+      // Calculate 0.5% margin for both width and height
+      const marginWidth = 0.005 * bodyWidth;
+      const marginHeight = 0.005 * bodyHeight;
   
       // Check boundaries with margins and reverse direction if necessary
       if (rect.left + dx < marginWidth || rect.right + dx > bodyWidth - marginWidth) {
@@ -161,7 +161,7 @@ function animateTextDivs() {
   }
   
   // Start the animation
-  animateTextDivs();
+  // animatefigDivs();
   
 
   // add fullscreen button after intro
@@ -187,32 +187,36 @@ function animateTextDivs() {
   });
   
 
-  // rotate h1 characters a lil
-  function animateH1Rotations() {
-    const h1Elements = document.querySelectorAll('h1');
+// rotate header characters a lil - scale h1 most intense
+function animateHeaderRotations() {
+    const headerElements = document.querySelectorAll('h1, h2');
   
-    h1Elements.forEach(h1 => {
-        let newContent = '';
-        const text = h1.textContent;
-    
-        for (let char of text) {
-          // Check if the character is not a space
+    headerElements.forEach(header => {
+      let newContent = '';
+      const text = header.textContent;
+      const headerLevel = parseInt(header.tagName.substring(1)); // Extract the header level (1 for H1, 2 for H2, etc.)
+  
+      // Scale factors based on header level (higher for H1 and lower for H6)
+      const maxRotation = (5 - headerLevel) * 5; // Decreasing max rotation from H1 to H6
+      const maxTranslateY = (7 - headerLevel) * 2; // Decreasing max translation from H1 to H6
+  
+      for (let char of text) {
         if (char !== ' ') {
-        const initialRotation = Math.random() * 2.5 - 2.5; // random initial rotation
-        const translateY = Math.random() * 5 - 10; // random Y-axis translation between -N px and N px
-        const animationDuration = Math.random() * 60 + 10; // random duration
-        const animationDelay = Math.random() * 5; // random delay
+          const initialRotation = Math.random() * maxRotation - (maxRotation / 2);
+          const translateY = Math.random() * maxTranslateY - (maxTranslateY / 2);
+          const animationDuration = Math.random() * 60 + 10; // Random duration
+          const animationDelay = Math.random() * 5; // Random delay
   
-        newContent += `<span class="rotate-animate" style="display: inline-block; transform: rotate(${initialRotation}deg) translateY(${translateY}px); animation-duration: ${animationDuration}s; animation-delay: ${animationDelay}s;">${char}</span>`;
-      } else {
-        // For spaces, just add them without any style or animation
-        newContent += char;
+          newContent += `<span class="rotate-animate" style="display: inline-block; transform: rotate(${initialRotation}deg) translateY(${translateY}px); animation-duration: ${animationDuration}s; animation-delay: ${animationDelay}s;">${char}</span>`;
+        } else {
+          newContent += char;
+        }
       }
-    }
-
-    h1.innerHTML = newContent;
-  });
-}
-
-// Call the function
-document.addEventListener('DOMContentLoaded', animateH1Rotations);
+  
+      header.innerHTML = newContent;
+    });
+  }
+  
+  // Call the function
+  document.addEventListener('DOMContentLoaded', animateHeaderRotations);
+  

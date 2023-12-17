@@ -10,6 +10,7 @@ export function wavetable(containerId) {
     let yoff = 0.0; // offset for y-axis noise
     let containerDiv = document.getElementById(containerId);
     let buffer; // Create a graphics buffer
+    let startY
 
     // noise control
     let noiseIntensityX = 30; // Adjust this for X noise intensity
@@ -17,8 +18,12 @@ export function wavetable(containerId) {
     let xoffIncrement = 0.00006; // Higher = faster horizontal change
     let yoffIncrement = 0.00009;  // vertical change
 
+    // surplus wave
+    let propagationWaveIndex = 0; // Index for the wave
+
+
     p.setup = () => {
-      p.frameRate(12);
+      p.frameRate(10);
       let rect = containerDiv.getBoundingClientRect();
       w = rect.width - (margin * 2); 
       h = rect.height - (margin * 2);
@@ -47,6 +52,7 @@ export function wavetable(containerId) {
     p.draw = () => {
       buffer.strokeWeight(2);
       let startY = (h - rows * scl) / 2;
+
       let overflow = 30; // Amount by which the drawing overflows on each side
     
       for (let y = startY; y <= startY + rows * scl; y += scl) {
@@ -56,7 +62,7 @@ export function wavetable(containerId) {
     
         for (let x = -overflow; x <= w + overflow; x += scl) {
           // Calculate alpha value based on y position
-          let alphaY = p.map(y, startY, startY + rows * scl, 50, 255); // Lower alpha at top, higher at bottom
+          let alphaY = p.map(y, startY, startY + rows * scl, 20, 222); // Lower alpha at top, higher at bottom
     
         
           let midX = w / 2;
@@ -81,14 +87,55 @@ export function wavetable(containerId) {
         buffer.endShape();
       }
 
+      // Draw the propagating wave
+      let propagationY = startY + propagationWaveIndex * scl; // Calculate the y position of the propagation wave
+      buffer.stroke(20, 20, 20); // Set color
+      drawPropWave(propagationY);
+
+      propagationWaveIndex++;
+      if (propagationWaveIndex >= rows) {
+        propagationWaveIndex = 0; // Reset the index to start from the bottom again
+      }
+
       p.clear();
-      p.tint(255, 255, 255, 215);
+      // p.tint(55, 55, 255, 215);
       p.image(buffer, 0, 0);
-      buffer.fill(0, 0, 0, 7);
+      buffer.fill(0, 0, 0, 50);
       buffer.noStroke();
       buffer.rect(0, 0, w, h);
       buffer.clear();
     };
+
+    // Function to draw a single wave
+    function drawPropWave(yPos) {
+      // buffer.strokeWeight(1);
+      buffer.noFill();
+      buffer.beginShape();
+      let xoff = 0.0;
+
+      for (let x = -30; x <= w + 30; x += scl) {
+          // Calculate alpha value based on y position
+          let alphaY = p.map(yPos, startY, startY + rows * scl, 0, 255); // Lower alpha at top, higher at bottom
+
+          let midX = w / 2;
+          let distanceFromMidX = Math.abs(x - midX);
+          let alphaX = p.map(distanceFromMidX, 0, midX, 255, 179);
+
+          let alpha = Math.min(alphaX, alphaY);
+          buffer.stroke(255, 0, 255, alpha); // Apply calculated alpha value
+
+          // Use existing noise and distortion logic
+          let noiseValue = p.noise(x * xoff, yoff);
+          let noiseScaleX = p.map(noiseValue, 0, 1, -noiseIntensityX, noiseIntensityX);
+          let noiseScaleY = p.map(noiseValue, 0, 1, -noiseIntensityY, noiseIntensityY);
+
+          buffer.curveVertex(x + noiseScaleX, yPos + noiseScaleY);
+          xoff += xoffIncrement;
+      }
+
+      buffer.endShape();
+}
+
 
     p.windowResized = () => {
       if (containerDiv) {

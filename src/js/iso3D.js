@@ -581,7 +581,7 @@ function addLayerVisibilityControls() {
     });
 
     // Adjust initial checkbox state for a few
-    if (layer.name === 'fm propagation curves' || layer.name === 'fm transmitter points' || layer.name === 'fm minimum spanning tree lines') {
+    if (layer.name === 'a' || layer.name === 'b' || layer.name === 'c') {
       checkbox.checked = false; // Set checkbox to unchecked for this layer
     }    
 
@@ -1348,7 +1348,7 @@ function addFMTowerPts(geojson) {
 
       // Add the FM points to the scene
       scene.add(fmTransmitterPoints);
-      fmTransmitterPoints.visible = false;
+      fmTransmitterPoints.visible = true;
 
 
       // Create and add the convex hull to the scene
@@ -1364,7 +1364,7 @@ function addFMTowerPts(geojson) {
 
       // Add the MST lines to the scene
       scene.add(fmMSTLines);
-      fmMSTLines.visible = false;
+      fmMSTLines.visible = true;
       resolve(); // Resolve the promise when done
     } catch (error) {
       console.error('Error in addFMTowerPts:', error);
