@@ -21,6 +21,7 @@
   overflow-wrap: break-word;
   hyphens: none;
   white-space: normal;
+  text-overflow: ellipsis;
   /* mix-blend-mode: screen; This will blend the navbar span with the background */
 }
 /* 
@@ -55,7 +56,6 @@ body {
     rgba(100, 100, 100, 0.0) 100%
   );
 
-
 }
 
 body .container {
@@ -73,7 +73,9 @@ body .container {
   opacity: 1; /* Fully visible initially */
   visibility: visible; /* Fully visible initially */
   height:fit-content;
+  padding: 1%;
 }
+
 
 
 .container:nth-child(even) {
@@ -163,13 +165,23 @@ body .container {
     rgba(0, 0, 0, 0.0) 100%
   );
 
-
 }
 
 .span{
   width: 100vw;
   height: 110vh;
   position: relative; /* Use relative for positioning child elements absolutely within it */
+}
+
+.centered{
+  text-align: center;
+
+}
+
+
+.inset{
+  
+  
 }
 
 
@@ -216,7 +228,6 @@ body .container {
 }
 
 #text-content{
-  /* height:fit-content; */
 }
 
 #text-content .column {
@@ -233,8 +244,8 @@ body .container {
 
 #text-content .text {
   position: relative;
-  flex-basis: 33.3%; /* 1/3 of the container */
-  max-width: 33.3%; /* Ensure it does not grow beyond 1/3 */
+  flex-basis: 40%; /* 1/3 of the container */
+  max-width: 40%; /* Ensure it does not grow beyond 1/3 */
   padding-right: 2%; /* Optional spacing between text and image */
   box-sizing: border-box; /* Include padding in the width calculation */
   cursor: text;
@@ -244,16 +255,19 @@ body .container {
 
 #text-content .figure {
   height:fit-content;
-  flex-basis: 50%; /* 2/3 of the container */
-  max-width: 50%; /* Ensure it does not grow beyond 2/3 */
+  flex-basis: 60%; /* 2/3 of the container */
+  max-width: 60%; /* Ensure it does not grow beyond 2/3 */
   /* max-height: 80vh; */
   box-sizing: border-box; /* Include any border or padding in the width calculation */
   margin: 2%;
+  overflow: hidden;
   z-index: 1;
+  object-fit: fill;
 }
 
 /* General Image Scaling within .figure containers */
 #text-content .figure img {
+  object-fit:cover;
   max-width: 100%;  /* Ensures image is not wider than the container */
   height: auto;     /* Maintains aspect ratio */
   display: block;   /* Removes any default inline spacing */
@@ -263,9 +277,15 @@ body .container {
 
 
 
-figcaption{
-  height: fit-content;
-  font-size:0.85em;
+figcaption {
+    height: fit-content;
+    margin-top: 0.5em;
+    font-size: 0.85em;
+    text-align: left; /* Default alignment */
+}
+  
+.container:nth-child(odd) .figure figcaption {
+  text-align: right; /* Align to the right in reversed containers */
 }
 
 ::selection {
@@ -739,13 +759,13 @@ button:focus-visible {
 }
 
 .grayscale-invert {
-  filter: grayscale() contrast(1.125) brightness(.9) invert();
+  filter: grayscale() contrast(1.125) brightness(.9) invert(0.75);
 }
 
 #FM-contours{
-  filter: invert(0.5);
-  object-fit: contain; /* Ensures the image is contained within the element's box */
-  max-width: 100%;
+  filter: invert(0.6);
+  width: 125%;
+  /* max-width: 100%; */
 }
 
 @keyframes rotateAndScale {
