@@ -77,7 +77,6 @@ body .container {
 }
 
 
-
 .container:nth-child(even) {
   flex-direction: row-reverse;
 }
@@ -135,7 +134,7 @@ body .container {
 
 /* end layout stuff */
 
-.navbar, .footer {
+.header, .footer {
   /* background-color: #000000; */
   text-align: left;
   font-weight: 750;
@@ -148,14 +147,18 @@ body .container {
 }
 
 
+
 #intro {
   background: linear-gradient(to bottom, rgba(100, 100, 100, 0.5) 60%, rgba(20, 20, 20, 0) 100%);
+  width: 100vw;
+  height: 110vh;
 }
 
 
 
 
-.navbar.span{
+#intro.span{
+  /* bottom: 500px; */
   /* background: linear-gradient(to bottom, rgba(20, 20, 20, 0.5) 66%, rgba(50, 50, 50, 0) 100%);  */
   background: linear-gradient(
     to bottom, 
@@ -175,12 +178,15 @@ body .container {
 
 .centered{
   text-align: center;
+  /* top: 50%; */
+  width: 100%;
+  height: 100%;
 
 }
 
 
 .inset{
-  
+
   
 }
 
@@ -265,28 +271,39 @@ body .container {
   object-fit: fill;
 }
 
-/* General Image Scaling within .figure containers */
-#text-content .figure img {
-  object-fit:cover;
-  max-width: 100%;  /* Ensures image is not wider than the container */
-  height: auto;     /* Maintains aspect ratio */
-  display: block;   /* Removes any default inline spacing */
+.column.text {
+  width: 100%; /* Ensure the column takes up the full width */
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%; /* Ensure the figure takes up the full width of its parent */
+  margin: 1em 0;
+}
+
+.figure img {
+  object-fit: scale-down;
+  max-width: 100%;
+  height: auto;
+  display: block;
   opacity: .85;
 }
 
-
-
-
 figcaption {
-    height: fit-content;
-    margin-top: 0.5em;
-    font-size: 0.85em;
-    text-align: left; /* Default alignment */
+  width: 100%;
+  /* margin-top: 0.5em; */
+  font-size: 0.85em;
+  text-align: center;
+  padding: 0 0.5em;
 }
-  
-.container:nth-child(odd) .figure figcaption {
-  text-align: right; /* Align to the right in reversed containers */
-}
+/* 
+.container:nth-child(even) .figure figcaption {
+  text-align: right;
+
+} */
 
 ::selection {
   background: rgba(100,100,100,0.85);
@@ -673,9 +690,9 @@ button:focus-visible {
 }
 
 #wavetableContainer1{
+  /* position: absolute; */
   width: 100%;
   height: 100%;
-  top: 2%;
 }
 
 #wavetableContainer2{
@@ -788,4 +805,24 @@ button:focus-visible {
   object-fit: contain; /* Ensures the image is contained within the element's box */
   max-width: 100%;
   filter: grayscale();
+}
+
+#gallery-container {
+  position: relative;
+  width: 100vw; /* Full width of the viewport */
+  height: 25vh; /* Height of the chyron */
+  /* overflow: hidden; */
+}
+
+.image {
+  position: absolute;
+  height: 100%; /* Full height of the container */
+  width: 21vw; /* Adjusted width to account for margins */
+  margin-right: 4%; /* 4% margin to the right of each image */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(140, 140, 140, 0.75);
+  transform: translate3d(0, 0, 0); /* Encourage GPU acceleration */
+  will-change: transform;
 }

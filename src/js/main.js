@@ -220,3 +220,64 @@ function animateHeaderRotations() {
   // Call the function
   document.addEventListener('DOMContentLoaded', animateHeaderRotations);
   
+  // gallery chyron
+  document.addEventListener("DOMContentLoaded", function () {
+    const galleryContainer = document.getElementById('gallery-container');
+    const imageFilenames = [];
+    for (let i = 1; i <= 23; i++) {
+        imageFilenames.push(`camp${i}.png`);
+    }
+
+    // Function to create an image div
+    function createImageDiv(filename) {
+        const div = document.createElement('div');
+        div.classList.add('image');
+        div.style.backgroundImage = `url('/public/image/photo/${filename}')`;
+        return div;
+    }
+
+    // Populate the gallery with images
+    imageFilenames.forEach(filename => {
+        const imageDiv = createImageDiv(filename);
+        galleryContainer.appendChild(imageDiv);
+    });
+
+    // Additional buffer images for seamless looping
+    imageFilenames.forEach(filename => {
+        const imageDiv = createImageDiv(filename);
+        galleryContainer.appendChild(imageDiv);
+    });
+
+    let images = Array.from(galleryContainer.querySelectorAll('.image'));
+    let totalWidth = 0; // Total width of all images
+    const marginPercent = 4; // Margin percentage
+
+    // Position images and calculate total width
+    images.forEach(image => {
+        totalWidth += image.offsetWidth + (image.offsetWidth * (marginPercent / 100));
+        image.style.left = totalWidth + 'px';
+    });
+
+    let lastTime = 0;
+    const speed = 0.05; // Pixels per millisecond
+    
+    function scrollImages(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const deltaTime = timestamp - lastTime;
+    
+        images.forEach(image => {
+            let currentLeft = parseFloat(image.style.left);
+            currentLeft -= speed * deltaTime; // Move based on time, not frames
+    
+            if (currentLeft <= -image.offsetWidth) {
+                currentLeft += totalWidth;
+            }
+            image.style.left = `${Math.round(currentLeft)}px`;
+          });
+    
+        lastTime = timestamp;
+        requestAnimationFrame(scrollImages);
+    }
+    
+    requestAnimationFrame(scrollImages);
+});
