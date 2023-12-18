@@ -83,6 +83,11 @@ body .container {
 }
 
 
+.container.grouped{
+  margin-top: -25vh;
+}
+
+
 .header, .footer {
   /* background-color: #000000; */
   text-align: left;
@@ -121,6 +126,7 @@ body .container {
 }
 
 .span{
+  object-fit: cover;
   padding-top: 10vh;
   padding-bottom: 30vh;
   width: 100vw;
@@ -222,6 +228,7 @@ body .container {
   padding-right: 2%; /* Optional spacing between text and image */
   box-sizing: border-box; /* Include padding in the width calculation */
   cursor: text;
+  text-transform: lowercase;
   /* cursor: url('/src/cursor/iBeam.cur'), auto; */
   /* cursor: text; */
 }
@@ -235,7 +242,6 @@ body .container {
   margin: 2%;
   overflow: hidden;
   z-index: 1;
-  object-fit: fill;
 }
 
 .column.text {
@@ -247,13 +253,12 @@ body .container {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  /* object-fit: fill; */
   /* width: 100%; Ensure the figure takes up the full width of its parent */
   margin: 1em 0;
 }
 
 .figure img {
-  object-fit:cover;
+  object-fit:scale-down;
   max-width: 100%;
   height: auto;
   display: block;
@@ -264,16 +269,17 @@ figcaption {
   color: rgb(20, 20, 20);
   border: rgb(20,20,20);
   border-width: 0.2em;
-  border-style: outset;
+  border-style:groove;
   background-color: rgb(200,200,200,0.3);
   width: max-content;
   /* margin-top: 0.5em; */
   font-size: 0.85em;
   text-align: center;
-  padding: 0 0.5em;
-  margin-top: 0.5em;
-  font-style: oblique;
+  padding: 0 0.25em 0 0.25em;
+  /* margin-top: 0.5em; */
+  font-style: italic;
   font-weight: bolder;
+  text-transform: uppercase;
 }
 /* 
 .container:nth-child(even) .figure figcaption {
@@ -293,9 +299,8 @@ figcaption {
   min-height: 50vh;
   max-height: 100vh;
   min-width: 100%;
-  padding: 0;
+  padding: 5vh;
   margin: 0;
-  object-fit:fill;
 }
   
 
@@ -749,17 +754,30 @@ button:focus-visible {
 .grayscale{
   
   filter: grayscale() contrast(1.125) brightness(.9);
+  
+}
+
+.grayscale-background{
+  
+  filter: grayscale() contrast(1.125) brightness(.9);
   background-color: rgba(200, 200, 200, 0.7);
   
 }
+
 
 .grayscale-invert {
   filter: grayscale() contrast(1.125) brightness(.9) invert(0.75);
 }
 
+.grayscale-invert-background {
+  /* background-color: rgba(20, 20, 20, 0.7); */
+  filter: grayscale() contrast(1.125) brightness(.9) invert(0.8);
+}
+
+
 #FM-contours{
   filter: invert(0.6);
-  width: 125%;
+  width: 50%;
   /* max-width: 100%; */
 }
 
