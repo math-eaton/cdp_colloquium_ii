@@ -3,6 +3,7 @@ import { iso3D } from './iso3D.js';
 import { terrain } from './terrain.js';
 import { wavetable } from './wavetable.js'
 import { isometricCube } from './isometricCube.js';
+import { sonicParameters } from './parameters.js';
 
 window.onload = () => {    
     setTimeout(() => {
@@ -16,12 +17,11 @@ window.onload = () => {
 
 // init external js
 iso3D();
-// document.addEventListener('DOMContentLoaded', (event) => {
-//     setTimeout(() => {
-//         terrain('terrainContainer1');
-//         wavetable('wavetableContainer1');
-//     }, 500);
-// });
+document.addEventListener('DOMContentLoaded', (event) => {
+    setTimeout(() => {
+      sonicParameters('sonicParametersContainer')
+    }, 500);
+});
 
 
 
@@ -219,14 +219,18 @@ function animateHeaderRotations() {
   
   // Call the function
   document.addEventListener('DOMContentLoaded', animateHeaderRotations);
+
   
-// Gallery chyron
+  // Gallery chyron
 document.addEventListener("DOMContentLoaded", function () {
   const galleryContainer = document.getElementById('gallery-container');
   let imageFilenames = [];
   for (let i = 1; i <= 25; i++) {
       imageFilenames.push(`camp${i}.png`);
   }
+
+  // Shuffle the image filenames
+  imageFilenames = shuffleArray(imageFilenames);
 
   // Function to create an image div
   function createImageDiv(filename) {
@@ -236,7 +240,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return div;
   }
 
-  // Populate the gallery with images
+  // Populate the gallery with shuffled images
   imageFilenames.forEach(filename => {
       const imageDiv = createImageDiv(filename);
       galleryContainer.appendChild(imageDiv);
@@ -250,16 +254,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let images = Array.from(galleryContainer.querySelectorAll('.image'));
   let totalWidth = 0; // Total width of all images
-  const marginPercent = 4; // Margin percentage
-
-  // Position images and calculate total width
-  images.forEach(image => {
-      totalWidth += image.offsetWidth + (image.offsetWidth * (marginPercent / 100));
-      image.style.left = totalWidth + 'px';
-  });
-
+  const marginPercent = 5; // Margin percentage
   let lastTime = 0;
   const speed = 0.05; // Pixels per millisecond
+  const vwToPixels = window.innerWidth / 100; // Calculate the value of 1vw in pixels
+
+  const imageWidth = 21 * vwToPixels; // Width of each image in vw
+  const marginRight = 4 * vwToPixels; // Right margin in vw
+
+// Position images and calculate total width
+  images.forEach(image => {
+  totalWidth += imageWidth + marginRight; // Add width and margin for each image
+  image.style.left = `${totalWidth}vw`; // Position in vw
+  });
+
 
   function scrollImages(timestamp) {
       if (!lastTime) lastTime = timestamp;
@@ -280,4 +288,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   requestAnimationFrame(scrollImages);
+
+  // Shuffle array function
+  function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+  }
 });

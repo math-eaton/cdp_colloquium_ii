@@ -18,34 +18,31 @@
   max-width: 100vw;
   font-size: 1em;
   word-wrap: break-word;
-  overflow-wrap: break-word;
+  /* overflow-wrap: break-word; */
   hyphens: none;
   white-space: normal;
   text-overflow: ellipsis;
-  /* mix-blend-mode: screen; This will blend the navbar span with the background */
+  display: inline-block;
+  word-break: break-word;
+    /* mix-blend-mode: screen; This will blend the navbar span with the background */
 }
-/* 
-html {
-  background: linear-gradient(to bottom, rgba(20, 20, 20, 0.95) 80%, rgba(20, 20, 20, 0) 100%);
-} */
 
 a {
   font-weight: 500;
-  color: rgb(200, 200, 200);
+  color: inherit;
   text-decoration: inherit;
 }
+
 a:hover {
   color: rgb(200, 200, 200);
 }
 
 body {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  /* margin: 2%; */
-  display: block; /* Changed from flex to block */
-  place-items: unset; /* Remove centering */
+  display: block;
+  position: inherit;
   min-width: 320px;
-  min-height: 100%; /* Changed from 100vh to 100% for proper scrolling */
-  max-width: 100vw;
+  min-height: 100%;
   margin: 0;
   padding: 0;
   background: linear-gradient(
@@ -55,38 +52,150 @@ body {
     rgba(150, 150, 150, 0.3) 85%, 
     rgba(100, 100, 100, 0.0) 100%
   );
-
 }
 
-body .container {
+/* containers */
+
+.container {
   margin: 0 auto;
-  display: flex; /* Enable flexbox */
-  flex-direction: row; /* Items are laid out in a row */
-  align-items: start; /* Align items to the start of the container */
-  justify-content: space-between; /* Distribute extra space between items */
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  justify-content: space-between;
   z-index: 50000;
-  /* margin: 5%; */
-  padding-bottom: 15vh;
-  padding-top: 10vh;
-  overflow: hidden;
+  padding-bottom: 25vh;
+  min-height: fit-content;
   transition: opacity 2s linear, visibility 0s linear 2s; /* Delay visibility transition */
-  opacity: 1; /* Fully visible initially */
-  visibility: visible; /* Fully visible initially */
-  height:fit-content;
-  padding: 1%;
-  min-height: 100vh;
+  /* position: relative; */
 }
-
 
 .container:nth-child(even) {
   flex-direction: row-reverse;
 }
 
-
-.container.grouped{
-  margin-top: -25vh;
+.container.grouped {
+  margin-top: -5vh;
 }
 
+@media only screen and (max-width: 600px) {
+  .container {
+    flex-direction: column;
+  }
+}
+
+/* type */
+
+h1, h2{
+  font-weight: 700;
+  mix-blend-mode:luminosity;
+  width: 100%;
+
+}
+
+h3, h4, h5 {
+  font-weight: 300;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+
+}
+
+h2 {
+  font-size: 2em;
+  text-shadow: 5px 5px rgba(50, 50, 50, 0.8);
+
+}
+
+.subtitle {
+  font-size: 2em;
+  color: rgb(200, 200, 200);
+  margin-top: 1em;
+}
+
+.small-text {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* figs */
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1em 0;
+}
+
+.figure img {
+  width: 100%;
+  height: auto;
+  object-fit: scale-down;
+  display: block;
+}
+
+figcaption {
+  color: rgb(20, 20, 20);
+  border: rgb(20,20,20);
+  border-width: 0.2em;
+  border-style: groove;
+  background-color: rgba(200,200,200,0.3);
+  display: inline-flex; /* Makes the element only as wide as its content */
+  justify-content: center; /* Center content for inline-flex */
+  align-items: center; /* Align items vertically for inline-flex */
+  font-size: clamp(0.8em, 1vw, 0.85em);
+  padding: 0 0.25em;
+  font-style: italic;
+  font-weight: bolder;
+  text-transform: uppercase;
+  height: fit-content;
+  margin-top: 0.5em;
+  word-wrap: break-word;
+  text-align: center; /* Center text if it wraps */
+}
+
+/* buttons */
+
+button {
+  background-color: rgba(0, 0, 0, 0.666);
+  color: cyan;
+  padding: 5px;
+  margin: 1%;
+  cursor: url('/src/cursor/point.cur'), auto;
+  border-style: groove;
+  border-width: 2px;
+  border-color: cyan;
+  font-size: 1em;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #000000;
+}
+
+/* media query */
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #ececec;
+    background-color: #1f1f1f;
+  }
+  a:hover {
+    color: #000000;
+  }
+  button {
+    background-color: #000000;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  #info-container {
+    font-size: 12px;
+  }
+}
+
+/* misc */
 
 .header, .footer {
   /* background-color: #000000; */
@@ -97,18 +206,18 @@ body .container {
   border-style:ridge;
   border-radius: 0.02px; */
   width: 100%;
+  text-shadow: 5px 5px rgba(50, 50, 50, 0.8);
+  padding-left: 2vw;
 
 }
-
 
 
 #intro {
   background: linear-gradient(to bottom, rgba(100, 100, 100, 0.5) 60%, rgba(20, 20, 20, 0) 100%);
   width: 100vw;
   height: 100vh;
+  margin: 0;
 }
-
-
 
 
 #intro.span{
@@ -140,9 +249,7 @@ body .container {
   width: 100%;
   height: 100%;
   /* padding-top: 15vh; */
-
 }
-
 
 .inset{
 
@@ -181,11 +288,12 @@ body .container {
 }
 
 .subtitle-container {
-  margin: 0 15%;
+  padding: 0 15% 15% 15%;
   position: relative;
   /* top: 50%;
   left: 50%; */
-  max-width: max-content;
+  /* max-width: max-content; */
+  width: auto;
   /* transform: translate(-50%, -50%); */
   text-align: right;
   z-index: 2;
@@ -225,13 +333,24 @@ body .container {
   position: relative;
   flex-basis: 40%; /* 1/3 of the container */
   max-width: 40%; /* Ensure it does not grow beyond 1/3 */
-  padding-right: 2%; /* Optional spacing between text and image */
   box-sizing: border-box; /* Include padding in the width calculation */
   cursor: text;
   text-transform: lowercase;
+  padding: 0 2% 0 2%; 
+  z-index: 123412354534;
   /* cursor: url('/src/cursor/iBeam.cur'), auto; */
   /* cursor: text; */
 }
+
+#text-content .text p {
+  /* border: rgba(0, 0, 0, 0.4); */
+  /* border-radius: 0.8em;
+  border-style: inset; */
+  padding: 2%;
+  margin-top: -2%;
+  /* background-color: rgba(40, 40, 40, 0.333); */
+}
+
 
 #text-content .figure {
   height:fit-content;
@@ -244,48 +363,22 @@ body .container {
   z-index: 1;
 }
 
-.column.text {
-  width: 100%; /* Ensure the column takes up the full width */
+.full-width-figure {
+  width: 100%;
+  position: relative;
+  margin: 0; /* Remove default margin if any */
 }
 
-.figure {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  /* width: 100%; Ensure the figure takes up the full width of its parent */
-  margin: 1em 0;
+.centered-text-overlay {
+  position: absolute;
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%); /* Adjust for perfect centering */
+  text-align: center; /* Center text alignment */
+  color: rgb(200, 200, 200); /* Choose a color that contrasts with the background */
+  z-index: 2; /* Ensure it's above the figure content */
 }
 
-.figure img {
-  object-fit:scale-down;
-  max-width: 100%;
-  height: auto;
-  display: block;
-  opacity: .85;
-}
-
-figcaption {
-  color: rgb(20, 20, 20);
-  border: rgb(20,20,20);
-  border-width: 0.2em;
-  border-style:groove;
-  background-color: rgb(200,200,200,0.3);
-  width: max-content;
-  /* margin-top: 0.5em; */
-  font-size: 0.85em;
-  text-align: center;
-  padding: 0 0.25em 0 0.25em;
-  /* margin-top: 0.5em; */
-  font-style: italic;
-  font-weight: bolder;
-  text-transform: uppercase;
-}
-/* 
-.container:nth-child(even) .figure figcaption {
-  text-align: right;
-
-} */
 
 ::selection {
   background: rgba(100,100,100,0.85);
@@ -299,20 +392,9 @@ figcaption {
   min-height: 50vh;
   max-height: 100vh;
   min-width: 100%;
-  padding: 5vh;
   margin: 0;
 }
   
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-h2, h3, h4, h5 {
-font-weight: 300;
-}
-
 
 #app {
   position: fixed;
@@ -328,48 +410,6 @@ font-weight: 300;
   /* z-index: 1; Lower than #intro */
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eaa);
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-#progress-container {
-  width: 33%;
-  margin: 0 auto; /* Center the progress bar */
-  background-color: #ffffff;
-  position: relative; /* Changed from absolute to relative */
-  overflow: visible;
-}
-
-#progress-bar {
-  font-size: xx-large;
-  position: absolute;
-  top:50%;
-  left:50%;
-  display: block;
-  /* height: 200px; */
-  width: 0;
-  line-height: 200px;
-  text-align: center;
-  color: rgb(255, 255, 255);
-  transition: width 0.25s ease; /* Add a transition for smooth width change */
-}
 
 /* Slider container */
 #resolution-controls {
@@ -661,7 +701,8 @@ button:focus-visible {
 
 #terrainContainer1{
   cursor: url('/src/cursor/point.cur'), auto;
-  overflow: hidden;
+  width: 100%;
+  height: auto; /* Adjust height as needed */
 }
 
 
@@ -789,18 +830,17 @@ button:focus-visible {
     transform: scale(1.0);
   }
   50% {
-    transform: scale(0.85);
+    transform: scale(0.9);
   }
   75% {
     transform: scale(1.0);
   }
 }
 
-#barrettLyon {
+.static-image {
   animation: rotateAndScale 60s infinite linear;
   object-fit: contain; /* Ensures the image is contained within the element's box */
   max-width: 100%;
-  filter: grayscale();
 }
 
 #gallery-container {
@@ -808,15 +848,15 @@ button:focus-visible {
   width: 100vw; /* Full width of the viewport */
   margin-top: -25vh;
   top: 25vh;
-  height: 35vh; /* Height of the chyron */
+  height: 25vh; /* Height of the chyron */
   /* overflow: hidden; */
 }
 
 .image {
   position: absolute;
-  height: 85%; /* Full height of the container */
+  height: 100%; /* Full height of the container */
   width: 21vw; /* Adjusted width to account for margins */
-  margin-right: 20%; /* 4% margin to the right of each image */
+  margin-right: 4vw; /* 4% margin to the right of each image */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -832,4 +872,79 @@ button:focus-visible {
 
 #pointOfEntry{
 margin-bottom: -15%;
+}
+
+#FM_towers {
+  padding-bottom: 25vh;
+  height: 100vh;
+  display: flex;
+  position: inherit;
+  align-items: center;
+  justify-content: top; 
+  /* padding-top: 5vh auto; */
+  /* position: relative; Set relative positioning for child absolute positioning */
+}
+
+.image-container {
+  position: relative;
+  width: 50%;
+  left: 5%;
+}
+
+.central-image {
+  width: 100%; /* Adjust size as needed */
+  display: block;
+  margin: 0 auto; 
+  transform: translateX(105%);
+
+}
+
+.side-image {
+  position: absolute;
+  top: 50%; /* Start at the vertical center */
+}
+
+.left-image {
+  width: 70%; /* 80% of the central image size */
+  /* left: -20%; */
+  transform: translateY(0); 
+}
+
+.right-image {
+  width: 50%; /* 50% of the central image size */
+  right: -70%;
+  transform: translateY(0%); /* Align bottom with the central image's bottom */
+}
+
+.text-container {
+  text-align: left;
+  flex-basis: 30%;
+  padding: 5%;
+  /* top: 0;
+  left: 0; */
+  z-index: 1000;
+}
+
+#barrett{
+  margin-bottom: -25vh;
+}
+
+.word-column {
+  display: inline-block;
+  margin-right: 0;
+}
+
+.word {
+  fill: black; /* Text color */
+  font-size: 16px; /* Text size */
+  font-family: Arial, sans-serif; /* Font family */
+}
+
+line {
+  stroke: black;
+  stroke-width: 1;
+}
+
+#sonicParametersContainer {
+  height: 100vh; /* Adjust the height as needed */
 }

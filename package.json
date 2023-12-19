@@ -21,6 +21,7 @@
     "chroma": "^0.0.1",
     "chroma-js": "^2.4.2",
     "convex-hull": "^1.0.3",
+    "d3": "^7.8.5",
     "delaunator": "^5.0.0",
     "graphology": "^0.25.4",
     "p5": "^1.9.0",

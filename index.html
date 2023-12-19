@@ -11,7 +11,7 @@
   <main class="" id="text-content">
 
     <div class="centered" id="intro">
-      <p class="header" style="margin-left: 1%;">
+      <p class="header">
         matthew heaton | columbia gsapp m.s. cdp | colloquium ii
       </p>
       
@@ -48,22 +48,57 @@
     </div>
     
     <!-- Subsection 0 -->
-      <div class="container">
+      <div class="container" id="barrett">
         <div class="column text">
-          <h1>text</h1>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-          <br>sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-          <br> Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-          <br>sunt in culpa qui officia deserunt mollit anim id est laborum.
+          <h2>text</h2>
+          <p>
+            I could conceive of connectivity like Barrett Lyon - his map of the internet presents a network topology of nodes and edges (or portals and linkages) that define its virtual quote-unquote “space.” 
+            But this type of spatiality is defined more through metaphor than felt experience. 
+            
+            As a geographer, I prefer to think about this much more literally: 
+                        
           </p>
         </div>
         <figure class="column figure">
-          <img class="" id="barrettLyon" src="public/image/photo/barrett_lyon_mapOfInternet.png">
+          <img class="static-image"  src="public/image/photo/barrett_lyon_mapOfInternet.png">
           <figcaption>BARRETT LYON:
             MAPPING THE INTERNET <em>(2022)</em>
             </figcaption>
         </figure>
     </div>
+
+
+<!-- cell towers subsection -->
+<div id="FM_towers" class="">
+  <div class="image-container">
+    <div class="text-container">
+      <h2>FM RADIO TOWER LOCATIONS AND THEIR ESTIMATED SIGNAL PROPAGATION CURVES 
+      </h2>
+    <p>What you’re looking at here is from a project I worked on over the summer in colloquium i: 
+
+      <br><br>Using US Federal Communications data, I extracted imagery from FM radio transmitters, as well as the estimated propagation distance of each transmitter signal. One can clearly see the relationship between the landscape and shape of each signal contour.
+      
+      <br><br>I find that phenomenon of electro-physical interference compelling, so I’m digging in
+      
+      </p>    
+    </div>    
+    <figure class="figure side-image left-image">
+      <img class="grayscale-invert-background" src="/public/gif/processed_imagery_area.gif">
+      <figcaption>processed imagery area</figcaption>
+  </figure>
+    <!-- Central image with caption -->
+    <figure class="figure central-image">
+      <img class="grayscale-invert-background"  src="/public/gif/processed_imagery_polyline_dithered.gif">
+      <figcaption>imagery point</figcaption>
+  </figure>
+  <figure class="figure side-image right-image">
+    <img class="grayscale-invert-background"  src="/public/gif/processed_imagery_point.gif">
+    <figcaption>imagery poly</figcaption>
+</figure>
+</div>
+</div>
+
+
 
     <!-- point of entry -->
 
@@ -75,7 +110,7 @@
 
     <div class="container" id="pointOfEntry">
       <div class="column text">
-        <h1>point of entry</h1>
+        <h2>point of entry</h2>
         <p>pictured : an old hunting camp built by my grandpa in the adirondack mountains
 
           <br><br>until recently, there has never been an internet connection anywhere nearby
@@ -94,7 +129,7 @@
       <!-- Subsection -->
       <div class="container">
         <div class="column text">
-          <h1>proof of concept</h1>
+          <h2>proof of concept</h2>
           <p>As an exploratory exercise, and to wireframe potential interface design for my final output, I’ve been developing a three dimensional mapping browser-based application to place built cell and radio topology in the context of the physical landscape. 
 
             <br><br>New York State is my primary study area
@@ -113,7 +148,7 @@
             </p>
         </div>
         <figure class="column figure">
-          <img class="p5 grayscale-background" id="MST" style="object-fit: fill;" src="/public/gif/hideshow3_dithered.gif">
+          <img class="grayscale-background" id="MST" style="object-fit: fill;" src="/public/gif/hideshow3_dithered.gif">
           <figcaption>MINIMUM SPANNING TREES: FM & CELL TOWER NETWORK, NYS</figcaption>
         </figure>
     </div>
@@ -121,8 +156,8 @@
     <!-- Subsection -->
     <div class="container">
       <div class="column text">
-        <h1>form factor
-        </h1>
+        <h2>form factor
+        </h2>
         <p>
           i make maps for a living, but they’re are about as conventional as they come: GIS input, output to PDF, print on a plotter, send to the field
 
@@ -131,15 +166,15 @@
 
         </p>
       </div>
-      <figure class="figure">
-        <img class="p5 grayscale-background" id="" src="/public/gif/norns_ex1_dithered.gif">
-        <figcaption>monome norns shield, an open-source diy sound computer</figcaption>
-      </figure>
-      <figure class="figure">
-        <img class="p5 grayscale-background" id="" src="/public/image/photo/eink.png">
-        <figcaption>a teensy microcontroller driving a liquid crystal monochrome 'memory display'</figcaption>
-      </figure>
-  </div>
+    <figure class="figure">
+      <img class="grayscale-background" src="/public/gif/norns_ex1_dithered.gif" alt="Monome Norns Shield">
+      <figcaption>monome norns shield, an open-source diy sound computer</figcaption>
+    </figure>
+    <figure class="figure">
+      <img class="grayscale-background" src="/public/gif/adafruit_dithered.gif" alt="Teensy Microcontroller">
+      <figcaption>a teensy microcontroller driving a liquid crystal monochrome 'memory display'</figcaption>
+    </figure>
+    </div>
 
   <div class="container grouped">
     <div class="column text">
@@ -151,43 +186,77 @@
               </p>
     </div>
     <figure class="figure">
-      <img class="p5 grayscale-invert" style="object-fit: scale-down;" src="/public/image/photo/rpi.png">
+      <img class="static-image grayscale-invert" style="object-fit: scale-down;" src="/public/image/photo/rpi.png">
       <figcaption>monome norns shield, an open-source diy sound computer</figcaption>
     </figure>
     <figure class="figure">
-      <img class="p5 grayscale-invert-background" id="" src="/public/image/photo/synths.png">
+      <img class="static-image grayscale-invert-background" id="" src="/public/image/photo/synths.png">
       <figcaption>a teensy microcontroller driving a liquid crystal monochrome 'memory display'</figcaption>
     </figure>
 </div>
 
 
-  
+<!-- Accessibility Subsection -->
+<div class="container">
+  <figure class="full-width-figure" id="">
+    <img class="grayscale" style="width: 100%;" src="/public/image/photo/travelTimetoCities.png">
+    <div class="centered-text-overlay">
+      <h2>accessibility modelling</h2>
+      <p>Here is a map of global travel time to the nearest high-density urban center, which is how this particular study operationalized remoteness
 
-    <!-- Subsection -->
-    <div class="container">
-      <div class="column text">
-        <h1>text</h1>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-        <br>sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        <br> Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-        <br>sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Isochrone maps like these are commonplace: they estimate a person’s traversal time through a given geographic unit (cell) based on its characteristics
+        
+        <br><br>This typically includes ground cover, slope, presence and conditions of roads, vegetation density, and so on 
+
+        <br><br>I’d like to apply this same logic of gridded “friction surfacing” to the electronic domain.
+
         </p>
-      </div>
-      <figure class="column figure">
-        <div class="p5 pointer" id="terrainContainer1"></div>
-        <figcaption>IMAGINARY LANDSCAPE GENERATED BY PERLIN NOISE FIELD</figcaption>
-      </figure>
-  </div>
+    </div>
+    <!-- <figcaption>IMAGINARY LANDSCAPE GENERATED BY PERLIN NOISE FIELD</figcaption> -->
+  </figure>
+</div>
 
+
+<!-- Terrain Subsection -->
+<div class="container">
+  <figure class="full-width-figure" id="terrainContainer1">
+    <div class="centered-text-overlay">
+      <h2>text</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, ...</p>
+    </div>
+    <!-- <figcaption>IMAGINARY LANDSCAPE GENERATED BY PERLIN NOISE FIELD</figcaption> -->
+  </figure>
+</div>
+
+<!-- Sonification types Subsection -->
+<div class="container">
+  <figure class="full-width-figure" id="sonicParametersContainer">
+    <div class="centered-text-overlay">
+
+    </div>
+    <!-- <figcaption>IMAGINARY LANDSCAPE GENERATED BY PERLIN NOISE FIELD</figcaption> -->
+  </figure>
+</div>
+
+  
     <!-- Subsection 2 -->
     <div class="container">
         <div class="column text">
-          <h1>text</h1>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-          <br>sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-          <br> Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-          <br>sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </p>
+          <h2>sonification</h2>
+          <p>
+            since my phenomena of interest - sound + signal - are physically waves there is a surprising amount of semantic overlap
+            
+            <br><br>for example:
+
+            <ul>Sonic and electromagnetic waves reflect and refract similarly, so sound propagation models may be helpful</ul>
+            <ul>Amplitude modulation (AM, like the radio) and frequency modulation (FM) are critical to radio signal propagation 
+              as well as common methods to modify a sonic palette. 
+            In both contexts, there are fundamental “carrier” waves that are affected by an external “modulator” waveform</ul>
+            <ul>Signal strength measured in decibels (just like loudness level on a stereo)</ul>
+            <ul>Wave interference between competing bands produces eerie and unique audio fingerprints</ul>
+            <ul>noise is decoded by signal receivers in similar ways - think about white noise static
+          </ul>
+            </p>
         </div>
         <div class="column figure">
           <div class="p5" id="wavetableContainer2"></div>
@@ -198,22 +267,48 @@
     <!-- Subsection 3 -->
     <div class="container">
       <div class="column text">
-        <h1>text</h1>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-        <br>sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        <br> Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-        <br>sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <h2>lines of sight</h2>
+        <p>
+          cell signals use the earth as transmission substrate, either directly via lines of sight (viewshed) or passively through the soil or ionosphere. 
+          The same physical phenomena that affect FM radio also affect cell signal.
+
+          <br><br>Radio signal - and signal loss - is thus a useful proxy to operationalize and investigate electronic isolation 
+
+          <br><br>one method of roughly modelling megahertz level signal propagation is through a viewshed analysis. 
+          by placing a cell network in 3d space with a digital elevation model (DEM), one can estimate a receiver's signal on the ground
+          
+          <br><br>cell signals technically can penetrate solids, but there is immediate signal absorption and refraction
+
         </p>
       </div>
       <div class="column figure">
         <div class="p5 pointer" id="isoCubeContainer1"></div>
       </div>
     </div>
+
+
     
+      
+    <!-- Subsection 5 -->
+    <div class="container">
+      <div class="column figure">
+        <figure>        
+          <img class="figure grayscale" src="public/image/photo/usda_slide.png">
+          <figcaption>STARLINK</figcaption>
+        </figure>
+        <figure>       
+          <img class="figure grayscale" src="public/image/photo/landlines.png">
+           <figcaption>ONEWEB</figcaption>
+        </figure>
+      </div>
+    </div>
+
+
+
     <!-- Subsection 4 -->
     <div class="container">
       <div class="column text">
-        <h1>the map as instrument</h1>
+        <h2>the map as instrument</h2>
           <h2>& measurement<br>
             as performance technique
           </h2>
@@ -225,11 +320,11 @@
       </div>
       <div class="column">
         <figure class="figure">
-          <img class="p5 grayscale" id="peripheral-transmissions" src="/gif/peripheralTransmissions.gif">
+          <img class="grayscale-invert-background" id="peripheral-transmissions" src="/public/gif/peripheralTransmissions_dithered.gif">
           <figcaption>WAAAA</figcaption>
         </figure>
         <figure class="figure">
-          <img class="p5 grayscale-invert" id="circle-sin" src="/public/gif/Circle_cos_sin.gif">
+          <img class="grayscale-invert" id="circle-sin" src="/public/gif/Circle_cos_sin_dithered_noRefresh_dithered.gif">
           <!-- Optional figcaption here -->
         </figure>
         <!-- Uncomment and wrap with figure if needed -->
@@ -244,62 +339,16 @@
     <div class="container">
       <div class="column figure">
         <figure>        
-          <img class="figure p5 grayscale-invert" src="public/gif/satellite_starlink_dithered.gif">
+          <img class="figure grayscale-invert" src="public/gif/satellite_starlink_dithered.gif">
           <figcaption>STARLINK</figcaption>
         </figure>
         <figure>       
-          <img class="figure p5 grayscale-invert" src="public/gif/satellite_oneweb_dithered.gif">
+          <img class="figure grayscale-invert" src="public/gif/satellite_oneweb_dithered.gif">
            <figcaption>ONEWEB</figcaption>
         </figure>
       </div>
     </div>
 
-
-
-    <!-- Subsection 6 -->
-    <div class="span inset centered">
-      <h1>lorem ipsum</h1>
-      <p>FM RADIO TOWER LOCATIONS AND THEIR ESTIMATED SIGNAL PROPAGATION CURVES 
-      </p>
-    </div>
-    <div class="container">
-      <div class="column">
-        <figure class="figure">
-          <img class="p5" id="FM-contours" src="/public/gif/processed_imagery_area.gif">
-          <figcaption>processed imagery area</figcaption>
-        </figure>
-        <figure class="">
-          <img class="p5" id="FM-contours" src="/public/gif/processed_imagery_point_dithered.gif">
-          <figcaption>imagery point</figcaption>
-        </figure>
-      </div>
-      <div class="column text">
-        <h1>the map as instrument</h1>
-        <h2>& measurement<br>
-          as performance technique
-        </h2>
-      <p>What comes next? When exploring ways to measure, simulate, and visualize communications data so far, my methods have been exclusively graphical. 
-        <br><br>Next, I hope to develop a data sonification engine that maps audio parameters onto spatial ones.</p>
-
-        <p>This is a project from last spring where I built a “tunable” map that crossfades between recordings scraped from radio stations based at each node. 
-      </p>
-        <figure>        
-        <img class="p5" id="FM-contours" src="/public/gif/processed_imagery_polyline_dithered.gif">
-        <figcaption>imagery poly</figcaption>
-      </figure>  
-    </div>
-  </div>
-
-  <div class="container grouped">
-    <div class="column text">
-    <div class="">
-      <figure style="right: 50%;">
-        <img class="p5" id="FM-contours" style="margin-top: -15vh;" src="/public/gif/processed_imagery_combined.gif">
-        <figcaption>processed imagery combined</figcaption>
-      </figure>  
-      </div>
-  </div>
-</div>
 
 
     
