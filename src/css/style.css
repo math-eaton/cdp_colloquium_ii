@@ -765,8 +765,13 @@ button:focus-visible {
 
 #terrainContainer1 {
   cursor: url("/src/cursor/point.cur"), auto;
-  width: 100%;
-  height: auto;
+  position: absolute; /* Make it positioned absolutely */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width */
+  height: 100vh; /* Full height */
+  z-index: 1; /* Lower z-index */
+  opacity: 0.9;
 }
 
 #isoCubeContainer1 {
@@ -1090,4 +1095,15 @@ button:focus-visible {
   to {
     transform: rotate(360deg);
   }
+}
+
+#electromagnetism{
+    position: relative; /* or absolute, depending on your layout */
+    z-index: 2; /* Higher z-index */
+
+}
+  
+
+#double-trouble{
+  position: relative;
 }
