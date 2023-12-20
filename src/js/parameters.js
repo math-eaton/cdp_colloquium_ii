@@ -1,18 +1,54 @@
 import p5 from 'p5';
 
 export function sonicParameters(containerId) {
-        let wordsA = ["location", "distance", "orientation", "force", "duration", "size", "amplitude", "length", "mass", "color"];
-        let wordsB = ["pitch", "brightness", "stereo panning", "tempo", "timbre", "decay", "articulation", "harmonic series", "instrumentation", "octave"];
-        let connections = [];
+    let wordsA = ["pitch", "brightness", "stereo panning", "tempo", "timbre", "sustain", "articulation", "overtones", "instrumentation", "octave"];
+    let wordsB = ["location", "distance", "orientation", "force", "duration", "size", "amplitude", "length", "mass", "color"];
+    let connections = [];
+
+    new p5((p) => {
+        let containerDiv;
+        let canvas; // Declare canvas here
+
+        p.setup = () => {
+            containerDiv = document.getElementById(containerId);
+            resizeCanvasToFitContainer();
+            
+            // Get the computed style of the container
+            const computedStyle = getComputedStyle(containerDiv);
+
+            // Calculate the available width and height inside the container
+            const containerWidth = containerDiv.offsetWidth
+
+            const containerHeight = containerDiv.offsetHeight
+
+            // Create the canvas with the calculated dimensions
+            let canvas = p.createCanvas(containerWidth, containerHeight);
+            canvas.parent(containerId);
+
+            p.textAlign(p.CENTER, p.CENTER);
+            p.textFont('sans-serif'); 
+            // p.textSize(36); // Set the text size
+            p.noStroke(); // No outline for the text
+            p.fill(200); 
+            updateConnections();
+            
+        };
+
+        p.windowResized = () => {
+            resizeCanvasToFitContainer();
+        };
+
+        function resizeCanvasToFitContainer() {
+            // Compute the style to get accurate dimensions
+            const computedStyle = getComputedStyle(containerDiv);
+            const containerWidth = containerDiv.offsetWidth - parseFloat(computedStyle.paddingLeft) - parseFloat(computedStyle.paddingRight);
+            const containerHeight = containerDiv.offsetHeight - parseFloat(computedStyle.paddingTop) - parseFloat(computedStyle.paddingBottom);
+
+            // Adjust canvas size
+            p.resizeCanvas(containerWidth, containerHeight);
+        }
     
-        new p5((p) => {
-            p.setup = () => {
-                let containerDiv = document.getElementById(containerId);
-                p.createCanvas(containerDiv.clientWidth, containerDiv.clientHeight);
-                p.textAlign(p.CENTER, p.CENTER);
-                p.textSize(16);
-                updateConnections();
-            };
+        
     
             p.draw = () => {
                 p.clear();
@@ -28,7 +64,7 @@ export function sonicParameters(containerId) {
             }
     
             function drawLines() {
-                p.stroke(0);
+                p.stroke(200);
                 for (const conn of connections) {
                     p.line(conn.x1, conn.y1, conn.x2, conn.y2);
                 }
@@ -53,8 +89,8 @@ export function sonicParameters(containerId) {
                 }
             }
                 
-            // Update connections every 3 seconds
-            setInterval(updateConnections, 2000);
+            // Update connections every n seconds
+            setInterval(updateConnections, 1000);
         }, containerId);
     }
     
