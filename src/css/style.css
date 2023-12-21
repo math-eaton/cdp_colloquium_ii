@@ -77,7 +77,7 @@ body {
   text-shadow: 1px 2px 2px rgb(20,20,20);
   transition:
     opacity 2s linear,
-    visibility 0s linear 2s; /* Delay visibility transition */
+    /* visibility 0s linear 2s; Delay visibility transition */
   /* position: relative; */
 }
 
@@ -248,6 +248,7 @@ button:hover {
   width: 100vw;
   height: 100vh;
   margin: 0;
+
 }
 
 #intro.span {
@@ -279,8 +280,7 @@ button:hover {
   /* padding-top: 15vh; */
 }
 
-.inset {
-}
+
 
 #intro > p {
   position: absolute;
@@ -332,9 +332,6 @@ button:hover {
   transition:
     opacity 2s linear,
     visibility 0s linear 0s; /* No delay when hiding */
-}
-
-#text-content {
 }
 
 #text-content .column {
@@ -806,6 +803,8 @@ button:focus-visible {
   background-size: cover;
   pointer-events: none;
   animation: fadeOut 1s forwards;
+  mix-blend-mode:exclusion;
+  z-index: 9999999999;
 }
 
 /* Style for default cursor trail */
@@ -1063,12 +1062,19 @@ button:focus-visible {
   position: absolute;
   bottom: 4vh; /* Adjust these values as needed */
   right: -1vw; /* Moves the asterisk to the right of the title */
-  -webkit-text-stroke-width: 2px;
+  -webkit-text-stroke-width: 0.1vw;
   -webkit-text-stroke-color: rgb(0, 255, 255);
   -webkit-text-fill-color: #00000000;
   font-size: 4vw;
   margin: 0; /* Removes default margins */
 }
+
+.title-container:hover .asterisk {
+  -webkit-text-stroke-width: 0.1vw;
+  -webkit-text-stroke-color: rgb(0, 255, 255);
+  -webkit-text-fill-color: #00000000;
+}
+
 
 .ticker-container {
   position: relative;
@@ -1083,6 +1089,11 @@ button:focus-visible {
   display: inline-block;
   color: rgb(200, 200, 200, 0.85);
   font-style: oblique;
+}
+
+#tickerContainer2{
+  transform: translate(0, -100vh);
+  margin-bottom: -25vh;
 }
 
 #sonar {
@@ -1108,6 +1119,7 @@ button:focus-visible {
 
 #double-trouble{
   position: relative;
+  cursor: pointer;
 }
 
 .front-matter {

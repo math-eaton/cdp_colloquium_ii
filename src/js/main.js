@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const galleryContainer = document.getElementById("gallery-container");
   let imageFilenames = [];
   for (let i = 1; i <= 25; i++) {
-    imageFilenames.push(`camp${i}.png`);
+    imageFilenames.push(`camp${i}.webp`);
   }
 
   // Shuffle the image filenames
@@ -237,7 +237,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function createImageDiv(filename) {
     const div = document.createElement("div");
     div.classList.add("image");
-    div.style.backgroundImage = `url('/image/photo/${filename}')`;
+    div.style.backgroundImage = `url('/3D_mapping/image/photo/${filename}')`;
     return div;
   }
 
@@ -323,10 +323,10 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// ticker
+// header text ticker
 
 class Ticker {
-  constructor(containerId, text, speed = 0.1) {
+  constructor(containerId, text, speed = 0.025) {
     this.container = document.getElementById(containerId);
     this.text = text;
     this.speed = speed; // Pixels per millisecond
@@ -398,10 +398,10 @@ class Ticker {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    const textArray1 = ["methodology"];
+    const textArray1 = ["methodology . . ."];
     const ticker1 = new Ticker("tickerContainer1", textArray1);
   
-    const textArray2 = ["sonification"];
+    const textArray2 = ["sonification . . ."];
     const ticker2 = new Ticker("tickerContainer2", textArray2);
 
   });
@@ -437,28 +437,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // Image information
   const imageInfo = [
       {
-      src: '/image/photo/davis_healy_rivalta_2019.png',
+      src: '/3D_mapping/image/photo/davis_healy_rivalta_2019.webp',
       caption: 'Davis, Healy, & Rivalta 2019'
       },
       {
-        src: '/image/photo/furuno_rado.png',
+        src: '/3D_mapping/image/photo/furuno_rado.webp',
 
         caption: 'Linear Frequency Modulated Pulse Waveform Radar Novikov & Osipov 2019'
       },
       {
-        src: '/image/photo/fairbairn_1949.png',
+        src: '/3D_mapping/image/photo/fairbairn_1949.webp',
         caption: 'Fairbairn, 1949'
       },
       {
-        src: '/image/photo/fairbairn_1949-2.png',
+        src: '/3D_mapping/image/photo/fairbairn_1949-2.webp',
         caption: 'Fairbairn, 1949'
       },
       {
-        src: '/image/photo/fairbairn_1949-3.png',
+        src: '/3D_mapping/image/photo/fairbairn_1949-3.webp',
         caption: 'Fairbairn, 1949'
       },
       {
-        src: '/image/photo/fairbairn_1949-4.png',
+        src: '/3D_mapping/image/photo/fairbairn_1949-4.webp',
         caption: 'Fairbairn, 1949'
       },
     ];
