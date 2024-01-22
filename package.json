@@ -2,7 +2,7 @@
   "name": "isolines-3d",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://math-eaton.github.io/3D_mapping/",
+  "homepage": "https://math-eaton.github.io/cdp_colloquium_ii/",
   "type": "module",
   "scripts": {
     "dev": "vite",
