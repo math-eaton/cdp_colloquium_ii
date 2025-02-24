@@ -41,13 +41,17 @@ a:hover {
   color: rgb(200, 200, 200);
 }
 
+/* html, body {
+  height: 100%;
+  min-height: 100%;
+} */
+
 body {
   font-family: "IBM Plex Sans", "Franklin Gothic Medium", "Arial Narrow", Arial,
     sans-serif;
   display: block;
   position: inherit;
   min-width: 320px;
-  min-height: 100%;
   margin: 0;
   padding: 0;
   word-wrap: normal;
@@ -227,17 +231,24 @@ button:hover {
 
 .header,
 .footer {
-  /* background-color: #000000; */
+  z-index: 10000001100101;
   text-align: left;
   font-weight: 750;
-  /* background-color: rgba(40, 40, 40, 0.85);
-  border-color: rgb(230, 230, 230);
-  border-style:ridge;
-  border-radius: 0.02px; */
   width: 100%;
-  text-shadow: 5px 5px rgba(50, 50, 50, 0.8);
+  text-shadow: 5px 5px rgba(50, 50, 50, 0.5);
   padding-left: 2vw;
 }
+
+.header {
+  position: fixed;
+  top: 2vh;
+}
+
+.footer {
+  position: fixed;
+  bottom: 2vh;
+}
+
 
 #intro {
   background: linear-gradient(
@@ -357,6 +368,12 @@ button:hover {
   /* cursor: url('/src/cursor/iBeam.cur'), auto; */
   /* cursor: text; */
 }
+
+#notice {
+  color: #00ffff;
+  text-transform: uppercase;
+}
+
 
 p, ul{
   text-transform: lowercase;
@@ -1125,3 +1142,4 @@ button:focus-visible {
 .front-matter {
   display: none;
 }
+
