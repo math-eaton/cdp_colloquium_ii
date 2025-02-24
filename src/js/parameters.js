@@ -1,8 +1,8 @@
 import p5 from 'p5';
 
 export function sonicParameters(containerId) {
-    let wordsA = ["pitch", "brightness", "stereo panning", "tempo", "timbre", "sustain", "articulation", "overtones", "instrumentation", "octave"];
-    let wordsB = ["location", "distance", "orientation", "force", "duration", "size", "amplitude", "length", "mass", "color"];
+    let wordsA = ["pitch", "brightness", "stereo panning", "tempo", "timbre", "dissonance", "articulation", "overtones", "instrumentation", "octave"];
+    let wordsB = ["location", "distance", "orientation", "force", "cardinality", "size", "amplitude", "length", "dissonance", "propagation"];
     let connections = [];
 
     new p5((p) => {

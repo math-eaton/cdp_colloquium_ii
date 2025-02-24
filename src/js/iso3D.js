@@ -63,7 +63,7 @@ const colorScheme = {
 const statePlaneProjString = "+proj=longlat +lat_0=40 +lon_0=-76.58333333333333 +k=0.9999375 +x_0=249999.9998983998 +y_0=0 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs";
 proj4.defs("EPSG:2261", statePlaneProjString);
 
-// Use this function to convert lon/lat to State Plane coordinates
+// Use this function to convert lon/lat to State Plane (actually NAD83) coordinates
 function toStatePlane(lon, lat) {
   if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
     throw new Error(`Invalid coordinates: longitude (${lon}), latitude (${lat})`);
@@ -886,7 +886,6 @@ function constrainCamera(controls, boundingBox) {
 
 
 // Function to get the center of the bounding box
-// This function is correct but make sure it's called after the lines are added to the scene
 function getCenterOfBoundingBox(boundingBox) {
   return new THREE.Vector3(
     (boundingBox.min.x + boundingBox.max.x) / 2,
@@ -904,21 +903,7 @@ function getSizeOfBoundingBox(boundingBox) {
   );
 }
 
-// Adjust the camera to view the entire extent of the GeoJSON features
-// function adjustCameraToBoundingBox(camera, controls, boundingBox) {
-//   const center = getCenterOfBoundingBox(boundingBox);
-//   const size = getSizeOfBoundingBox(boundingBox);
-//   const maxDim = Math.max(size.x, size.y);
-//   const fov = camera.fov * (Math.PI / 180);
-//   let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)); // Adjust the 2 to frame the scene
 
-//   cameraZ *= 1.1; // Slight adjustment to ensure the features are fully visible
-//   camera.position.set(center.x, center.y, cameraZ);
-//   controls.target.set(center.x, center.y, 0);
-//   controls.update();
-// }
-
-// Function to lock the camera to a top-down view
 // Function to calculate the camera Z position to view the entire bounding box
 function calculateCameraZToFitBoundingBox(boundingBox) {
   const center = getCenterOfBoundingBox(boundingBox);

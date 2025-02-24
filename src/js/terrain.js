@@ -236,7 +236,7 @@ export function terrain(containerId) {
           let elevation = terrain[x][y];
           let greyValue = p.map(elevation, -50, 50, 40, 100);
           p.stroke(greyValue); // Set the stroke to a shade of grey
-          p.strokeWeight(3);
+          p.strokeWeight(0.5);
           // p.stroke(p.map(elevation, 45, 90, 270, 360), 60, 65);
           p.noFill();
           p.vertex(x * scl, y * scl, elevation);
