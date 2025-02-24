@@ -38,7 +38,8 @@ a {
 }
 
 a:hover {
-  color: rgb(200, 200, 200);
+  color: #ff0;
+  font-weight: bolder;
 }
 
 /* html, body {
@@ -894,7 +895,7 @@ button:focus-visible {
 
 .grayscale-invert-background {
   /* background-color: rgba(20, 20, 20, 0.7); */
-  filter: grayscale() contrast(1.125) brightness(0.9) invert(0.8);
+  filter: grayscale() brightness(0.9) invert(0.8);
 }
 
 .inverted-text p, .inverted-text h2{
@@ -1104,7 +1105,7 @@ button:focus-visible {
 .ticker-text {
   position: absolute;
   display: inline-block;
-  color: rgb(200, 200, 200, 0.85);
+  color: rgb(0, 255, 255);
   font-style: oblique;
 }
 
