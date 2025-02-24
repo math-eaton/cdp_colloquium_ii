@@ -88,84 +88,93 @@ target/
 profile_default/
 ipython_config.py
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+# Dependency directories
+node_modules
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
+# Optional npm cache directory
+.npm
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
+# Optional eslint cache
+.eslintcache
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+# Optional REPL history
+.node_repl_history
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+# Output of 'npm pack'
+*.tgz
 
-# SageMath parsed files
-*.sage.py
+# Yarn Integrity file
+.yarn-integrity
 
-# Environments
+# dotenv environment variables file
 .env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# Next.js build output
+.next/
 
-# Rope project settings
-.ropeproject
+# Nuxt.js build output
+.nuxt/
 
-# mkdocs documentation
-/site
+# Gatsby files
+.cache/
+public/
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# Vuepress build output
+.vuepress/dist/
 
-# Pyre type checker
-.pyre/
+# vuepress v2.x temp and cache directory
+.temp/
+.cache/
 
-# pytype static type analyzer
-.pytype/
+# Docusaurus cache and generated files
+.docusaurus/
+.build/
 
-# Cython debug symbols
-cython_debug/
+# Serverless directories
+.serverless/
 
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-node_modules/.vite/deps/chunk-YGBHMJOR.js.map
-node_modules/.vite/deps/chunk-YGBHMJOR.js
-node_modules/.vite/deps/chunk-PESLVFJD.js.map
-node_modules/.vite/deps/chunk-PESLVFJD.js
-node_modules/.vite/deps/_metadata.json
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Vite build output
+dist/
+
+# Storybook build outputs
+.out/
+.storybook-out/
+
+# vuepress v2.x temp and cache directory
+.temp/
+.cache/
+
+# Sapper build / generated files
+__sapper__/
+
+# SvelteKit build / generated files
+.svelte-kit/
+
+# SvelteKit build / generated files
+.svelte-kit/
+
+# Gridsome build / generated files
+.gridsome/
+
+# Cache and build files
+.cache/
+build/
+
+# GitHub Pages
+docs/
